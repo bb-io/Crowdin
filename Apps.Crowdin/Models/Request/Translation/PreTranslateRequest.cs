@@ -6,7 +6,7 @@ public class PreTranslateRequest
 {
     [Display("Language IDs")] public IEnumerable<string> LanguageIds { get; set; }
 
-    [Display("File IDs")] public IEnumerable<int> FileIds { get; set; }
+    [Display("File IDs")] public IEnumerable<string> FileIds { get; set; }
 
     [Display("Engine ID")] public string? EngineId { get; set; }
 

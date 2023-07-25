@@ -3,6 +3,7 @@ using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Response.Project;
 using Apps.Crowdin.Utils;
+using Apps.Crowdin.Utils.Parsers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
@@ -49,11 +50,12 @@ public class ProjectActions
     //     [ActionParameter] [Display("Project ID")] string projectId)
     // {
     //     var client = new CrowdinClient(creds);
-    //
-    //     var request = new AddProjectRequest()
+    //     
+    //     var request = new EnterpriseProject()
     //     {
     //
     //     };
+    //     
     //     var response = await client.ProjectsGroups.AddProject<ProjectBase>(intProjectId!.Value);
     //     return new(response);
     // }

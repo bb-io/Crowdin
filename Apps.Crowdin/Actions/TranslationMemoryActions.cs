@@ -1,9 +1,11 @@
 ﻿using Apps.Crowdin.Api;
+using Apps.Crowdin.Constants;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.TranslationMemory;
 using Apps.Crowdin.Models.Response.File;
 using Apps.Crowdin.Models.Response.TranslationMemory;
 using Apps.Crowdin.Utils;
+using Apps.Crowdin.Utils.Parsers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
@@ -66,29 +68,29 @@ public class TranslationMemoryActions
     [Action("Delete translation memory", Description = "Delete specific translation memory")]
     public Task DeleteTranslationMemory(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Translation memory ID")] string translationMemoryId)
+        [ActionParameter] [Display("Translation memory ID")]
+        string translationMemoryId)
     {
         var intTmId = IntParser.Parse(translationMemoryId, nameof(translationMemoryId));
         var client = new CrowdinClient(creds);
 
         return client.TranslationMemory.DeleteTm(intTmId!.Value);
     }
-    
+
     [Action("Export translation memory", Description = "Export specific translation memory")]
     public async Task<TmExportEntity> ExportTranslationMemory(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Translation memory ID")] string translationMemoryId,
+        [ActionParameter] [Display("Translation memory ID")]
+        string translationMemoryId,
         [ActionParameter] ExportTranslationMemoryRequest input)
     {
         var intTmId = IntParser.Parse(translationMemoryId, nameof(translationMemoryId));
 
-        var formatEnum = TmFileFormat.Tmx;
-        if (input.Format != null && !Enum.TryParse(input.Format, out formatEnum))
-            throw new("Wrong format value, acceptable values are: tmx, csv, xlsx");
-        
+        var formatEnum =
+            EnumParser.Parse<TmFileFormat>(input.Format, nameof(input.Format), EnumValues.TmFileFormat);
+
         var client = new CrowdinClient(creds);
 
-        
         var request = new ExportTmRequest
         {
             SourceLanguageId = input.SourceLanguageId,
@@ -96,10 +98,10 @@ public class TranslationMemoryActions
             Format = formatEnum
         };
         var response = await client.TranslationMemory.ExportTm(intTmId!.Value, request);
-        
+
         return new(response);
     }
-    
+
     [Action("Download translation memory", Description = "Download specific translation memory")]
     public async Task<DownloadFileResponse> DownloadTranslationMemory(
         IEnumerable<AuthenticationCredentialsProvider> creds,
@@ -110,7 +112,7 @@ public class TranslationMemoryActions
 
         var response = await client.TranslationMemory.DownloadTm(intTmId!.Value, input.ExportId);
         var fileContent = await FileDownloader.DownloadFileBytes(response.Url);
-        
+
         return new(fileContent);
     }
 }

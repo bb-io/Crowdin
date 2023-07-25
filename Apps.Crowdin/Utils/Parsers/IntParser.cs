@@ -1,4 +1,4 @@
-﻿namespace Apps.Crowdin.Utils;
+﻿namespace Apps.Crowdin.Utils.Parsers;
 
 public static class IntParser
 {
