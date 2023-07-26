@@ -1,0 +1,47 @@
+﻿using System.Collections;
+using Blackbird.Applications.Sdk.Common;
+
+namespace Apps.Crowdin.Models.Request.Project;
+
+public class AddNewProjectRequest
+{
+    public string Name { get; set; }
+
+    [Display("Soucre language ID")] public string SourceLanguageId { get; set; }
+
+    public string? Identifier { get; set; }
+
+    [Display("Target language IDs")] public IEnumerable<string>? TargetLanguageIds { get; set; }
+    public string? Visibility { get; set; }
+    public string? Cname { get; set; }
+    public string? Description { get; set; }
+
+    [Display("Is MT allowed")] public bool? IsMtAllowed { get; set; }
+
+    [Display("Auto substitution")] public bool? AutoSubstitution { get; set; }
+
+    [Display("Auto translate dialects")] public bool? AutoTranslateDialects { get; set; }
+
+    [Display("Public downloads")] public bool? PublicDownloads { get; set; }
+
+    [Display("Hidden strings proofreaders access")]
+    public bool? HiddenStringsProofreadersAccess { get; set; }
+
+    [Display("Use global TM")] public bool? UseGlobalTm { get; set; }
+
+    [Display("Skip untranslated strings")] public bool? SkipUntranslatedStrings { get; set; }
+
+    [Display("Skip untranslated files")] public bool? SkipUntranslatedFiles { get; set; }
+
+    [Display("Export approved only")] public bool? ExportApprovedOnly { get; set; }
+
+    [Display("In context")] public bool? InContext { get; set; }
+
+    [Display("In context process hidden strings")]
+    public bool? InContextProcessHiddenStrings { get; set; }
+
+    [Display("In context pseudo language ID")]
+    public string? InContextPseudoLanguageId { get; set; }
+
+    [Display("QA check is active")] public bool? QaCheckIsActive { get; set; }
+}

@@ -35,7 +35,7 @@ public abstract class ProjectWebhookHandler : IWebhookEventHandler
         var request = new AddWebhookRequest
         {
             Name = $"BlackBird-{SubscriptionEvent}-{Guid.NewGuid()}",
-            Url = values["payloadUrl"],
+            Url = " https://webhook.site/37aecaf2-ce6b-4817-8788-79eb3a06832f",
             RequestType = RequestType.POST,
             Events = new List<EventType> { SubscriptionEvent },
             BatchingEnabled = EnableBatchingWebhooks

@@ -1,4 +1,5 @@
 ﻿using Apps.Crowdin.Api;
+using Apps.Crowdin.Constants;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Response.Project;
@@ -8,6 +9,7 @@ using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Crowdin.Api.ProjectsGroups;
+using AddProjectRequest = Crowdin.Api.ProjectsGroups.AddProjectRequest;
 
 namespace Apps.Crowdin.Actions;
 
@@ -44,22 +46,41 @@ public class ProjectActions
         var response = await client.ProjectsGroups.GetProject<ProjectBase>(intProjectId!.Value);
         return new(response);
     }
-    // TODO: add action using rest api directly
-    // [Action("Add project", Description = "Add new project")]
-    // public async Task<ProjectEntity> AddProject(
-    //     IEnumerable<AuthenticationCredentialsProvider> creds,
-    //     [ActionParameter] [Display("Project ID")] string projectId)
-    // {
-    //     var client = new CrowdinClient(creds);
-    //     
-    //     var request = new EnterpriseProject()
-    //     {
-    //
-    //     };
-    //     
-    //     var response = await client.ProjectsGroups.AddProject<ProjectBase>(intProjectId!.Value);
-    //     return new(response);
-    // }
+
+    [Action("Add project", Description = "Add new project")]
+    public async Task<ProjectEntity> AddProject(
+        IEnumerable<AuthenticationCredentialsProvider> creds,
+        [ActionParameter] AddNewProjectRequest input)
+    {
+        var client = new CrowdinClient(creds);
+        
+        var request = new StringsBasedProjectForm
+        {
+            Name = input.Name,
+            SourceLanguageId = input.SourceLanguageId,
+            Identifier = input.Identifier,
+            Visibility = EnumParser.Parse<ProjectVisibility>(input.Visibility, nameof(input.Visibility), EnumValues.ProjectVisibility),
+            TargetLanguageIds = input.TargetLanguageIds?.ToList(),
+            Cname = input.Cname,
+            Description = input.Description,
+            IsMtAllowed = input.IsMtAllowed,
+            AutoSubstitution = input.AutoSubstitution,
+            AutoTranslateDialects = input.AutoTranslateDialects,
+            PublicDownloads = input.PublicDownloads,
+            HiddenStringsProofreadersAccess = input.HiddenStringsProofreadersAccess,
+            UseGlobalTm = input.UseGlobalTm,
+            SkipUntranslatedStrings = input.SkipUntranslatedStrings,
+            SkipUntranslatedFiles = input.SkipUntranslatedFiles,
+            ExportApprovedOnly = input.ExportApprovedOnly,
+            InContext = input.InContext,
+            InContextProcessHiddenStrings = input.InContextProcessHiddenStrings,
+            InContextPseudoLanguageId = input.InContextPseudoLanguageId,
+            QaCheckIsActive = input.QaCheckIsActive,
+        };
+        
+        var response = await client.ProjectsGroups.AddProject<ProjectBase>(request);
+        return new(response);
+    }
 
     [Action("Delete project", Description = "Delete specific project")]
     public Task DeleteProject(

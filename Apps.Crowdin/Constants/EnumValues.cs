@@ -11,4 +11,5 @@ public static class EnumValues
     public static readonly string[] IssueType = { "GeneralQuestion", "TranslationMistake", "ContextRequest", "SourceMistake" };
     public static readonly string[] PluralCategoryName = { "Zero", "One", "Two", "Few", "Many", "Other" };
     public static readonly string[] StringScope = { "Identifier", "Text", "Context" };
+    public static readonly string[] ProjectVisibility = { "Open", "Private" };
 }
