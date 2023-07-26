@@ -11,7 +11,7 @@ public class TranslationEntity
     [Display("User ID")]
     public string UserId { get; set; }
     public string Text { get; set; }
-    public int Rating { get; set; }
+    public int? Rating { get; set; }
     
     [Display("Created at")]
     public DateTime CreatedAt { get; set; }
@@ -23,5 +23,13 @@ public class TranslationEntity
         UserId = stringTranslation.User.Id.ToString();
         Rating = stringTranslation.Rating;
         CreatedAt = stringTranslation.CreatedAt.DateTime;
+    }
+    
+    public TranslationEntity(PlainLanguageTranslations translation)
+    {
+        Id = translation.TranslationId.ToString();
+        Text = translation.Text;
+        UserId = translation.User.Id.ToString();
+        CreatedAt = translation.CreatedAt.DateTime;
     }
 }

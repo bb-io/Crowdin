@@ -17,12 +17,15 @@ public class MachineTranslationActions
 {
     [Action("List machine translation engines", Description = "List all machine translation engines")]
     public async Task<ListMtEnginesResponse> ListMtEnginges(
-        IEnumerable<AuthenticationCredentialsProvider> creds)
+        IEnumerable<AuthenticationCredentialsProvider> creds,
+        [ActionParameter] [Display("Group ID")] string? groupId)
     {
+        var intGroupId = IntParser.Parse(groupId, nameof(groupId));
+        
         var client = new CrowdinClient(creds);
 
         var items = await Paginator.Paginate((lim, offset)
-            => client.MachineTranslationEngines.ListMts(lim, offset));
+            => client.MachineTranslationEngines.ListMts(intGroupId, lim, offset));
 
         var mtEntities = items.Select(x => new MtEngineEntity(x)).ToArray();
         return new(mtEntities);

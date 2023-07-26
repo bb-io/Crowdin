@@ -24,9 +24,13 @@ public class OrganizationWebhookList
         if (data is null)
             throw new InvalidCastException(nameof(webhookRequest.Body));
 
+        var result = new ProjectWithUserWebhookResponse();
+        result.ConfigureResponse(data);
+        
+        
         return Task.FromResult(new WebhookResponse<ProjectWithUserWebhookResponse>
         {
-            Result = new(data)
+            Result = result
         });
     }
 }

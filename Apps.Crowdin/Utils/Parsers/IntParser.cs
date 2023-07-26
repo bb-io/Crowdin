@@ -1,4 +1,6 @@
-﻿namespace Apps.Crowdin.Utils.Parsers;
+﻿using Apps.Crowdin.Extensions;
+
+namespace Apps.Crowdin.Utils.Parsers;
 
 public static class IntParser
 {
@@ -8,7 +10,7 @@ public static class IntParser
             return null;
         
         if (!int.TryParse(input, out var intValue))
-            throw new Exception("Group ID should be a number");
+            throw new Exception($"{errorName.ToPascalCase()} should be a number");
 
         return intValue;
     } 

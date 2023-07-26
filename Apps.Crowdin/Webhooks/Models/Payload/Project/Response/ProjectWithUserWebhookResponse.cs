@@ -1,15 +1,17 @@
 ﻿using Apps.Crowdin.Models.Entities;
-using Apps.Crowdin.Webhooks.Models.Payload.Project.Response.Base;
 using Apps.Crowdin.Webhooks.Models.Payload.Project.Wrappers;
 
 namespace Apps.Crowdin.Webhooks.Models.Payload.Project.Response;
 
-public class ProjectWithUserWebhookResponse : ProjectWebhookResponse
+public class ProjectWithUserWebhookResponse : CrowdinWebhookResponse<ProjectWithUserWrapper>
 {
+    public ProjectEntity Project { get; set; }
+
     public UserEntity User { get; set; }
 
-    public ProjectWithUserWebhookResponse(ProjectWithUserWrapper projectWrapper) : base(projectWrapper.Project)
+    public override void ConfigureResponse(ProjectWithUserWrapper wrapper)
     {
-        User = new(projectWrapper.User);
+        Project = new(wrapper.Project);
+        User = new(wrapper.User);
     }
 }

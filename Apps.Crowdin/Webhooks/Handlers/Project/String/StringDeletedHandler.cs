@@ -9,7 +9,7 @@ public class StringDeletedHandler : ProjectWebhookHandler
 {
     protected override EventType SubscriptionEvent => EventType.StringDeleted;
 
-    public StringDeletedHandler([WebhookParameter] ProjectWebhookInput input) : base(input)
+    public StringDeletedHandler([WebhookParameter] ProjectWebhookInput input) : base(input, true)
     {
     }
 }

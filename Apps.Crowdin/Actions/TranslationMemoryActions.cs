@@ -115,4 +115,28 @@ public class TranslationMemoryActions
 
         return new(fileContent);
     }
+
+    [Action("Add translation memory segment", Description = "Add new segment to the translation memory")]
+    public async Task<TmSegmentRecordEntity> AddTmSegment(
+        IEnumerable<AuthenticationCredentialsProvider> creds,
+        [ActionParameter] AddTranslationMemorySegmentRequest input)
+    {
+        var intTmId = IntParser.Parse(input.TranslationMemoryId, nameof(input.TranslationMemoryId));
+        var client = new CrowdinClient(creds);
+
+        var request = new CreateTmSegmentRequest
+        {
+            Records = new List<TmSegmentRecordForm>
+            {
+                new()
+                {
+                    LanguageId = input.LanguageId,
+                    Text = input.Text
+                }
+            }
+        };
+
+        var response = await client.TranslationMemory.CreateTmSegment(intTmId!.Value, request);
+        return new(response.Records.First());
+    }
 }

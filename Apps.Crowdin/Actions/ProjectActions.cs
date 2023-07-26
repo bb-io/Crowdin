@@ -28,6 +28,7 @@ public class ProjectActions
             => client.ProjectsGroups.ListProjects<ProjectBase>(userId, groupId, input.HasManagerAccess ?? false, lim, offset));
 
         var projects = items.Select(x => new ProjectEntity(x)).ToArray();
+
         return new(projects);
     }
     

@@ -1,4 +1,6 @@
-﻿namespace Apps.Crowdin.Utils.Parsers;
+﻿using Apps.Crowdin.Extensions;
+
+namespace Apps.Crowdin.Utils.Parsers;
 
 public static class EnumParser
 {
@@ -7,8 +9,8 @@ public static class EnumParser
         if (input is null)
             return null;
 
-        if (!Enum.TryParse(input, out T res))
-            throw new($"Wrong {variableName} value, acceptable values are: {string.Join(',', acceptableValues)}");
+        if (!Enum.TryParse(input, ignoreCase: true, out T res))
+            throw new($"Wrong {variableName.ToPascalCase()} value, acceptable values are: {string.Join(", ", acceptableValues)}");
 
         return res;
     }

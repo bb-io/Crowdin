@@ -2,5 +2,5 @@
 
 public class TaskWrapper
 {
-    //public Task Task { get; set; }
+    public TaskPayload Task { get; set; }
 }

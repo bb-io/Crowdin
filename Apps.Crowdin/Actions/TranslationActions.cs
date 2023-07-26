@@ -43,34 +43,36 @@ public class TranslationActions
 
         return new(response);
     }
-    // TODO: uncomment when response is valid
-    // [Action("List language translations", Description = "List project language translations")]
-    // public async Task<ListTranslationsResponse> ListTranslations(
-    //     IEnumerable<AuthenticationCredentialsProvider> creds,
-    //     [ActionParameter] ListLanguageTranslationsRequest input)
-    // {
-    //     var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
-    //     var intFileId = IntParser.Parse(input.FileId, nameof(input.FileId));
-    //
-    //     var client = new CrowdinClient(creds);
-    //
-    //     var items = await Paginator.Paginate((lim, offset) =>
-    //     {
-    //         var request = new LanguageTranslationsListParams
-    //         {
-    //             Limit = lim,
-    //             Offset = offset,
-    //             StringIds = input.StringIds,
-    //             LabelIds = input.LabelIds,
-    //             FileId = intFileId,
-    //             CroQL = input.CroQL,
-    //             DenormalizePlaceholders = input.DenormalizePlaceholders
-    //         };
-    //         return client.StringTranslations.ListLanguageTranslations(intProjectId!.Value, input.LanguageId, request);
-    //     });
-    //     var translations = items.Select(x => new TranslationEntity(x)).ToArray();
-    //     return new(translations);
-    // }
+    [Action("List language translations", Description = "List project language translations")]
+    public async Task<ListTranslationsResponse> ListLangTranslations(
+        IEnumerable<AuthenticationCredentialsProvider> creds,
+        [ActionParameter] ListLanguageTranslationsRequest input)
+    {
+        var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
+        var intFileId = IntParser.Parse(input.FileId, nameof(input.FileId));
+    
+        var client = new CrowdinClient(creds);
+    
+        var items = await Paginator.Paginate((lim, offset) =>
+        {
+            var request = new LanguageTranslationsListParams
+            {
+                Limit = lim,
+                Offset = offset,
+                StringIds = input.StringIds,
+                LabelIds = input.LabelIds,
+                FileId = intFileId,
+                CroQL = input.CroQL,
+                DenormalizePlaceholders = input.DenormalizePlaceholders
+            };
+            return client.StringTranslations.ListLanguageTranslations(intProjectId!.Value, input.LanguageId, request);
+        });
+
+        var castedItems = items.Cast<PlainLanguageTranslations>();
+       
+        var translations = castedItems.Select(x => new TranslationEntity(x)).ToArray();
+        return new(translations);
+    }
 
     [Action("List string translations", Description = "List project string translations")]
     public async Task<ListTranslationsResponse> ListTranslations(
@@ -89,6 +91,7 @@ public class TranslationActions
                 Limit = lim,
                 Offset = offset,
                 StringId = intStringId!.Value,
+                LanguageId = input.LanguageId,
                 DenormalizePlaceholders = input.DenormalizePlaceholders
             };
             return client.StringTranslations.ListStringTranslations(intProjectId!.Value, request);

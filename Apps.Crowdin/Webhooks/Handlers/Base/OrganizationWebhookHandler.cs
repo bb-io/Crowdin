@@ -1,9 +1,15 @@
 ﻿using Apps.Crowdin.Api;
+using Apps.Crowdin.Api.RestSharp;
+using Apps.Crowdin.Models.Entities;
+using Apps.Crowdin.Models.Response;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Webhooks;
+using Crowdin.Api;
 using Crowdin.Api.Webhooks;
 using Crowdin.Api.Webhooks.Organization;
+using Newtonsoft.Json;
+using RestSharp;
 using AddWebhookRequest = Crowdin.Api.Webhooks.Organization.AddWebhookRequest;
 
 namespace Apps.Crowdin.Webhooks.Handlers.Base;
@@ -12,7 +18,7 @@ public abstract class OrganizationWebhookHandler : IWebhookEventHandler
 {
     protected abstract OrganizationEventType SubscriptionEvent { get; }
 
-    public Task SubscribeAsync(
+    public async Task SubscribeAsync(
         IEnumerable<AuthenticationCredentialsProvider> creds,
         Dictionary<string, string> values)
     {
@@ -27,7 +33,14 @@ public abstract class OrganizationWebhookHandler : IWebhookEventHandler
             Events = new List<OrganizationEventType> { SubscriptionEvent }
         };
 
-        return executor.AddWebhook(request);
+        try
+        {
+            await executor.AddWebhook(request);
+        }
+        catch (JsonSerializationException)
+        {
+            // SDK deserializes response wrong, but the request itself is successful
+        }
     }
 
     public async Task UnsubscribeAsync(IEnumerable<AuthenticationCredentialsProvider> creds,
@@ -36,12 +49,28 @@ public abstract class OrganizationWebhookHandler : IWebhookEventHandler
         var client = new CrowdinClient(creds);
         var executor = new OrganizationWebhooksApiExecutor(client);
 
-        var allWebhooks = await GetAllWebhooks(executor);
-        var webhookToDelete = allWebhooks.First(x => x.Url == values["payloadUrl"]);
+        var allWebhooks = await GetAllWebhooks(creds);
+        var webhookToDelete = allWebhooks.FirstOrDefault(x => x.Data.Url == values["payloadUrl"]);
+
+        if (webhookToDelete is null)
+            return;
         
-        await executor.DeleteWebhook(webhookToDelete.Id);
+        await executor.DeleteWebhook(webhookToDelete.Data.Id);
     }
 
-    private Task<List<OrganizationWebhookResource>> GetAllWebhooks(OrganizationWebhooksApiExecutor client)
-        => Paginator.Paginate(client.ListWebhooks);
+    private Task<List<DataResponse<WebhookEntity>>> GetAllWebhooks(
+        IEnumerable<AuthenticationCredentialsProvider> creds)
+    {
+        var endpoint = "/webhooks";
+        var client = new CrowdinRestClient();
+        
+        return Paginator.Paginate(async (lim, offset) =>
+        {
+            var source = $"{endpoint}?limit={lim}&offset={offset}";
+            var request = new CrowdinRestRequest(source, Method.Get, creds);
+
+            var response = await client.ExecuteAsync<ResponseList<DataResponse<WebhookEntity>>>(request);
+            return response.Data;
+        });
+    }
 }
