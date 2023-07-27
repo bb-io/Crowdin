@@ -27,7 +27,7 @@ public class SimpleTranslationWrapper : SimpleWebhookWrapper
     public bool IsPreTranslated { get; set; }
     
     [JsonProperty("file_id")]
-    public bool FileId { get; set; }
+    public string FileId { get; set; }
     
-    public bool File { get; set; }
+    public string File { get; set; }
 }

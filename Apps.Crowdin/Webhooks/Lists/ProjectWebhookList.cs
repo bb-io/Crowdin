@@ -160,17 +160,13 @@ public class ProjectWebhookList
     public async Task<WebhookResponse<TV>> HandleWehookRequest<T, TV>(WebhookRequest webhookRequest)
         where TV : CrowdinWebhookResponse<T>, new()
     {
-        await Logger.Log(webhookRequest);
         var data = JsonConvert.DeserializeObject<T>(webhookRequest.Body.ToString());
-        await Logger.Log(data);
 
         if (data is null)
             throw new InvalidCastException(nameof(webhookRequest.Body));
 
         var result = new TV();
         result.ConfigureResponse(data);
-
-        await Logger.Log(result);
 
         return new WebhookResponse<TV>
         {

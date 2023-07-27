@@ -32,9 +32,9 @@ public class SimpleSuggestionWebhookResponse : CrowdinWebhookResponse<SimpleSugg
     public bool IsPreTranslated { get; set; }
     
     [Display("File ID")] 
-    public bool FileId { get; set; }
+    public string FileId { get; set; }
     
-    public bool File { get; set; }
+    public string File { get; set; }
     
     public override void ConfigureResponse(SimpleSuggestionWrapper wrapper)
     {

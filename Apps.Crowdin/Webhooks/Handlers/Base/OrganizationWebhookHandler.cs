@@ -28,7 +28,7 @@ public abstract class OrganizationWebhookHandler : IWebhookEventHandler
         var request = new AddWebhookRequest
         {
             Name = $"BlackBird-{SubscriptionEvent}-{Guid.NewGuid()}",
-            Url = "https://youtube.com",
+            Url = values["payloadUrl"],
             RequestType = RequestType.POST,
             Events = new List<OrganizationEventType> { SubscriptionEvent }
         };
