@@ -10,26 +10,20 @@ public class ConnectionDefinition : IConnectionDefinition
  {
             new()
             {
-                Name = "Developer API Key",
-                AuthenticationType = ConnectionAuthenticationType.Undefined,
+                Name = "OAuth",
+                AuthenticationType = ConnectionAuthenticationType.OAuth2,
                 ConnectionUsage = ConnectionUsage.Actions,
-                ConnectionProperties = new List<ConnectionProperty>
-                {
-                    new(CredsNames.ApiToken)
-                    {
-                        DisplayName = "API token"
-                    }
-                }
+                ConnectionProperties = new List<ConnectionProperty>()
             }
         };
 
         public IEnumerable<AuthenticationCredentialsProvider> CreateAuthorizationCredentialsProviders(Dictionary<string, string> values)
         {
-            var accessToken = values.First(v => v.Key == CredsNames.ApiToken);
+            var accessToken = values.First(v => v.Key == "access_token");
             
             yield return new AuthenticationCredentialsProvider(
                 AuthenticationCredentialsRequestLocation.None,
-                accessToken.Key,
+                CredsNames.ApiToken,
                 accessToken.Value
             );
         }
