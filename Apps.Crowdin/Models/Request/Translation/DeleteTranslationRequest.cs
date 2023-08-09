@@ -1,9 +1,9 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Crowdin.Models.Request.Project;
+using Blackbird.Applications.Sdk.Common;
 
 namespace Apps.Crowdin.Models.Request.Translation;
 
-public class DeleteTranslationRequest
+public class DeleteTranslationRequest : ProjectRequest
 {
-    [Display("Project ID")] public string ProjectId { get; set; }
     [Display("Translation ID")] public string TranslationId { get; set; }
 }

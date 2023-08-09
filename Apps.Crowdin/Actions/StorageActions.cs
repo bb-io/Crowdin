@@ -3,10 +3,10 @@ using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Storage;
 using Apps.Crowdin.Models.Response.Storage;
 using Apps.Crowdin.Utils;
-using Apps.Crowdin.Utils.Parsers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Utils.Parsers;
 
 namespace Apps.Crowdin.Actions;
 
@@ -29,9 +29,9 @@ public class StorageActions
     [Action("Get storage", Description = "Get specific storage")]
     public async Task<StorageEntity> GetStorage(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Storage ID")] string storageId)
+        [ActionParameter] StorageRequest storage)
     {
-        var intStorageId = IntParser.Parse(storageId, nameof(storageId));
+        var intStorageId = IntParser.Parse(storage.StorageId, nameof(storage.StorageId));
         var client = new CrowdinClient(creds);
 
         var response = await client.Storage.GetStorage(intStorageId!.Value);
@@ -54,9 +54,9 @@ public class StorageActions
     [Action("Delete storage", Description = "Delete specific storage")]
     public Task DeleteStorage(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Storage ID")] string storageId)
+        [ActionParameter] StorageRequest storage)
     {
-        var intStorageId = IntParser.Parse(storageId, nameof(storageId));
+        var intStorageId = IntParser.Parse(storage.StorageId, nameof(storage.StorageId));
         var client = new CrowdinClient(creds);
 
         return client.Storage.DeleteStorage(intStorageId!.Value);

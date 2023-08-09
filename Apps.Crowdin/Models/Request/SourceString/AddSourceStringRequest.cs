@@ -1,10 +1,10 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Crowdin.Models.Request.Project;
+using Blackbird.Applications.Sdk.Common;
 
 namespace Apps.Crowdin.Models.Request.SourceString;
 
-public class AddSourceStringRequest
+public class AddSourceStringRequest : ProjectRequest
 {
-    [Display("Project ID")] public string ProjectId { get; set; }
     [Display("File ID")] public string FileId { get; set; }
     public string Text { get; set; }
     public string Identifier { get; set; }

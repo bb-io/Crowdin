@@ -1,11 +1,12 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Crowdin.DataSourceHandlers.EnumHandlers;
+using Apps.Crowdin.Models.Request.Project;
+using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Crowdin.Models.Request.SourceString;
 
-public class ListStringsRequest
+public class ListStringsRequest : ProjectRequest
 {
-    [Display("Project ID")] public string ProjectId { get; set; }
-
     [Display("Denormalize placeholders")] public bool? DenormalizePlaceholders { get; set; }
 
     [Display("Label IDs")] public string? LabelIds { get; set; }
@@ -18,5 +19,7 @@ public class ListStringsRequest
 
     public string? CroQl { get; set; }
     public string? Filter { get; set; }
+    
+    [DataSource(typeof(StringScopeHandler))]
     public string? Scope { get; set; }
 }

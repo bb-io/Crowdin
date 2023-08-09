@@ -1,10 +1,13 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Crowdin.DataSourceHandlers;
+using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Crowdin.Models.Request.File;
 
 public class AddNewFileRequest
 {
-    [Display("Storage ID")]
+    [Display("Storage")]
+    [DataSource(typeof(StorageDataHandler))]
     public string StorageId { get; set; }
 
     public string Name { get; set; }

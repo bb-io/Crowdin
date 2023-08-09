@@ -1,5 +1,7 @@
-﻿using System.Collections;
+﻿using Apps.Crowdin.DataSourceHandlers;
+using Apps.Crowdin.DataSourceHandlers.EnumHandlers;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Crowdin.Models.Request.Project;
 
@@ -7,12 +9,18 @@ public class AddNewProjectRequest
 {
     public string Name { get; set; }
 
-    [Display("Soucre language ID")] public string SourceLanguageId { get; set; }
+    [Display("Source language")]
+    [DataSource(typeof(LanguagesDataHandler))]
+    public string SourceLanguageId { get; set; }
 
     public string? Identifier { get; set; }
 
     [Display("Target language IDs")] public IEnumerable<string>? TargetLanguageIds { get; set; }
+    
+    [DataSource(typeof(ProjectVisibilityHandler))]
     public string? Visibility { get; set; }
+    
+    [Display("Custom domain name")]
     public string? Cname { get; set; }
     public string? Description { get; set; }
 

@@ -15,7 +15,10 @@ public class ProjectEntity
     public string SourceLanguageId { get; set; }
 
     [Display("Target language IDs")]
-    public string[] TargetLanguageIds { get; set; }
+    public IEnumerable<string> TargetLanguageIds { get; set; }
+    
+    [Display("Target language ID")]
+    public string? TargetLanguageId { get; set; }
 
     public string Name { get; set; }
 
@@ -35,6 +38,7 @@ public class ProjectEntity
         UserId = project.UserId.ToString();
         SourceLanguageId = project.SourceLanguageId;
         TargetLanguageIds = project.TargetLanguageIds;
+        TargetLanguageId = project.TargetLanguageIds.FirstOrDefault();
         Name = project.Name;
         Description = project.Description;
         Logo = project.Logo;

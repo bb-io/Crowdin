@@ -2,12 +2,13 @@
 using Apps.Crowdin.Constants;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Comments;
+using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Response.Comments;
 using Apps.Crowdin.Utils;
-using Apps.Crowdin.Utils.Parsers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Utils.Parsers;
 using Crowdin.Api.StringComments;
 
 namespace Apps.Crowdin.Actions;
@@ -51,10 +52,10 @@ public class CommentActions
     [Action("Get string comment", Description = "Get specific string comment")]
     public async Task<CommentEntity> GetStringComment(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Project ID")] string projectId,
+        [ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("Comment ID")] string commentId)
     {
-        var intProjectId = IntParser.Parse(projectId, nameof(projectId));
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intCommentId = IntParser.Parse(commentId, nameof(commentId));
 
         var client = new CrowdinClient(creds);
@@ -89,10 +90,10 @@ public class CommentActions
     [Action("Delete string comment", Description = "Delete specific string comment")]
     public Task DeleteComment(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Project ID")] string projectId,
+        [ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("Comment ID")] string commentId)
     {
-        var intProjectId = IntParser.Parse(projectId, nameof(projectId));
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intCommentId = IntParser.Parse(commentId, nameof(commentId));
 
         var client = new CrowdinClient(creds);

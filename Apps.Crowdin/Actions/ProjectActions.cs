@@ -4,12 +4,11 @@ using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Response.Project;
 using Apps.Crowdin.Utils;
-using Apps.Crowdin.Utils.Parsers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Utils.Parsers;
 using Crowdin.Api.ProjectsGroups;
-using AddProjectRequest = Crowdin.Api.ProjectsGroups.AddProjectRequest;
 
 namespace Apps.Crowdin.Actions;
 
@@ -37,9 +36,9 @@ public class ProjectActions
     [Action("Get project", Description = "Get specific project")]
     public async Task<ProjectEntity> GetProject(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Project ID")] string projectId)
+        [ActionParameter] ProjectRequest project)
     {
-        var intProjectId = IntParser.Parse(projectId, nameof(projectId));
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
 
         var client = new CrowdinClient(creds);
 
@@ -85,9 +84,9 @@ public class ProjectActions
     [Action("Delete project", Description = "Delete specific project")]
     public Task DeleteProject(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Project ID")] string projectId)
+        [ActionParameter] ProjectRequest project)
     {
-        var intProjectId = IntParser.Parse(projectId, nameof(projectId));
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         
         var client = new CrowdinClient(creds);
 

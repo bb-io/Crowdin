@@ -1,6 +1,6 @@
 ﻿using Apps.Crowdin.Constants;
 using Blackbird.Applications.Sdk.Common.Authentication.OAuth2;
-using Microsoft.AspNetCore.WebUtilities;
+using Blackbird.Applications.Sdk.Utils.Extensions.String;
 
 namespace Apps.Crowdin.Connections.OAuth;
 
@@ -17,6 +17,6 @@ public class OAuth2AuthorizationSerivce : IOAuth2AuthorizeService
             { "response_type", "code" },
         };
         
-        return QueryHelpers.AddQueryString(Urls.OAuth, parameters);
+        return Urls.OAuth.WithQuery(parameters);
     }
 }

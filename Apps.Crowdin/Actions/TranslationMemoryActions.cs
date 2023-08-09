@@ -5,10 +5,11 @@ using Apps.Crowdin.Models.Request.TranslationMemory;
 using Apps.Crowdin.Models.Response.File;
 using Apps.Crowdin.Models.Response.TranslationMemory;
 using Apps.Crowdin.Utils;
-using Apps.Crowdin.Utils.Parsers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Utils.Parsers;
+using Blackbird.Applications.Sdk.Utils.Utilities;
 using Crowdin.Api.TranslationMemory;
 
 namespace Apps.Crowdin.Actions;
@@ -36,10 +37,9 @@ public class TranslationMemoryActions
     [Action("Get translation memory", Description = "Get specific translation memory")]
     public async Task<TranslationMemoryEntity> GetTranslationMemory(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Translation memory ID")]
-        string translationMemoryId)
+        [ActionParameter] TranslationMemoryRequest tm)
     {
-        var intTmId = IntParser.Parse(translationMemoryId, nameof(translationMemoryId));
+        var intTmId = IntParser.Parse(tm.TranslationMemoryId, nameof(tm.TranslationMemoryId));
         var client = new CrowdinClient(creds);
 
         var response = await client.TranslationMemory.GetTm(intTmId!.Value);
@@ -68,10 +68,9 @@ public class TranslationMemoryActions
     [Action("Delete translation memory", Description = "Delete specific translation memory")]
     public Task DeleteTranslationMemory(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Translation memory ID")]
-        string translationMemoryId)
+        [ActionParameter] TranslationMemoryRequest tm)
     {
-        var intTmId = IntParser.Parse(translationMemoryId, nameof(translationMemoryId));
+        var intTmId = IntParser.Parse(tm.TranslationMemoryId, nameof(tm.TranslationMemoryId));
         var client = new CrowdinClient(creds);
 
         return client.TranslationMemory.DeleteTm(intTmId!.Value);
@@ -80,11 +79,10 @@ public class TranslationMemoryActions
     [Action("Export translation memory", Description = "Export specific translation memory")]
     public async Task<TmExportEntity> ExportTranslationMemory(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Translation memory ID")]
-        string translationMemoryId,
+        [ActionParameter] TranslationMemoryRequest tm,
         [ActionParameter] ExportTranslationMemoryRequest input)
     {
-        var intTmId = IntParser.Parse(translationMemoryId, nameof(translationMemoryId));
+        var intTmId = IntParser.Parse(tm.TranslationMemoryId, nameof(tm.TranslationMemoryId));
 
         var formatEnum =
             EnumParser.Parse<TmFileFormat>(input.Format, nameof(input.Format), EnumValues.TmFileFormat);
@@ -107,7 +105,7 @@ public class TranslationMemoryActions
         IEnumerable<AuthenticationCredentialsProvider> creds,
         [ActionParameter] DownloadTranslationMemoryRequest input)
     {
-        var intTmId = IntParser.Parse(input.TrasnlationMemoryId, nameof(input.TrasnlationMemoryId));
+        var intTmId = IntParser.Parse(input.TranslationMemoryId, nameof(input.TranslationMemoryId));
         var client = new CrowdinClient(creds);
 
         var response = await client.TranslationMemory.DownloadTm(intTmId!.Value, input.ExportId);

@@ -1,13 +1,25 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Crowdin.DataSourceHandlers;
+using Apps.Crowdin.DataSourceHandlers.EnumHandlers;
+using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Crowdin.Models.Request.MachineTranslation;
 
 public class TranslateStringsRequest
 {
-    [Display("Source language ID")] public string SourceLanguageId { get; set; }
-    [Display("Target language ID")] public string TargetLanguageId { get; set; }
+    [Display("Source language")] 
+    [DataSource(typeof(LanguagesDataHandler))]
+    public string SourceLanguageId { get; set; }
+    
+    [Display("Target language")] 
+    [DataSource(typeof(LanguagesDataHandler))]
+    public string TargetLanguageId { get; set; }
+    
     public IEnumerable<string> Text { get; set; }
-    [Display("Language recognition provider")] public string LanguageRecognitionProvider { get; set; }
+    
+    [Display("Language recognition provider")] 
+    [DataSource(typeof(LanguageRecognitionProviderHandler))]
+    public string LanguageRecognitionProvider { get; set; }
 
     
     public TranslateStringsRequest()

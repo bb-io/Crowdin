@@ -1,12 +1,14 @@
 ﻿using Apps.Crowdin.Api;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.File;
+using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Response.File;
 using Apps.Crowdin.Utils;
-using Apps.Crowdin.Utils.Parsers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Utils.Parsers;
+using Blackbird.Applications.Sdk.Utils.Utilities;
 using Crowdin.Api.SourceFiles;
 
 namespace Apps.Crowdin.Actions;
@@ -17,11 +19,10 @@ public class FileActions
     [Action("List files", Description = "List project files")]
     public async Task<ListFilesResponse> ListFiles(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Project ID")]
-        string projectId,
+        [ActionParameter] ProjectRequest project,
         [ActionParameter] ListFilesRequest input)
     {
-        var intProjectId = IntParser.Parse(projectId, nameof(projectId));
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intBranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId));
         var intDirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId));
 
@@ -48,10 +49,10 @@ public class FileActions
     [Action("Add file", Description = "Add new file")]
     public async Task<FileEntity> AddFile(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Project ID")] string projectId,
+        [ActionParameter] ProjectRequest project,
         [ActionParameter] AddNewFileRequest input)
     {
-        var intProjectId = IntParser.Parse(projectId, nameof(projectId));
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intStorageId = IntParser.Parse(input.StorageId, nameof(input.StorageId));
         var intBranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId));
         var intDirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId));
@@ -76,10 +77,10 @@ public class FileActions
     [Action("Get file", Description = "Get specific file info")]
     public async Task<FileEntity> GetFile(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Project ID")] string projectId,
+        [ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("File ID")] string fileId)
     {
-        var intProjectId = IntParser.Parse(projectId, nameof(projectId));
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intFileId = IntParser.Parse(fileId, nameof(fileId));
 
         var client = new CrowdinClient(creds);
@@ -91,10 +92,10 @@ public class FileActions
     [Action("Download file", Description = "Download specific file")]
     public async Task<DownloadFileResponse> DownloadFile(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Project ID")] string projectId,
+        [ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("File ID")] string fileId)
     {
-        var intProjectId = IntParser.Parse(projectId, nameof(projectId));
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intFileId = IntParser.Parse(fileId, nameof(fileId));
 
         var client = new CrowdinClient(creds);
@@ -108,10 +109,10 @@ public class FileActions
     [Action("Delete file", Description = "Delete specific file")]
     public Task DeleteFile(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Project ID")] string projectId,
+        [ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("File ID")] string fileId)
     {
-        var intProjectId = IntParser.Parse(projectId, nameof(projectId));
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intFileId = IntParser.Parse(fileId, nameof(fileId));
 
         var client = new CrowdinClient(creds);

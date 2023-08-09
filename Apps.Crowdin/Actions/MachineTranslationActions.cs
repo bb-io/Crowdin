@@ -4,10 +4,10 @@ using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.MachineTranslation;
 using Apps.Crowdin.Models.Response.MachineTranslation;
 using Apps.Crowdin.Utils;
-using Apps.Crowdin.Utils.Parsers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Utils.Parsers;
 using Crowdin.Api.MachineTranslationEngines;
 
 namespace Apps.Crowdin.Actions;
@@ -34,11 +34,10 @@ public class MachineTranslationActions
     [Action("Translate via machine translation engine", Description = "Translate text via machine translation engine")]
     public async Task<MtTextTranslationEntity> TranslateTextViaMt(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Machine translation engine ID")]
-        string mtEngineId,
+        [ActionParameter] MtEngineRequest mtEngine,
         [ActionParameter] TranslateTextRequest input)
     {
-        var response = await TranslateLinesViaMt(creds, mtEngineId, new(input));
+        var response = await TranslateLinesViaMt(creds, mtEngine, new(input));
         return new(response);
     }
 
@@ -46,11 +45,10 @@ public class MachineTranslationActions
         Description = "Translate multiple text lines via machine translation engine")]
     public async Task<MtStringsTranslationEntity> TranslateLinesViaMt(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Machine translation engine ID")]
-        string mtEngineId,
+        [ActionParameter] MtEngineRequest mtEngine,
         [ActionParameter] TranslateStringsRequest input)
     {
-        var intMtId = IntParser.Parse(mtEngineId, nameof(mtEngineId));
+        var intMtId = IntParser.Parse(mtEngine.MtEngineId, nameof(mtEngine.MtEngineId));
 
         var recognitionProvider =
             EnumParser.Parse<LanguageRecognitionProvider>(input.LanguageRecognitionProvider,

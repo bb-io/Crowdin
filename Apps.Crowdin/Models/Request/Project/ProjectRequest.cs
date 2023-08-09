@@ -2,9 +2,9 @@
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
-namespace Apps.Crowdin.Webhooks.Models.Inputs;
+namespace Apps.Crowdin.Models.Request.Project;
 
-public class ProjectWebhookInput
+public class ProjectRequest
 {
     [Display("Project")]
     [DataSource(typeof(ProjectDataHandler))]

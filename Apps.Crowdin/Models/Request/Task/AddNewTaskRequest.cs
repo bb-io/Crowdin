@@ -1,4 +1,7 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Crowdin.DataSourceHandlers;
+using Apps.Crowdin.DataSourceHandlers.EnumHandlers;
+using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Crowdin.Models.Request.Task;
 
@@ -6,14 +9,17 @@ public class AddNewTaskRequest
 {
     public string Title { get; set; }
 
-    [Display("Language ID")]
+    [Display("Language")]
+    [DataSource(typeof(LanguagesDataHandler))]
     public string LanguageId { get; set; }
 
     [Display("File IDs")]
     public IEnumerable<string> FileIds { get; set; }
 
+    [DataSource(typeof(TaskTypeHandler))]
     public string Type { get; set; }
 
+    [DataSource(typeof(TaskStatusHandler))]
     public string? Status { get; set; }
 
     public string? Description { get; set; }

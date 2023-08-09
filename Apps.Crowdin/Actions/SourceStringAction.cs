@@ -4,10 +4,10 @@ using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.SourceString;
 using Apps.Crowdin.Models.Response.SourceString;
 using Apps.Crowdin.Utils;
-using Apps.Crowdin.Utils.Parsers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Utils.Parsers;
 using Crowdin.Api.SourceStrings;
 
 namespace Apps.Crowdin.Actions;

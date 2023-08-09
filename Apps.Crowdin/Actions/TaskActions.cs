@@ -1,14 +1,16 @@
 ﻿using Apps.Crowdin.Api;
 using Apps.Crowdin.Constants;
 using Apps.Crowdin.Models.Entities;
+using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.Task;
 using Apps.Crowdin.Models.Response.File;
 using Apps.Crowdin.Models.Response.Task;
 using Apps.Crowdin.Utils;
-using Apps.Crowdin.Utils.Parsers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Utils.Parsers;
+using Blackbird.Applications.Sdk.Utils.Utilities;
 using Crowdin.Api.Tasks;
 using TaskStatus = Crowdin.Api.Tasks.TaskStatus;
 
@@ -37,11 +39,10 @@ public class TaskActions
     [Action("Get task", Description = "Get specific task")]
     public async Task<TaskEntity> GetTask(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Project ID")]
-        string projectId,
+        [ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("Task ID")] string taskId)
     {
-        var intProjectId = IntParser.Parse(projectId, nameof(projectId));
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intTaskId = IntParser.Parse(taskId, nameof(taskId));
 
         var client = new CrowdinClient(creds);
@@ -53,11 +54,10 @@ public class TaskActions
     [Action("Add task", Description = "Add new task")]
     public async Task<TaskEntity> AddTask(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Project ID")]
-        string projectId,
+        [ActionParameter] ProjectRequest project,
         [ActionParameter] AddNewTaskRequest input)
     {
-        var intProjectId = IntParser.Parse(projectId, nameof(projectId));
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
 
         var client = new CrowdinClient(creds);
         var request = new TaskCreateForm
@@ -85,11 +85,10 @@ public class TaskActions
     [Action("Delete task", Description = "Delete specific task")]
     public Task DeleteTask(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Project ID")]
-        string projectId,
+        [ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("Task ID")] string taskId)
     {
-        var intProjectId = IntParser.Parse(projectId, nameof(projectId));
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intTaskId = IntParser.Parse(taskId, nameof(taskId));
 
         var client = new CrowdinClient(creds);
@@ -100,11 +99,10 @@ public class TaskActions
     [Action("Download task string", Description = "Download specific task strings")]
     public async Task<DownloadFileResponse> DownloadTaskStrings(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Project ID")]
-        string projectId,
+        [ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("Task ID")] string taskId)
     {
-        var intProjectId = IntParser.Parse(projectId, nameof(projectId));
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intTaskId = IntParser.Parse(taskId, nameof(taskId));
 
         var client = new CrowdinClient(creds);

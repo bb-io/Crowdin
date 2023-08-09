@@ -1,11 +1,13 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Crowdin.DataSourceHandlers.EnumHandlers;
+using Apps.Crowdin.Models.Request.Project;
+using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Crowdin.Models.Request.Task;
 
-public class ListTasksRequest
+public class ListTasksRequest : ProjectRequest
 {
-    [Display("Project ID")]
-    public string ProjectId { get; set; }
+    [DataSource(typeof(TaskStatusHandler))]
     public string? Status { get; set; }
     
     [Display("Assignee ID")]

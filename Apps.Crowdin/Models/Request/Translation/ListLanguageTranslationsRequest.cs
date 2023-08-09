@@ -1,13 +1,14 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Crowdin.DataSourceHandlers;
+using Apps.Crowdin.Models.Request.Project;
+using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Crowdin.Models.Request.Translation;
 
-public class ListLanguageTranslationsRequest
+public class ListLanguageTranslationsRequest : ProjectRequest
 {
-    [Display("Project ID")]
-    public string ProjectId { get; set; }
-    
-    [Display("Language ID")]
+    [Display("Language")]
+    [DataSource(typeof(LanguagesDataHandler))]
     public string LanguageId { get; set; }
     
     [Display("String IDs")]

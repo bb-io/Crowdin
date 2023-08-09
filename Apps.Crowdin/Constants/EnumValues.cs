@@ -2,7 +2,7 @@
 
 public static class EnumValues
 {
-    public static readonly string[] TaskStatus = { "Todo", "InProgress", "Done", "Closed" };
+    public static readonly string[] TaskStatus = { "Todo", "InProgress", "", "Closed" };
     public static readonly string[] TmFileFormat = { "Tmx", "Csv", "Xlsx" };
     public static readonly string[] LanguageRecognitionProvider = { "Crowdin", "Engine" };
     public static readonly string[] TaskType = { "Translate", "Proofread", "TranslateByVendor", "ProofreadByVendor" };

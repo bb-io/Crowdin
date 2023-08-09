@@ -1,13 +1,14 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Crowdin.DataSourceHandlers;
+using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Crowdin.Models.Request.TranslationMemory;
 
-public class AddTranslationMemorySegmentRequest
+public class AddTranslationMemorySegmentRequest : TranslationMemoryRequest
 {
-    [Display("Translation memory ID")]
-    public string TranslationMemoryId { get; set; }    
-    
-    [Display("Language ID")]
+    [Display("Language")]
+    [DataSource(typeof(LanguagesDataHandler))]
     public string LanguageId { get; set; }
+    
     public string Text { get; set; }
 }

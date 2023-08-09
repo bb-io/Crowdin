@@ -2,11 +2,8 @@
 
 namespace Apps.Crowdin.Models.Request.TranslationMemory;
 
-public class DownloadTranslationMemoryRequest
+public class DownloadTranslationMemoryRequest : TranslationMemoryRequest
 {
-    [Display("Translation memory ID")]
-    public string TrasnlationMemoryId { get; set; }
-    
     [Display("Export ID")]
     public string ExportId { get; set; }
 }

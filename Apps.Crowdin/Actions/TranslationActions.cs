@@ -1,13 +1,14 @@
 ﻿using Apps.Crowdin.Api;
 using Apps.Crowdin.Constants;
 using Apps.Crowdin.Models.Entities;
+using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.Translation;
 using Apps.Crowdin.Models.Response.Translation;
 using Apps.Crowdin.Utils;
-using Apps.Crowdin.Utils.Parsers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Utils.Parsers;
 using Crowdin.Api.StringTranslations;
 using Crowdin.Api.Translations;
 
@@ -19,11 +20,10 @@ public class TranslationActions
     [Action("Apply pre-translation", Description = "Apply pre-translation to chosen files")]
     public async Task<PreTranslationEntity> PreTranslate(
         IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] [Display("Project ID")]
-        string projectId,
+        [ActionParameter] ProjectRequest project,
         [ActionParameter] PreTranslateRequest input)
     {
-        var intProjectId = IntParser.Parse(projectId, nameof(projectId));
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intEngineId = IntParser.Parse(input.EngineId, nameof(input.EngineId));
 
         var client = new CrowdinClient(creds);
