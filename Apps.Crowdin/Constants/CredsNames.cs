@@ -2,6 +2,5 @@
 
 public static class CredsNames
 {
-    public const string ApiToken = "apiToken";
-    public const string RefreshToken = "refresh_token";
+    public const string ApiToken = "access_token";
 }
