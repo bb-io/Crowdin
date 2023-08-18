@@ -1,5 +1,4 @@
-﻿using Apps.Crowdin.Constants;
-using Blackbird.Applications.Sdk.Common.Authentication;
+﻿using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Connections;
 
 namespace Apps.Crowdin.Connections;

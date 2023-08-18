@@ -9,8 +9,8 @@ namespace Apps.Crowdin.DataSourceHandlers;
 
 public class LanguagesDataHandler : BaseInvocable, IAsyncDataSourceHandler
 {
-    private IEnumerable<AuthenticationCredentialsProvider> Creds =>
-        InvocationContext.AuthenticationCredentialsProviders;
+    private AuthenticationCredentialsProvider[] Creds =>
+        InvocationContext.AuthenticationCredentialsProviders.ToArray();
 
     public LanguagesDataHandler(InvocationContext invocationContext) : base(invocationContext)
     {
