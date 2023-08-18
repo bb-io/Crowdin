@@ -7,22 +7,28 @@ using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Crowdin.Api.SourceStrings;
 
 namespace Apps.Crowdin.Actions;
 
 [ActionList]
-public class SourceStringAction
+public class SourceStringAction : BaseInvocable
 {
+    private AuthenticationCredentialsProvider[] Creds =>
+        InvocationContext.AuthenticationCredentialsProviders.ToArray();
+
+    public SourceStringAction(InvocationContext invocationContext) : base(invocationContext)
+    {
+    }
+    
     [Action("List strings", Description = "List all project source strings")]
-    public async Task<ListStringsResponse> ListStrings(
-        IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] ListStringsRequest input)
+    public async Task<ListStringsResponse> ListStrings([ActionParameter] ListStringsRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
 
-        var client = new CrowdinClient(creds);
+        var client = new CrowdinClient(Creds);
 
         var items = await Paginator.Paginate((lim, offset)
             =>
@@ -48,14 +54,12 @@ public class SourceStringAction
     }
 
     [Action("Get source string", Description = "Get specific source string")]
-    public async Task<SourceStringEntity> GetString(
-        IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] GetSourceStringRequest input)
+    public async Task<SourceStringEntity> GetString([ActionParameter] GetSourceStringRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intStringId = IntParser.Parse(input.StringId, nameof(input.StringId));
 
-        var client = new CrowdinClient(creds);
+        var client = new CrowdinClient(Creds);
 
         var response = await client.SourceStrings
             .GetString(intProjectId!.Value, intStringId!.Value, input.DenormalizePlaceholders ?? false);
@@ -63,13 +67,11 @@ public class SourceStringAction
     }
 
     [Action("Add source string", Description = "Add new source string")]
-    public async Task<SourceStringEntity> AddString(
-        IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] AddSourceStringRequest input)
+    public async Task<SourceStringEntity> AddString([ActionParameter] AddSourceStringRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
 
-        var client = new CrowdinClient(creds);
+        var client = new CrowdinClient(Creds);
 
         var request = new AddStringRequest
         {
@@ -88,14 +90,12 @@ public class SourceStringAction
     }
 
     [Action("Delete source string", Description = "Delete specific source string")]
-    public Task DeleteString(
-        IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] DeleteSourceStringRequest input)
+    public Task DeleteString([ActionParameter] DeleteSourceStringRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intStringId = IntParser.Parse(input.StringId, nameof(input.StringId));
 
-        var client = new CrowdinClient(creds);
+        var client = new CrowdinClient(Creds);
 
         return client.SourceStrings.DeleteString(intProjectId!.Value, intStringId!.Value);
     }

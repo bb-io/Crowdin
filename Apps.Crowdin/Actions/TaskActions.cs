@@ -9,6 +9,7 @@ using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Blackbird.Applications.Sdk.Utils.Utilities;
 using Crowdin.Api.Tasks;
@@ -17,18 +18,23 @@ using TaskStatus = Crowdin.Api.Tasks.TaskStatus;
 namespace Apps.Crowdin.Actions;
 
 [ActionList]
-public class TaskActions
+public class TaskActions : BaseInvocable
 {
+    private AuthenticationCredentialsProvider[] Creds =>
+        InvocationContext.AuthenticationCredentialsProviders.ToArray();
+
+    public TaskActions(InvocationContext invocationContext) : base(invocationContext)
+    {
+    }
+    
     [Action("List tasks", Description = "List all tasks")]
-    public async Task<ListTasksResponse> ListTasks(
-        IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] ListTasksRequest input)
+    public async Task<ListTasksResponse> ListTasks([ActionParameter] ListTasksRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intAssigneeId = IntParser.Parse(input.AssigneeId, nameof(input.AssigneeId));
         var status = EnumParser.Parse<TaskStatus>(input.Status, nameof(input.Status), EnumValues.TaskStatus);
 
-        var client = new CrowdinClient(creds);
+        var client = new CrowdinClient(Creds);
         var items = await Paginator.Paginate((lim, offset)
             => client.Tasks.ListTasks(intProjectId!.Value, lim, offset, status, intAssigneeId));
 
@@ -38,14 +44,13 @@ public class TaskActions
 
     [Action("Get task", Description = "Get specific task")]
     public async Task<TaskEntity> GetTask(
-        IEnumerable<AuthenticationCredentialsProvider> creds,
         [ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("Task ID")] string taskId)
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intTaskId = IntParser.Parse(taskId, nameof(taskId));
 
-        var client = new CrowdinClient(creds);
+        var client = new CrowdinClient(Creds);
 
         var response = await client.Tasks.GetTask(intProjectId!.Value, intTaskId!.Value);
         return new(response);
@@ -53,13 +58,12 @@ public class TaskActions
 
     [Action("Add task", Description = "Add new task")]
     public async Task<TaskEntity> AddTask(
-        IEnumerable<AuthenticationCredentialsProvider> creds,
         [ActionParameter] ProjectRequest project,
         [ActionParameter] AddNewTaskRequest input)
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
 
-        var client = new CrowdinClient(creds);
+        var client = new CrowdinClient(Creds);
         var request = new TaskCreateForm
         {
             Title = input.Title,
@@ -84,28 +88,26 @@ public class TaskActions
 
     [Action("Delete task", Description = "Delete specific task")]
     public Task DeleteTask(
-        IEnumerable<AuthenticationCredentialsProvider> creds,
         [ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("Task ID")] string taskId)
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intTaskId = IntParser.Parse(taskId, nameof(taskId));
 
-        var client = new CrowdinClient(creds);
+        var client = new CrowdinClient(Creds);
 
         return client.Tasks.DeleteTask(intProjectId!.Value, intTaskId!.Value);
     }
 
     [Action("Download task string", Description = "Download specific task strings")]
     public async Task<DownloadFileResponse> DownloadTaskStrings(
-        IEnumerable<AuthenticationCredentialsProvider> creds,
         [ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("Task ID")] string taskId)
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intTaskId = IntParser.Parse(taskId, nameof(taskId));
 
-        var client = new CrowdinClient(creds);
+        var client = new CrowdinClient(Creds);
 
         var downloadLink = await client.Tasks.ExportTaskStrings(intProjectId!.Value, intTaskId!.Value);
 

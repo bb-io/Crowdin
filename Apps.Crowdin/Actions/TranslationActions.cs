@@ -8,6 +8,7 @@ using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Crowdin.Api.StringTranslations;
 using Crowdin.Api.Translations;
@@ -15,18 +16,24 @@ using Crowdin.Api.Translations;
 namespace Apps.Crowdin.Actions;
 
 [ActionList]
-public class TranslationActions
+public class TranslationActions : BaseInvocable
 {
+    private AuthenticationCredentialsProvider[] Creds =>
+        InvocationContext.AuthenticationCredentialsProviders.ToArray();
+
+    public TranslationActions(InvocationContext invocationContext) : base(invocationContext)
+    {
+    }
+    
     [Action("Apply pre-translation", Description = "Apply pre-translation to chosen files")]
     public async Task<PreTranslationEntity> PreTranslate(
-        IEnumerable<AuthenticationCredentialsProvider> creds,
         [ActionParameter] ProjectRequest project,
         [ActionParameter] PreTranslateRequest input)
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intEngineId = IntParser.Parse(input.EngineId, nameof(input.EngineId));
 
-        var client = new CrowdinClient(creds);
+        var client = new CrowdinClient(Creds);
 
         var request = new ApplyPreTranslationRequest
         {
@@ -45,13 +52,12 @@ public class TranslationActions
     }
     [Action("List language translations", Description = "List project language translations")]
     public async Task<ListTranslationsResponse> ListLangTranslations(
-        IEnumerable<AuthenticationCredentialsProvider> creds,
         [ActionParameter] ListLanguageTranslationsRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intFileId = IntParser.Parse(input.FileId, nameof(input.FileId));
     
-        var client = new CrowdinClient(creds);
+        var client = new CrowdinClient(Creds);
     
         var items = await Paginator.Paginate((lim, offset) =>
         {
@@ -76,13 +82,12 @@ public class TranslationActions
 
     [Action("List string translations", Description = "List project string translations")]
     public async Task<ListTranslationsResponse> ListTranslations(
-        IEnumerable<AuthenticationCredentialsProvider> creds,
         [ActionParameter] ListStringTranslationsRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intStringId = IntParser.Parse(input.StringId, nameof(input.StringId));
 
-        var client = new CrowdinClient(creds);
+        var client = new CrowdinClient(Creds);
 
         var items = await Paginator.Paginate((lim, offset) =>
         {
@@ -102,14 +107,12 @@ public class TranslationActions
     }
 
     [Action("Get translation", Description = "Get specific translation")]
-    public async Task<TranslationEntity> GetTranslation(
-        IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] GetTranslationRequest input)
+    public async Task<TranslationEntity> GetTranslation([ActionParameter] GetTranslationRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intTransId = IntParser.Parse(input.TranslationId, nameof(input.TranslationId));
 
-        var client = new CrowdinClient(creds);
+        var client = new CrowdinClient(Creds);
 
         var response = await client.StringTranslations
             .GetTranslation(intProjectId!.Value, intTransId!.Value, input.DenormalizePlaceholders);
@@ -118,14 +121,12 @@ public class TranslationActions
     }
 
     [Action("Add translation", Description = "Add new translation")]
-    public async Task<TranslationEntity> AddTranslation(
-        IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] AddNewTranslationRequest input)
+    public async Task<TranslationEntity> AddTranslation([ActionParameter] AddNewTranslationRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intStringId = IntParser.Parse(input.StringId, nameof(input.StringId));
 
-        var client = new CrowdinClient(creds);
+        var client = new CrowdinClient(Creds);
 
         var request = new AddTranslationRequest
         {
@@ -140,14 +141,12 @@ public class TranslationActions
     }
     
     [Action("Delete translation", Description = "Delete specific translation")]
-    public Task DeleteTranslation(
-        IEnumerable<AuthenticationCredentialsProvider> creds,
-        [ActionParameter] DeleteTranslationRequest input)
+    public Task DeleteTranslation([ActionParameter] DeleteTranslationRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intTransId = IntParser.Parse(input.TranslationId, nameof(input.TranslationId));
 
-        var client = new CrowdinClient(creds);
+        var client = new CrowdinClient(Creds);
 
         return client.StringTranslations
             .DeleteTranslation(intProjectId!.Value, intTransId!.Value);

@@ -7,22 +7,29 @@ using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Crowdin.Api.MachineTranslationEngines;
 
 namespace Apps.Crowdin.Actions;
 
 [ActionList]
-public class MachineTranslationActions
+public class MachineTranslationActions : BaseInvocable
 {
+    private AuthenticationCredentialsProvider[] Creds =>
+        InvocationContext.AuthenticationCredentialsProviders.ToArray();
+
+    public MachineTranslationActions(InvocationContext invocationContext) : base(invocationContext)
+    {
+    }
+    
     [Action("List machine translation engines", Description = "List all machine translation engines")]
     public async Task<ListMtEnginesResponse> ListMtEnginges(
-        IEnumerable<AuthenticationCredentialsProvider> creds,
         [ActionParameter] [Display("Group ID")] string? groupId)
     {
         var intGroupId = IntParser.Parse(groupId, nameof(groupId));
         
-        var client = new CrowdinClient(creds);
+        var client = new CrowdinClient(Creds);
 
         var items = await Paginator.Paginate((lim, offset)
             => client.MachineTranslationEngines.ListMts(intGroupId, lim, offset));
@@ -33,18 +40,16 @@ public class MachineTranslationActions
 
     [Action("Translate via machine translation engine", Description = "Translate text via machine translation engine")]
     public async Task<MtTextTranslationEntity> TranslateTextViaMt(
-        IEnumerable<AuthenticationCredentialsProvider> creds,
         [ActionParameter] MtEngineRequest mtEngine,
         [ActionParameter] TranslateTextRequest input)
     {
-        var response = await TranslateLinesViaMt(creds, mtEngine, new(input));
+        var response = await TranslateLinesViaMt(mtEngine, new(input));
         return new(response);
     }
 
     [Action("Translate lines via machine translation engine",
         Description = "Translate multiple text lines via machine translation engine")]
     public async Task<MtStringsTranslationEntity> TranslateLinesViaMt(
-        IEnumerable<AuthenticationCredentialsProvider> creds,
         [ActionParameter] MtEngineRequest mtEngine,
         [ActionParameter] TranslateStringsRequest input)
     {
@@ -55,7 +60,7 @@ public class MachineTranslationActions
                 nameof(input.LanguageRecognitionProvider),
                 EnumValues.LanguageRecognitionProvider);
 
-        var client = new CrowdinClient(creds);
+        var client = new CrowdinClient(Creds);
 
         var request = new TranslateViaMtRequest
         {
