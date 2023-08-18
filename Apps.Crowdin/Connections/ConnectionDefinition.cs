@@ -26,5 +26,12 @@ public class ConnectionDefinition : IConnectionDefinition
                 CredsNames.ApiToken,
                 accessToken.Value
             );
+            
+            var refreshToken = values.First(v => v.Key == "refresh_token");
+            yield return new AuthenticationCredentialsProvider(
+                AuthenticationCredentialsRequestLocation.None,
+                CredsNames.RefreshToken,
+                refreshToken.Value
+            );
         }
 }
