@@ -80,6 +80,7 @@ public class TaskActions : BaseInvocable
             DeadLine = input.Deadline,
             DateFrom = input.DateFrom,
             DateTo = input.DateTo,
+            IncludePreTranslatedStringsOnly = input.IncludePreTranslatedStringsOnly
         };
         
         var response = await client.Tasks.AddTask(intProjectId!.Value, request);
