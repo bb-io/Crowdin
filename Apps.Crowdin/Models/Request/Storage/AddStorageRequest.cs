@@ -4,6 +4,6 @@ namespace Apps.Crowdin.Models.Request.Storage;
 
 public class AddStorageRequest
 {
-    public byte[] File { get; set; }
-    [Display("File name")] public string FileName { get; set; }
+    public Blackbird.Applications.Sdk.Common.Files.File File { get; set; }
+    [Display("File name")] public string? FileName { get; set; }
 }

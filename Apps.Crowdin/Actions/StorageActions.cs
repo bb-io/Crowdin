@@ -49,7 +49,7 @@ public class StorageActions : BaseInvocable
         var client = new CrowdinClient(Creds);
 
         var response = await client.Storage
-            .AddStorage(new MemoryStream(input.File), input.FileName);
+            .AddStorage(new MemoryStream(input.File.Bytes), input.FileName ?? input.File.Name);
         
         return new(response);
     }

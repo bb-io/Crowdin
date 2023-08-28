@@ -1,4 +1,6 @@
-﻿using Apps.Crowdin.Api;
+﻿using System.Net.Http.Headers;
+using System.Net.Mime;
+using Apps.Crowdin.Api;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.File;
 using Apps.Crowdin.Models.Request.Project;
@@ -7,10 +9,12 @@ using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Blackbird.Applications.Sdk.Utils.Utilities;
 using Crowdin.Api.SourceFiles;
+using File = Blackbird.Applications.Sdk.Common.Files.File;
 
 namespace Apps.Crowdin.Actions;
 
@@ -106,8 +110,12 @@ public class FileActions : BaseInvocable
 
         var downloadLink = await client.SourceFiles.DownloadFile(intProjectId!.Value, intFileId!.Value);
         var fileContent = await FileDownloader.DownloadFileBytes(downloadLink.Url);
-        
-        return new(fileContent);
+
+        var result = new File(fileContent)
+        {
+            ContentType = MediaTypeNames.Application.Octet,
+        };
+        return new(result);
     }   
     
     [Action("Delete file", Description = "Delete specific file")]
