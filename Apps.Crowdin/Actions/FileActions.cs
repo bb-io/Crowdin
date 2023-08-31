@@ -1,5 +1,4 @@
-﻿using System.Net.Http.Headers;
-using System.Net.Mime;
+﻿using System.Net.Mime;
 using Apps.Crowdin.Api;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.File;
@@ -9,7 +8,6 @@ using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
-using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Blackbird.Applications.Sdk.Utils.Utilities;
@@ -62,6 +60,9 @@ public class FileActions : BaseInvocable
         [ActionParameter] ProjectRequest project,
         [ActionParameter] AddNewFileRequest input)
     {
+        if (input.StorageId is null && input.File is null)
+            throw new("You need to specfiy one of the parameters: Storage ID or File");
+        
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intStorageId = IntParser.Parse(input.StorageId, nameof(input.StorageId));
         var intBranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId));
@@ -69,9 +70,16 @@ public class FileActions : BaseInvocable
 
         var client = new CrowdinClient(Creds);
 
+        if (intStorageId is null)
+        {
+            var storage = await client.Storage
+                .AddStorage(new MemoryStream(input.File!.Bytes), input.Name);
+            intStorageId = storage.Id;
+        }
+        
         var request = new AddFileRequest
         {
-            StorageId = intStorageId!.Value,
+            StorageId = intStorageId.Value,
             Name = input.Name,
             BranchId = intBranchId,
             DirectoryId = intDirectoryId,
