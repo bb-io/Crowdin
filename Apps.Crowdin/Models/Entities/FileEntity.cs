@@ -17,6 +17,10 @@ public class FileEntity
     public string Status { get; set; }
     [Display("Created at")] public DateTime CreatedAt { get; set; }
 
+    [Display("Is modified")]
+    public bool? IsModified { get; set; }
+
+
     public FileEntity(FileCollectionResource file)
     {
         Id = file.Id.ToString();
@@ -29,9 +33,10 @@ public class FileEntity
         Path = file.Path;
         Status = file.Status.ToString();
         CreatedAt = file.CreatedAt.DateTime;
+        IsModified = false;
     }
 
-    public FileEntity(File file)
+    public FileEntity(File file, bool? isModified = false)
     {
         Id = file.Id.ToString();
         ProjectId = file.ProjectId.ToString();
@@ -43,6 +48,7 @@ public class FileEntity
         Path = file.Path;
         Status = file.Status.ToString();
         CreatedAt = file.CreatedAt.DateTime;
+        IsModified = isModified;
     }
 
     public FileEntity(FileResource file)
@@ -57,5 +63,6 @@ public class FileEntity
         Path = file.Path;
         Status = file.Status.ToString();
         CreatedAt = file.CreatedAt.DateTime;
+        IsModified = false;
     }
 }

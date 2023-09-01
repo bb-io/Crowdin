@@ -5,9 +5,7 @@ using Blackbird.Applications.Sdk.Common.Dynamic;
 namespace Apps.Crowdin.Models.Request.File;
 
 public class AddNewFileRequest
-{
-    public string Name { get; set; }
-
+{    
     public Blackbird.Applications.Sdk.Common.Files.File? File { get; set; }
     
     [Display("Storage")]
@@ -27,4 +25,7 @@ public class AddNewFileRequest
 
     [Display("Attach label IDs")]
     public IEnumerable<int>? AttachLabelIds { get; set; }
+
+    [Display("Name")]
+    public string? Name { get; set; }
 }

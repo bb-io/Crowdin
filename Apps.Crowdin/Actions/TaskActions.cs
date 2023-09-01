@@ -119,10 +119,6 @@ public class TaskActions : BaseInvocable
         
         var fileContent = await FileDownloader.DownloadFileBytes(downloadLink.Url);
 
-        var result = new File(fileContent)
-        {
-            ContentType = MediaTypeNames.Application.Octet,
-        };
-        return new(result);
+        return new(fileContent);
     }
 }

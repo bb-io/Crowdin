@@ -62,25 +62,26 @@ public class FileActions : BaseInvocable
     {
         if (input.StorageId is null && input.File is null)
             throw new("You need to specfiy one of the parameters: Storage ID or File");
-        
+
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intStorageId = IntParser.Parse(input.StorageId, nameof(input.StorageId));
         var intBranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId));
         var intDirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId));
 
         var client = new CrowdinClient(Creds);
+        var filename = input.Name ?? input.File?.Name;
 
         if (intStorageId is null)
         {
             var storage = await client.Storage
-                .AddStorage(new MemoryStream(input.File!.Bytes), input.Name);
+                .AddStorage(new MemoryStream(input.File!.Bytes), filename);
             intStorageId = storage.Id;
         }
-        
+
         var request = new AddFileRequest
         {
             StorageId = intStorageId.Value,
-            Name = input.Name,
+            Name = filename,
             BranchId = intBranchId,
             DirectoryId = intDirectoryId,
             Title = input.Title,
@@ -91,7 +92,29 @@ public class FileActions : BaseInvocable
 
         return new(file);
     }
-    
+
+    [Action("Update file", Description = "Update an existing file with new content")]
+    public async Task<FileEntity> UpdateFile(
+        [ActionParameter] ProjectRequest project,
+        [ActionParameter] UpdateFileRequest input)
+    {
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
+        var intFileId = IntParser.Parse(input.FileId, nameof(input.FileId));
+
+        var client = new CrowdinClient(Creds);
+
+        var storage = await client.Storage
+            .AddStorage(new MemoryStream(input.File!.Bytes), input.File.Name);
+
+        (var file, var isModified) = await client.SourceFiles.UpdateOrRestoreFile(intProjectId!.Value, intFileId!.Value, new ReplaceFileRequest
+        {
+            StorageId = storage.Id,
+            UpdateOption = ToOptionEnum(input.UpdateOption)
+        });
+
+        return new(file, isModified);
+    }
+
     [Action("Get file", Description = "Get specific file info")]
     public async Task<FileEntity> GetFile(
         [ActionParameter] ProjectRequest project,
@@ -119,11 +142,7 @@ public class FileActions : BaseInvocable
         var downloadLink = await client.SourceFiles.DownloadFile(intProjectId!.Value, intFileId!.Value);
         var fileContent = await FileDownloader.DownloadFileBytes(downloadLink.Url);
 
-        var result = new File(fileContent)
-        {
-            ContentType = MediaTypeNames.Application.Octet,
-        };
-        return new(result);
+        return new(fileContent);
     }   
     
     [Action("Delete file", Description = "Delete specific file")]
@@ -137,5 +156,19 @@ public class FileActions : BaseInvocable
         var client = new CrowdinClient(Creds);
 
         return client.SourceFiles.DeleteFile(intProjectId!.Value, intFileId!.Value);
+    }
+
+    private FileUpdateOption? ToOptionEnum(string? option)
+    {
+        if (option == "keep_translations")
+            return FileUpdateOption.KeepTranslations;
+
+        if (option == "keep_translations_and_approvals")
+            return FileUpdateOption.KeepTranslationsAndApprovals;
+
+        if (option == "clear_translations_and_approvals")
+            return FileUpdateOption.ClearTranslationsAndApprovals;
+
+        return null;
     }
 }

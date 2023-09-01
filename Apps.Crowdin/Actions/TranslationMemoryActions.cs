@@ -113,12 +113,7 @@ public class TranslationMemoryActions : BaseInvocable
 
         var response = await client.TranslationMemory.DownloadTm(intTmId!.Value, input.ExportId);
         var fileContent = await FileDownloader.DownloadFileBytes(response.Url);
-
-        var result = new File(fileContent)
-        {
-            ContentType = MediaTypeNames.Application.Octet,
-        };
-        return new(result);
+        return new(fileContent);
     }
 
     [Action("Add translation memory segment", Description = "Add new segment to the translation memory")]

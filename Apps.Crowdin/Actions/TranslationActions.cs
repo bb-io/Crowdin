@@ -3,6 +3,7 @@ using Apps.Crowdin.Constants;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.Translation;
+using Apps.Crowdin.Models.Response.File;
 using Apps.Crowdin.Models.Response.Translation;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
@@ -10,8 +11,11 @@ using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Parsers;
+using Blackbird.Applications.Sdk.Utils.Utilities;
 using Crowdin.Api.StringTranslations;
 using Crowdin.Api.Translations;
+using System.Net.Mime;
+using File = Blackbird.Applications.Sdk.Common.Files.File;
 
 namespace Apps.Crowdin.Actions;
 
@@ -150,5 +154,29 @@ public class TranslationActions : BaseInvocable
 
         return client.StringTranslations
             .DeleteTranslation(intProjectId!.Value, intTransId!.Value);
+    }
+
+    [Action("Download file translation", Description = "Builds and downloads the translation of a file")]
+    public async Task<DownloadFileResponse> DownloadTranslationFile(
+        [ActionParameter] ProjectRequest project,
+        [ActionParameter] DownloadFileTranslationRequest request
+        )
+    {
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
+        var intFileId = IntParser.Parse(request.FileId, nameof(request.FileId));
+
+        var client = new CrowdinClient(Creds);
+
+        var build = await client.Translations.BuildProjectFileTranslation(intProjectId!.Value, intFileId!.Value, new BuildProjectFileTranslationRequest
+        {
+            TargetLanguageId = request.TargetLanguage,
+            SkipUntranslatedStrings = request.SkipUntranslatedStrings,
+            SkipUntranslatedFiles = request.SkipUntranslatedFiles,
+            ExportApprovedOnly = request.ExportApprovedOnly,
+        });
+        var fileContent = await FileDownloader.DownloadFileBytes(build.Link.Url);
+
+        return new(fileContent);
+
     }
 }
