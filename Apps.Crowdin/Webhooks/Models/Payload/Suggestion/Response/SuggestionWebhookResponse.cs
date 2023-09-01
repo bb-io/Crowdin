@@ -9,6 +9,9 @@ public class SuggestionWebhookResponse : CrowdinWebhookResponse<SuggestionWrappe
 {
     [Display("ID")]
     public string Id { get; set; }
+    
+    [Display("Project ID")]
+    public string ProjectId { get; set; }
     public string Text { get; set; }
     public string Rating { get; set; }
     
@@ -30,5 +33,6 @@ public class SuggestionWebhookResponse : CrowdinWebhookResponse<SuggestionWrappe
         TargetLanguageId = wrapper.Translation.TargetLanguage.Id;
         User = new(wrapper.Translation.User);
         String = new(wrapper.Translation.String);
+        ProjectId = wrapper.Translation.String.Project.Id.ToString();
     }
 }

@@ -15,7 +15,7 @@ public class StringCommentWebhookResponse : CrowdinWebhookResponse<StringComment
 
     [Display("Issue status")] public string IssueStatus { get; set; }
 
-    [Display("Created at")] public DateTime CreatedAt { get; set; }
+    [Display("Created at")] public DateTime? CreatedAt { get; set; }
     [Display("Target language ID")] public string TargetLanguageId { get; set; }
     public StringWebhookResponseEntity String { get; set; }
     public UserEntity User { get; set; }

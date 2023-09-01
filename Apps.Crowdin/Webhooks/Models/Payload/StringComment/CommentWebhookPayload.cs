@@ -10,10 +10,10 @@ public class CommentWebhookPayload
     public string Type { get; set; }
     public string IssueType { get; set; }
     public string IssueStatus { get; set; }
-    public DateTime CreatedAt { get; set; }
+    public DateTime? CreatedAt { get; set; }
     
     public StringPayload String { get; set; }
     public LanguagePayload TargetLanguage { get; set; }
     public User User { get; set; }
-    public User CommentResolver { get; set; }
+    public UserPayload CommentResolver { get; set; }
 }

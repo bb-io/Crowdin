@@ -1,4 +1,5 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Crowdin.Webhooks.Models.Payload.File;
+using Blackbird.Applications.Sdk.Common;
 using Crowdin.Api.SourceFiles;
 using File = Crowdin.Api.SourceFiles.File;
 
@@ -64,5 +65,18 @@ public class FileEntity
         Status = file.Status.ToString();
         CreatedAt = file.CreatedAt.DateTime;
         IsModified = false;
+    }
+    
+    public FileEntity(FilePayloadWithProject file)
+    {
+        Id = file.Id.ToString();
+        ProjectId = file.Project.Id.ToString();
+        BranchId = file.BranchId;
+        DirectoryId = file.DirectoryId;
+        Name = file.Name;
+        Title = file.Title;
+        Type = file.Type;
+        Path = file.Path;
+        Status = file.Status.ToString();
     }
 }

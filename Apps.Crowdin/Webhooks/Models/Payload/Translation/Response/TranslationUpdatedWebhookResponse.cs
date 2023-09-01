@@ -1,5 +1,4 @@
-﻿using Apps.Crowdin.Models.Entities;
-using Apps.Crowdin.Webhooks.Models.Payload.Translation.Wrappers;
+﻿using Apps.Crowdin.Webhooks.Models.Payload.Translation.Wrappers;
 using Blackbird.Applications.Sdk.Common;
 
 namespace Apps.Crowdin.Webhooks.Models.Payload.Translation.Response;
@@ -7,10 +6,10 @@ namespace Apps.Crowdin.Webhooks.Models.Payload.Translation.Response;
 public class TranslationUpdatedWebhookResponse : CrowdinWebhookResponse<TranslationUpdatedWrapper>
 {
     [Display("Old translation")]
-    public TranslationEntity OldTranslation { get; set; }
+    public OldTranslationWebhookResponse OldTranslation { get; set; }
     
     [Display("New translation")]
-    public TranslationEntity NewTranslation { get; set; }
+    public NewTranslationWebhookResponse NewTranslation { get; set; }
     
     public override void ConfigureResponse(TranslationUpdatedWrapper wrapper)
     {

@@ -11,6 +11,8 @@ public class FileWithUserWebhookResponse : CrowdinWebhookResponse<FileWithUserWr
     public override void ConfigureResponse(FileWithUserWrapper wrapper)
     {
         File = new(wrapper.File);
+        File.ProjectId = wrapper.File.Project.Id.ToString();
+
         User = new(wrapper.User);
     }
 }

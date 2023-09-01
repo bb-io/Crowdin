@@ -5,11 +5,13 @@ using Crowdin.Api.Tasks;
 
 namespace Apps.Crowdin.Webhooks.Models.Payload.Task.Response;
 
-public class TaskWebhookResponse : CrowdinWebhookResponse<TaskWrapper>
+public class TaskStatusChangedWebhookResponse : CrowdinWebhookResponse<TaskStatusChangedWrapper>
 {
     [Display("ID")] public string Id { get; set; }
     [Display("Type")] public string Type { get; set; }
     [Display("Vendor")] public string Vendor { get; set; }
+    [Display("Old status")] public string OldStatus { get; set; }
+    [Display("New status")] public string NewStatus { get; set; }
     [Display("Status")] public string Status { get; set; }
     [Display("Title")] public string Title { get; set; }
     [Display("Assignee IDs")] public IEnumerable<string>? AssigneeIds { get; set; }
@@ -24,11 +26,13 @@ public class TaskWebhookResponse : CrowdinWebhookResponse<TaskWrapper>
     [Display("Project ID")] public string ProjectId { get; set; }
     [Display("Task creator")] public UserEntity TaskCreator { get; set; }
 
-    public override void ConfigureResponse(TaskWrapper wrapper)
+    public override void ConfigureResponse(TaskStatusChangedWrapper wrapper)
     {
         Id = wrapper.Task.Id;
         Type = wrapper.Task.Type;
         Vendor = wrapper.Task.Vendor;
+        OldStatus = wrapper.Task.OldStatus;
+        NewStatus = wrapper.Task.NewStatus;
         Status = wrapper.Task.Status;
         Title = wrapper.Task.Title;
         AssigneeIds = wrapper.Task.Assignees?.Select(x => x.Id.ToString());

@@ -14,6 +14,6 @@ public class ProjectBuiltWebhookResponse : CrowdinWebhookResponse<ProjectBuildWr
     {
         Project = new(wrapper.Build.Project);
         BuildId = wrapper.Build.Id;
-        BuildDownloadUrl = wrapper.Build.DownloadLink;
+        BuildDownloadUrl = wrapper.Build.DownloadUrl;
     }
 }

@@ -16,11 +16,11 @@ public class TaskPayload
     public TaskProgress Progress { get; set; }
     public string Description { get; set; }
     public string TranslationUrl { get; set; }
-    public DateTime Deadline { get; set; }
+    public DateTime? Deadline { get; set; }
     public DateTime CreatedAt { get; set; }
     
     public LanguagePayload SourceLanguage { get; set; }
     public LanguagePayload TargetLanguage { get; set; }
-    public ProjectBase Project { get; set; }
+    public EnterpriseProject Project { get; set; }
     public User TaskCreator { get; set; }
 }
