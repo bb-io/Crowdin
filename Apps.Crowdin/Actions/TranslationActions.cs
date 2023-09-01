@@ -11,9 +11,11 @@ using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Parsers;
-using Blackbird.Applications.Sdk.Utils.Utilities;
+using Crowdin.Api.SourceFiles;
 using Crowdin.Api.StringTranslations;
 using Crowdin.Api.Translations;
+using RestSharp;
+using File = Blackbird.Applications.Sdk.Common.Files.File;
 
 namespace Apps.Crowdin.Actions;
 
@@ -165,6 +167,8 @@ public class TranslationActions : BaseInvocable
 
         var client = new CrowdinClient(Creds);
 
+        var fileInfo = await client.SourceFiles.GetFile<FileResource>(intProjectId!.Value, intFileId!.Value);
+
         var build = await client.Translations.BuildProjectFileTranslation(intProjectId!.Value, intFileId!.Value, new BuildProjectFileTranslationRequest
         {
             TargetLanguageId = request.TargetLanguage,
@@ -172,9 +176,18 @@ public class TranslationActions : BaseInvocable
             SkipUntranslatedFiles = request.SkipUntranslatedFiles,
             ExportApprovedOnly = request.ExportApprovedOnly,
         });
-        var fileContent = await FileDownloader.DownloadFileBytes(build.Link.Url);
 
-        return new(fileContent);
+        if (!MimeTypes.TryGetMimeType(fileInfo.Name, out var contentType))
+            contentType = "application/octet-stream";
 
+        var bytes = new RestClient(build.Link.Url).Get(new RestRequest("/")).RawBytes;
+
+        var file = new File(bytes)
+        {
+            Name = fileInfo.Name,
+            ContentType = contentType
+        };
+
+        return new(file);
     }
 }

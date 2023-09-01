@@ -9,8 +9,9 @@ using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Parsers;
-using Blackbird.Applications.Sdk.Utils.Utilities;
 using Crowdin.Api.SourceFiles;
+using RestSharp;
+using File = Blackbird.Applications.Sdk.Common.Files.File;
 
 namespace Apps.Crowdin.Actions;
 
@@ -58,28 +59,17 @@ public class FileActions : BaseInvocable
         [ActionParameter] ProjectRequest project,
         [ActionParameter] AddNewFileRequest input)
     {
-        if (input.StorageId is null && input.File is null)
-            throw new("You need to specfiy one of the parameters: Storage ID or File");
-
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
-        var intStorageId = IntParser.Parse(input.StorageId, nameof(input.StorageId));
         var intBranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId));
         var intDirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId));
-
         var client = new CrowdinClient(Creds);
-        var filename = input.Name ?? input.File?.Name;
 
-        if (intStorageId is null)
-        {
-            var storage = await client.Storage
-                .AddStorage(new MemoryStream(input.File!.Bytes), filename);
-            intStorageId = storage.Id;
-        }
+        var storage = await client.Storage.AddStorage(new MemoryStream(input.File!.Bytes), input.File.Name);
 
         var request = new AddFileRequest
         {
-            StorageId = intStorageId.Value,
-            Name = filename,
+            StorageId = storage.Id,
+            Name = input.File.Name,
             BranchId = intBranchId,
             DirectoryId = intDirectoryId,
             Title = input.Title,
@@ -101,8 +91,7 @@ public class FileActions : BaseInvocable
 
         var client = new CrowdinClient(Creds);
 
-        var storage = await client.Storage
-            .AddStorage(new MemoryStream(input.File!.Bytes), input.File.Name);
+        var storage = await client.Storage.AddStorage(new MemoryStream(input.File!.Bytes), input.File.Name);
 
         (var file, var isModified) = await client.SourceFiles.UpdateOrRestoreFile(intProjectId!.Value, intFileId!.Value, new ReplaceFileRequest
         {
@@ -137,10 +126,22 @@ public class FileActions : BaseInvocable
 
         var client = new CrowdinClient(Creds);
 
-        var downloadLink = await client.SourceFiles.DownloadFile(intProjectId!.Value, intFileId!.Value);
-        var fileContent = await FileDownloader.DownloadFileBytes(downloadLink.Url);
+        var fileInfo = await client.SourceFiles.GetFile<FileResource>(intProjectId!.Value, intFileId!.Value);
 
-        return new(fileContent);
+        var downloadLink = await client.SourceFiles.DownloadFile(intProjectId!.Value, intFileId!.Value);
+
+        if (!MimeTypes.TryGetMimeType(fileInfo.Name, out var contentType))
+            contentType = "application/octet-stream";
+
+        var bytes = new RestClient(downloadLink.Url).Get(new RestRequest("/")).RawBytes;
+
+        var file = new File(bytes)
+        {
+            Name = fileInfo.Name,
+            ContentType = contentType
+        };
+
+        return new(file);
     }   
     
     [Action("Delete file", Description = "Delete specific file")]
