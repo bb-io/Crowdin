@@ -130,8 +130,9 @@ public class FileActions : BaseInvocable
 
         var downloadLink = await client.SourceFiles.DownloadFile(intProjectId!.Value, intFileId!.Value);
 
-        if (!MimeTypes.TryGetMimeType(fileInfo.Name, out var contentType))
-            contentType = "application/octet-stream";
+        //temp fix https://dev.azure.com/blackbird-io/Blackbird.io/_workitems/edit/3397
+        //if (!MimeTypes.TryGetMimeType(fileInfo.Name, out var contentType))
+        string contentType = "application/octet-stream";
 
         var bytes = new RestClient(downloadLink.Url).Get(new RestRequest("/")).RawBytes;
 

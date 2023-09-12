@@ -41,11 +41,10 @@ public class CommentActions : BaseInvocable
                 Offset = offset,
                 StringId = intStringId,
                 Type =
-                    EnumParser.Parse<StringCommentType>(input.Type, nameof(input.Type), EnumValues.StringCommentType),
-                IssueStatus = EnumParser.Parse<IssueStatus>(input.IssueStatus, nameof(input.IssueStatus),
-                    EnumValues.IssueStatus),
+                    EnumParser.Parse<StringCommentType>(input.Type, nameof(input.Type)),
+                IssueStatus = EnumParser.Parse<IssueStatus>(input.IssueStatus, nameof(input.IssueStatus)),
                 IssueTypes = input.IssueTypes?.Select(issueType =>
-                        EnumParser.Parse<IssueType>(issueType, nameof(issueType), EnumValues.IssueType)!.Value)
+                        EnumParser.Parse<IssueType>(issueType, nameof(issueType))!.Value)
                     .ToHashSet() ?? new()
             };
             return client.StringComments.ListStringComments(intProjectId!.Value, request);
@@ -83,9 +82,9 @@ public class CommentActions : BaseInvocable
             StringId = intStringId!.Value,
             Text = input.Text,
             TargetLanguageId = input.TargetLanguageId,
-            Type = EnumParser.Parse<StringCommentType>(input.Type, nameof(input.Type), EnumValues.StringCommentType)!
+            Type = EnumParser.Parse<StringCommentType>(input.Type, nameof(input.Type))!
                 .Value,
-            IssueType = EnumParser.Parse<IssueType>(input.IssueType, nameof(input.IssueType), EnumValues.IssueType)
+            IssueType = EnumParser.Parse<IssueType>(input.IssueType, nameof(input.IssueType))
         };
 
         var response = await client.StringComments.AddStringComment(intProjectId!.Value, request);

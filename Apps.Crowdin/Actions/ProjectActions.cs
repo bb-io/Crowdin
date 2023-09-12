@@ -60,7 +60,7 @@ public class ProjectActions : BaseInvocable
             Name = input.Name,
             SourceLanguageId = input.SourceLanguageId,
             Identifier = input.Identifier,
-            Visibility = EnumParser.Parse<ProjectVisibility>(input.Visibility, nameof(input.Visibility), EnumValues.ProjectVisibility),
+            Visibility = EnumParser.Parse<ProjectVisibility>(input.Visibility, nameof(input.Visibility)),
             TargetLanguageIds = input.TargetLanguageIds?.ToList(),
             Cname = input.Cname,
             Description = input.Description,

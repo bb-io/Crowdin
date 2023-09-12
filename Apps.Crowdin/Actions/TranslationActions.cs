@@ -124,8 +124,8 @@ public class TranslationActions : BaseInvocable
         return new(response);
     }
 
-    [Action("Add translation", Description = "Add new translation")]
-    public async Task<TranslationEntity> AddTranslation([ActionParameter] AddNewTranslationRequest input)
+    [Action("Add string translation", Description = "Add new string translation")]
+    public async Task<TranslationEntity> AddStringTranslation([ActionParameter] AddNewTranslationRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intStringId = IntParser.Parse(input.StringId, nameof(input.StringId));
@@ -137,13 +137,34 @@ public class TranslationActions : BaseInvocable
             StringId = intStringId!.Value,
             LanguageId = input.LanguageId,
             Text = input.Text,
-            PluralCategoryName = EnumParser.Parse<PluralCategoryName>(input.PluralCategoryName, nameof(input.PluralCategoryName), EnumValues.PluralCategoryName)
+            PluralCategoryName = EnumParser.Parse<PluralCategoryName>(input.PluralCategoryName, nameof(input.PluralCategoryName))
         };
         
         var response = await client.StringTranslations.AddTranslation(intProjectId!.Value,request);
         return new(response);
     }
-    
+
+    [Action("Add file translation", Description = "Add new file translation")]
+    public async Task<FileTranslationEntity> AddFileTranslation([ActionParameter] AddNewFileTranslationRequest input)
+    {
+        var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
+        var client = new CrowdinClient(Creds);
+
+        var storageResult = await client.Storage.AddStorage(new MemoryStream(input.File.Bytes), input.File.Name);
+
+        var request = new UploadTranslationsRequest
+        {
+            StorageId = storageResult.Id,
+            FileId = int.Parse(input.SourceFileId),
+            ImportEqSuggestions = input.ImportEqSuggestions,
+            AutoApproveImported = input.AutoApproveImported,
+            TranslateHidden = input.TranslateHidden
+        };
+
+        var response = await client.Translations.UploadTranslations(intProjectId!.Value, input.LanguageId, request);
+        return new(response);
+    }
+
     [Action("Delete translation", Description = "Delete specific translation")]
     public Task DeleteTranslation([ActionParameter] DeleteTranslationRequest input)
     {

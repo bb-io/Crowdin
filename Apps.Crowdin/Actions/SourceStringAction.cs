@@ -43,7 +43,7 @@ public class SourceStringAction : BaseInvocable
                 LabelIds = input.LabelIds,
                 Filter = input.Filter,
                 CroQL = input.CroQl,
-                Scope = EnumParser.Parse<StringScope>(input.Scope, nameof(input.Scope), EnumValues.StringScope),
+                Scope = EnumParser.Parse<StringScope>(input.Scope, nameof(input.Scope)),
                 DenormalizePlaceholders = input.DenormalizePlaceholders is true ? 1 : 0,
             };
             return client.SourceStrings.ListStrings(intProjectId!.Value, request);

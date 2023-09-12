@@ -87,7 +87,7 @@ public class TranslationMemoryActions : BaseInvocable
         var intTmId = IntParser.Parse(tm.TranslationMemoryId, nameof(tm.TranslationMemoryId));
 
         var formatEnum =
-            EnumParser.Parse<TmFileFormat>(input.Format, nameof(input.Format), EnumValues.TmFileFormat);
+            EnumParser.Parse<TmFileFormat>(input.Format, nameof(input.Format));
 
         var client = new CrowdinClient(Creds);
 

@@ -32,7 +32,7 @@ public class TaskActions : BaseInvocable
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intAssigneeId = IntParser.Parse(input.AssigneeId, nameof(input.AssigneeId));
-        var status = EnumParser.Parse<TaskStatus>(input.Status, nameof(input.Status), EnumValues.TaskStatus);
+        var status = EnumParser.Parse<TaskStatus>(input.Status, nameof(input.Status));
 
         var client = new CrowdinClient(Creds);
         var items = await Paginator.Paginate((lim, offset)
@@ -69,8 +69,8 @@ public class TaskActions : BaseInvocable
             Title = input.Title,
             LanguageId = input.LanguageId,
             FileIds = input.FileIds.Select(fileId => IntParser.Parse(fileId, nameof(fileId))!.Value).ToList(),
-            Type = EnumParser.Parse<TaskType>(input.Type, nameof(input.Type), EnumValues.TaskType)!.Value,
-            Status = EnumParser.Parse<TaskStatus>(input.Status, nameof(input.Status), EnumValues.TaskStatus),
+            Type = EnumParser.Parse<TaskType>(input.Type, nameof(input.Type))!.Value,
+            Status = EnumParser.Parse<TaskStatus>(input.Status, nameof(input.Status)),
             Description = input.Description,
             SplitFiles = input.SplitFiles,
             SkipAssignedStrings = input.SkipAssignedStrings,
