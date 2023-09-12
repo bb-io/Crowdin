@@ -65,7 +65,6 @@ public class FileActions : BaseInvocable
         var client = new CrowdinClient(Creds);
 
         var storage = await client.Storage.AddStorage(new MemoryStream(input.File!.Bytes), input.File.Name);
-
         var request = new AddFileRequest
         {
             StorageId = storage.Id,
@@ -100,6 +99,21 @@ public class FileActions : BaseInvocable
         });
 
         return new(file, isModified);
+    }
+
+    [Action("Add or update file", Description = "Add or update file")]
+    public async Task<FileEntity> AddOrUpdateFile(
+        [ActionParameter] ProjectRequest project,
+        [ActionParameter] AddOrUpdateFileRequest input)
+    {
+        var projectFiles = await ListFiles(project, new ListFilesRequest());
+        var existingFile = projectFiles.Files.FirstOrDefault(f => f.Name == input.File.Name);
+        if (existingFile != null)
+        {
+            return await UpdateFile(project, 
+                new UpdateFileRequest() { File = input.File, FileId = existingFile.Id, UpdateOption = input.UpdateOption });
+        }
+        return await AddFile(project, input);
     }
 
     [Action("Get file", Description = "Get specific file info")]
