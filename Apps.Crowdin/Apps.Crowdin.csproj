@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.1.0" />
+      <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.2.0-alpha3" />
       <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.0.9" />
       <PackageReference Include="Crowdin.Api" Version="2.17.1" />
       <PackageReference Include="MimeTypes" Version="2.4.1">
