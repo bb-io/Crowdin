@@ -100,7 +100,7 @@ public class TaskActions : BaseInvocable
         return client.Tasks.DeleteTask(intProjectId!.Value, intTaskId!.Value);
     }
 
-    [Action("Download task string", Description = "Download specific task strings")]
+    [Action("Download task strings as XLIFF", Description = "Download specific task strings as XLIFF")]
     public async Task<DownloadFileResponse> DownloadTaskStrings(
         [ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("Task ID")] string taskId)
