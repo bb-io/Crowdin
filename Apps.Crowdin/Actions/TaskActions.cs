@@ -61,10 +61,17 @@ public class TaskActions : BaseInvocable
         [ActionParameter] ProjectRequest project,
         [ActionParameter] AddNewTaskRequest input)
     {
+        var vendorTaskTypes = new[] { "TranslateByVendor", "ProofreadByVendor" };
+        if (vendorTaskTypes.Contains(input.Type) && input.Vendor is null)
+            throw new("You should specify vendor for such task type");
+
+        if (input.Vendor is not null && !vendorTaskTypes.Contains(input.Type))
+            throw new("Task with the chosen type can't contain vendor. If you want to specify a vendor, please change type to 'Translate by vendor' or 'Proofread by vendor'");
+        
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
 
         var client = new CrowdinClient(Creds);
-        var request = new TaskCreateForm
+        var request = new CrowdinTaskCreateForm()
         {
             Title = input.Title,
             LanguageId = input.LanguageId,
@@ -80,7 +87,8 @@ public class TaskActions : BaseInvocable
             DeadLine = input.Deadline,
             DateFrom = input.DateFrom,
             DateTo = input.DateTo,
-            IncludePreTranslatedStringsOnly = input.IncludePreTranslatedStringsOnly
+            IncludePreTranslatedStringsOnly = input.IncludePreTranslatedStringsOnly,
+            Vendor = input.Vendor
         };
         
         var response = await client.Tasks.AddTask(intProjectId!.Value, request);

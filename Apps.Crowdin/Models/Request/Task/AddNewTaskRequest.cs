@@ -23,6 +23,9 @@ public class AddNewTaskRequest
     public string? Status { get; set; }
 
     public string? Description { get; set; }
+    
+    [DataSource(typeof(VendorDataHandler))]
+    public string? Vendor { get; set; }
 
     [Display("Split files")]
     public bool? SplitFiles { get; set; }
