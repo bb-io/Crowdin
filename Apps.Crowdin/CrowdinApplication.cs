@@ -1,10 +1,11 @@
 ﻿using Apps.Crowdin.Connections.OAuth;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Authentication.OAuth2;
+using Blackbird.Applications.Sdk.Common.Invocation;
 
 namespace Apps.Crowdin;
 
-public class CrowdinApplication : IApplication
+public class CrowdinApplication : BaseInvocable, IApplication
 {
     public string Name
     {
@@ -14,7 +15,7 @@ public class CrowdinApplication : IApplication
 
     private readonly Dictionary<Type, object> _typesInstances;
 
-    public CrowdinApplication()
+    public CrowdinApplication(InvocationContext invocationContext) : base(invocationContext)
     {
         _typesInstances = CreateTypesInstances();
     }
@@ -33,8 +34,8 @@ public class CrowdinApplication : IApplication
     {
         return new Dictionary<Type, object>
         {
-            { typeof(IOAuth2AuthorizeService), new OAuth2AuthorizationSerivce() },
-            { typeof(IOAuth2TokenService), new OAuth2TokenService() }
+            { typeof(IOAuth2AuthorizeService), new OAuth2AuthorizationSerivce(InvocationContext) },
+            { typeof(IOAuth2TokenService), new OAuth2TokenService(InvocationContext) }
         };
     }
 }
