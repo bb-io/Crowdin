@@ -1,12 +1,18 @@
 ﻿using Apps.Crowdin.Constants;
+using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Authentication.OAuth2;
+using Blackbird.Applications.Sdk.Common.Invocation;
 using Newtonsoft.Json;
 
 namespace Apps.Crowdin.Connections.OAuth;
 
-public class OAuth2TokenService : IOAuth2TokenService
+public class OAuth2TokenService : BaseInvocable, IOAuth2TokenService
 {
     private const string ExpiresAtKeyName = "expires_at";
+
+    public OAuth2TokenService(InvocationContext invocationContext) : base(invocationContext)
+    {
+    }
 
     #region Token actions
 
@@ -18,7 +24,7 @@ public class OAuth2TokenService : IOAuth2TokenService
             { "grant_type", "authorization_code" },
             { "client_id", ApplicationConstants.ClientId },
             { "client_secret", ApplicationConstants.ClientSecret },
-            { "redirect_uri", ApplicationConstants.RedirectUri },
+            { "redirect_uri", $"{InvocationContext.UriInfo.BridgeServiceUrl.ToString().TrimEnd('/')}/AuthorizationCode" },
             { "state", state },
             { "code", code },
         };
