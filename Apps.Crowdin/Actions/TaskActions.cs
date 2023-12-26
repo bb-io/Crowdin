@@ -1,5 +1,4 @@
 ﻿using Apps.Crowdin.Api;
-using Apps.Crowdin.Constants;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.Task;
@@ -10,6 +9,7 @@ using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Blackbird.Applications.Sdk.Utils.Utilities;
 using Crowdin.Api.Tasks;
@@ -23,8 +23,12 @@ public class TaskActions : BaseInvocable
     private AuthenticationCredentialsProvider[] Creds =>
         InvocationContext.AuthenticationCredentialsProviders.ToArray();
 
-    public TaskActions(InvocationContext invocationContext) : base(invocationContext)
+    private readonly IFileManagementClient _fileManagementClient;
+
+    public TaskActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(
+        invocationContext)
     {
+        _fileManagementClient = fileManagementClient;
     }
     
     [Action("List tasks", Description = "List all tasks")]
@@ -123,7 +127,7 @@ public class TaskActions : BaseInvocable
         if (downloadLink is null)
             throw new("No string found for this task");
         
-        var fileContent = await FileDownloader.DownloadFileBytes(downloadLink.Url);
+        var fileContent = await FileDownloader.DownloadFileBytes(downloadLink.Url, _fileManagementClient);
 
         return new(fileContent);
     }
