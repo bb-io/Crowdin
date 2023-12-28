@@ -1,9 +1,10 @@
 ﻿using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Files;
 
 namespace Apps.Crowdin.Models.Request.Storage;
 
 public class AddStorageRequest
 {
-    public Blackbird.Applications.Sdk.Common.Files.File File { get; set; }
+    public FileReference File { get; set; }
     [Display("File name")] public string? FileName { get; set; }
 }

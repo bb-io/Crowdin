@@ -1,5 +1,4 @@
 ﻿using Apps.Crowdin.Api;
-using Apps.Crowdin.Constants;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.MachineTranslation;
 using Apps.Crowdin.Models.Response.MachineTranslation;

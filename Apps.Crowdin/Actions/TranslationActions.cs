@@ -1,5 +1,4 @@
 ﻿using Apps.Crowdin.Api;
-using Apps.Crowdin.Constants;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.Translation;
@@ -10,12 +9,12 @@ using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Crowdin.Api.SourceFiles;
 using Crowdin.Api.StringTranslations;
 using Crowdin.Api.Translations;
 using RestSharp;
-using File = Blackbird.Applications.Sdk.Common.Files.File;
 
 namespace Apps.Crowdin.Actions;
 
@@ -25,8 +24,12 @@ public class TranslationActions : BaseInvocable
     private AuthenticationCredentialsProvider[] Creds =>
         InvocationContext.AuthenticationCredentialsProviders.ToArray();
 
-    public TranslationActions(InvocationContext invocationContext) : base(invocationContext)
+    private readonly IFileManagementClient _fileManagementClient;
+
+    public TranslationActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(
+        invocationContext)
     {
+        _fileManagementClient = fileManagementClient;
     }
     
     [Action("Apply pre-translation", Description = "Apply pre-translation to chosen files")]
@@ -150,7 +153,8 @@ public class TranslationActions : BaseInvocable
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var client = new CrowdinClient(Creds);
 
-        var storageResult = await client.Storage.AddStorage(new MemoryStream(input.File.Bytes), input.File.Name);
+        var fileStream = await _fileManagementClient.DownloadAsync(input.File);
+        var storageResult = await client.Storage.AddStorage(fileStream, input.File.Name);
 
         var request = new UploadTranslationsRequest
         {
@@ -203,12 +207,7 @@ public class TranslationActions : BaseInvocable
 
         var bytes = new RestClient(build.Link.Url).Get(new RestRequest("/")).RawBytes;
 
-        var file = new File(bytes)
-        {
-            Name = fileInfo.Name,
-            ContentType = contentType
-        };
-
+        var file = await _fileManagementClient.UploadAsync(new MemoryStream(bytes), contentType, fileInfo.Name);
         return new(file);
     }
 }
