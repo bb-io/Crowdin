@@ -2,11 +2,18 @@
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Authentication.OAuth2;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.Sdk.Common.Metadata;
 
 namespace Apps.Crowdin;
 
-public class CrowdinApplication : BaseInvocable, IApplication
+public class CrowdinApplication : BaseInvocable, IApplication, ICategoryProvider
 {
+    public IEnumerable<ApplicationCategory> Categories
+    {
+        get => [ApplicationCategory.CatAndTms];
+        set { }
+    }
+    
     public string Name
     {
         get => "Crowdin";
