@@ -2,7 +2,6 @@
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Authentication.OAuth2;
 using Blackbird.Applications.Sdk.Common.Invocation;
-using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Microsoft.AspNetCore.WebUtilities;
 
 namespace Apps.Crowdin.Connections.OAuth;

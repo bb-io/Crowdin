@@ -8,10 +8,10 @@ using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Crowdin.Api.SourceFiles;
 using RestSharp;
-using File = Blackbird.Applications.Sdk.Common.Files.File;
 
 namespace Apps.Crowdin.Actions;
 
@@ -21,10 +21,14 @@ public class FileActions : BaseInvocable
     private AuthenticationCredentialsProvider[] Creds =>
         InvocationContext.AuthenticationCredentialsProviders.ToArray();
 
-    public FileActions(InvocationContext invocationContext) : base(invocationContext)
+    private readonly IFileManagementClient _fileManagementClient;
+
+    public FileActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(
+        invocationContext)
     {
+        _fileManagementClient = fileManagementClient;
     }
-    
+
     [Action("List files", Description = "List project files")]
     public async Task<ListFilesResponse> ListFiles(
         [ActionParameter] ProjectRequest project,
@@ -64,7 +68,8 @@ public class FileActions : BaseInvocable
         var intDirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId));
         var client = new CrowdinClient(Creds);
 
-        var storage = await client.Storage.AddStorage(new MemoryStream(input.File!.Bytes), input.File.Name);
+        var fileStream = await _fileManagementClient.DownloadAsync(input.File);
+        var storage = await client.Storage.AddStorage(fileStream, input.File.Name);
         var request = new AddFileRequest
         {
             StorageId = storage.Id,
@@ -90,13 +95,15 @@ public class FileActions : BaseInvocable
 
         var client = new CrowdinClient(Creds);
 
-        var storage = await client.Storage.AddStorage(new MemoryStream(input.File!.Bytes), input.File.Name);
+        var fileStream = await _fileManagementClient.DownloadAsync(input.File);
+        var storage = await client.Storage.AddStorage(fileStream, input.File.Name);
 
-        (var file, var isModified) = await client.SourceFiles.UpdateOrRestoreFile(intProjectId!.Value, intFileId!.Value, new ReplaceFileRequest
-        {
-            StorageId = storage.Id,
-            UpdateOption = ToOptionEnum(input.UpdateOption)
-        });
+        var (file, isModified) = await client.SourceFiles.UpdateOrRestoreFile(intProjectId!.Value, intFileId!.Value,
+            new ReplaceFileRequest
+            {
+                StorageId = storage.Id,
+                UpdateOption = ToOptionEnum(input.UpdateOption)
+            });
 
         return new(file, isModified);
     }
@@ -110,9 +117,10 @@ public class FileActions : BaseInvocable
         var existingFile = projectFiles.Files.FirstOrDefault(f => f.Name == input.File.Name);
         if (existingFile != null)
         {
-            return await UpdateFile(project, 
-                new UpdateFileRequest() { File = input.File, FileId = existingFile.Id, UpdateOption = input.UpdateOption });
+            return await UpdateFile(project, new()
+                { File = input.File, FileId = existingFile.Id, UpdateOption = input.UpdateOption });
         }
+
         return await AddFile(project, input);
     }
 
@@ -128,8 +136,8 @@ public class FileActions : BaseInvocable
 
         var file = await client.SourceFiles.GetFile<FileResource>(intProjectId!.Value, intFileId!.Value);
         return new(file);
-    }      
-    
+    }
+
     [Action("Download file", Description = "Download specific file")]
     public async Task<DownloadFileResponse> DownloadFile(
         [ActionParameter] ProjectRequest project,
@@ -150,15 +158,10 @@ public class FileActions : BaseInvocable
 
         var bytes = new RestClient(downloadLink.Url).Get(new RestRequest("/")).RawBytes;
 
-        var file = new File(bytes)
-        {
-            Name = fileInfo.Name,
-            ContentType = contentType
-        };
-
+        var file = await _fileManagementClient.UploadAsync(new MemoryStream(bytes), contentType, fileInfo.Name);
         return new(file);
-    }   
-    
+    }
+
     [Action("Delete file", Description = "Delete specific file")]
     public Task DeleteFile(
         [ActionParameter] ProjectRequest project,

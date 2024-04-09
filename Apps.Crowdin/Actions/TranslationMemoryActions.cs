@@ -1,5 +1,4 @@
 ﻿using Apps.Crowdin.Api;
-using Apps.Crowdin.Constants;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.TranslationMemory;
 using Apps.Crowdin.Models.Response.File;
@@ -9,6 +8,7 @@ using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Blackbird.Applications.Sdk.Utils.Utilities;
 using Crowdin.Api.TranslationMemory;
@@ -21,8 +21,12 @@ public class TranslationMemoryActions : BaseInvocable
     private AuthenticationCredentialsProvider[] Creds =>
         InvocationContext.AuthenticationCredentialsProviders.ToArray();
 
-    public TranslationMemoryActions(InvocationContext invocationContext) : base(invocationContext)
+    private readonly IFileManagementClient _fileManagementClient;
+
+    public TranslationMemoryActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(
+        invocationContext)
     {
+        _fileManagementClient = fileManagementClient;
     }
     
     [Action("List translation memories", Description = "List all translation memories")]
@@ -110,7 +114,7 @@ public class TranslationMemoryActions : BaseInvocable
         var client = new CrowdinClient(Creds);
 
         var response = await client.TranslationMemory.DownloadTm(intTmId!.Value, input.ExportId);
-        var fileContent = await FileDownloader.DownloadFileBytes(response.Url);
+        var fileContent = await FileDownloader.DownloadFileBytes(response.Url, _fileManagementClient);
         return new(fileContent);
     }
 
