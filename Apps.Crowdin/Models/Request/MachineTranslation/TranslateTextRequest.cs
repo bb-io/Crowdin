@@ -1,6 +1,7 @@
 ﻿using Apps.Crowdin.DataSourceHandlers;
 using Apps.Crowdin.DataSourceHandlers.EnumHandlers;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Crowdin.Models.Request.MachineTranslation;
@@ -18,6 +19,6 @@ public class TranslateTextRequest
     public string Text { get; set; }
     
     [Display("Language recognition provider")]
-    [DataSource(typeof(LanguageRecognitionProviderHandler))]
+    [StaticDataSource(typeof(LanguageRecognitionProviderHandler))]
     public string LanguageRecognitionProvider { get; set; }
 }

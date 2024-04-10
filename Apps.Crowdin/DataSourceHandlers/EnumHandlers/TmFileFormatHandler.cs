@@ -1,10 +1,10 @@
-﻿using Blackbird.Applications.Sdk.Utils.Sdk.DataSourceHandlers;
+﻿using Blackbird.Applications.Sdk.Common.Dictionaries;
 
 namespace Apps.Crowdin.DataSourceHandlers.EnumHandlers;
 
-public class TmFileFormatHandler : EnumDataHandler
+public class TmFileFormatHandler : IStaticDataSourceHandler
 {
-    protected override Dictionary<string, string> EnumValues => new()
+    public Dictionary<string, string> GetData() => new()
     {
         { "Tmx", "TMX" },
         { "Csv", "CSV" },

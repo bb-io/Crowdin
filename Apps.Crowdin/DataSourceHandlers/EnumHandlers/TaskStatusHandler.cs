@@ -1,14 +1,14 @@
-﻿using Blackbird.Applications.Sdk.Utils.Sdk.DataSourceHandlers;
+﻿using Blackbird.Applications.Sdk.Common.Dictionaries;
 
 namespace Apps.Crowdin.DataSourceHandlers.EnumHandlers;
 
-public class TaskStatusHandler : EnumDataHandler
+public class TaskStatusHandler : IStaticDataSourceHandler
 {
-    protected override Dictionary<string, string> EnumValues => new()
+    public Dictionary<string, string> GetData() => new()
     {
-        {"Todo", "To do"},
-        {"InProgress", "In progress"},
-        {"Done", "Done"},
-        {"Closed", "Closed"},
+        { "Todo", "To do" },
+        { "InProgress", "In progress" },
+        { "Done", "Done" },
+        { "Closed", "Closed" },
     };
 }

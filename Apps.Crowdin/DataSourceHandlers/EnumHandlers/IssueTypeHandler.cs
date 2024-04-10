@@ -1,10 +1,10 @@
-﻿using Blackbird.Applications.Sdk.Utils.Sdk.DataSourceHandlers;
+﻿using Blackbird.Applications.Sdk.Common.Dictionaries;
 
 namespace Apps.Crowdin.DataSourceHandlers.EnumHandlers;
 
-public class IssueTypeHandler : EnumDataHandler
+public class IssueTypeHandler : IStaticDataSourceHandler
 {
-    protected override Dictionary<string, string> EnumValues => new()
+    public Dictionary<string, string> GetData() => new()
     {
         { "GeneralQuestion", "General question" },
         { "TranslationMistake", "Translation mistake" },

@@ -1,6 +1,7 @@
 ﻿using Apps.Crowdin.DataSourceHandlers;
 using Apps.Crowdin.DataSourceHandlers.EnumHandlers;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Crowdin.Models.Request.Task;
@@ -16,15 +17,15 @@ public class AddNewTaskRequest
     [Display("File IDs")]
     public IEnumerable<string> FileIds { get; set; }
 
-    [DataSource(typeof(TaskTypeHandler))]
+    [StaticDataSource(typeof(TaskTypeHandler))]
     public string Type { get; set; }
 
-    [DataSource(typeof(TaskStatusHandler))]
+    [StaticDataSource(typeof(TaskStatusHandler))]
     public string? Status { get; set; }
 
     public string? Description { get; set; }
     
-    [DataSource(typeof(VendorDataHandler))]
+    [StaticDataSource(typeof(VendorDataHandler))]
     public string? Vendor { get; set; }
 
     [Display("Split files")]

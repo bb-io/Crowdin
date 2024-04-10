@@ -1,10 +1,10 @@
-﻿using Blackbird.Applications.Sdk.Utils.Sdk.DataSourceHandlers;
+﻿using Blackbird.Applications.Sdk.Common.Dictionaries;
 
 namespace Apps.Crowdin.DataSourceHandlers.EnumHandlers;
 
-public class FileUpdateOptionHandler : EnumDataHandler
+public class FileUpdateOptionHandler : IStaticDataSourceHandler
 {
-    protected override Dictionary<string, string> EnumValues => new()
+    public Dictionary<string, string> GetData() => new()
     {
         { "clear_translations_and_approvals", "Clear translations and approvals" },
         { "keep_translations", "Keep translations" },
