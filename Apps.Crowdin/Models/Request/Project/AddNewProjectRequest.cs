@@ -1,6 +1,7 @@
 ﻿using Apps.Crowdin.DataSourceHandlers;
 using Apps.Crowdin.DataSourceHandlers.EnumHandlers;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Crowdin.Models.Request.Project;
@@ -17,7 +18,7 @@ public class AddNewProjectRequest
 
     [Display("Target language IDs")] public IEnumerable<string>? TargetLanguageIds { get; set; }
     
-    [DataSource(typeof(ProjectVisibilityHandler))]
+    [StaticDataSource(typeof(ProjectVisibilityHandler))]
     public string? Visibility { get; set; }
     
     [Display("Custom domain name")]

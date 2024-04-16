@@ -2,6 +2,7 @@
 using Apps.Crowdin.DataSourceHandlers.EnumHandlers;
 using Apps.Crowdin.Models.Request.Project;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Crowdin.Models.Request.Translation;
@@ -16,6 +17,6 @@ public class AddNewTranslationRequest : ProjectRequest
     [Display("Text")] public string Text { get; set; }
     
     [Display("Plural category")]
-    [DataSource(typeof(PluralCategoryNameHandler))]
+    [StaticDataSource(typeof(PluralCategoryNameHandler))]
     public string? PluralCategoryName { get; set; }
 }

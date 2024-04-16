@@ -1,7 +1,7 @@
 ﻿using Apps.Crowdin.DataSourceHandlers.EnumHandlers;
 using Apps.Crowdin.Models.Request.Project;
 using Blackbird.Applications.Sdk.Common;
-using Blackbird.Applications.Sdk.Common.Dynamic;
+using Blackbird.Applications.Sdk.Common.Dictionaries;
 
 namespace Apps.Crowdin.Models.Request.SourceString;
 
@@ -20,6 +20,6 @@ public class ListStringsRequest : ProjectRequest
     public string? CroQl { get; set; }
     public string? Filter { get; set; }
     
-    [DataSource(typeof(StringScopeHandler))]
+    [StaticDataSource(typeof(StringScopeHandler))]
     public string? Scope { get; set; }
 }
