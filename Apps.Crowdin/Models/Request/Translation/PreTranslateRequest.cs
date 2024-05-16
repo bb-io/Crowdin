@@ -18,6 +18,4 @@ public class PreTranslateRequest
     [Display("Translate with perfect match only")]
     public bool? TranslateWithPerfectMatchOnly { get; set; }
 
-    [Display("Mark added translations as done")]
-    public bool? MarkAddedTranslationsAsDone { get; set; }
 }
