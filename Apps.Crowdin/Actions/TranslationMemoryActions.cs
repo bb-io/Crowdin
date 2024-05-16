@@ -12,6 +12,7 @@ using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Blackbird.Applications.Sdk.Utils.Utilities;
 using Crowdin.Api.TranslationMemory;
+using System.IO;
 
 namespace Apps.Crowdin.Actions;
 
@@ -114,8 +115,9 @@ public class TranslationMemoryActions : BaseInvocable
         var client = new CrowdinClient(Creds);
 
         var response = await client.TranslationMemory.DownloadTm(intTmId!.Value, input.ExportId);
-        var fileContent = await FileDownloader.DownloadFileBytes(response.Url, _fileManagementClient);
-        return new(fileContent);
+        var fileContent = await FileDownloader.DownloadFileBytes(response.Url);
+        var file = await _fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType, fileContent.Name);
+        return new(file);
     }
 
     [Action("Add translation memory segment", Description = "Add new segment to the translation memory")]

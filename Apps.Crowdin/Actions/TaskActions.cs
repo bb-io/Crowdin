@@ -14,6 +14,7 @@ using Blackbird.Applications.Sdk.Utils.Parsers;
 using Blackbird.Applications.Sdk.Utils.Utilities;
 using Crowdin.Api.Tasks;
 using TaskStatus = Crowdin.Api.Tasks.TaskStatus;
+using System.IO;
 
 namespace Apps.Crowdin.Actions;
 
@@ -127,8 +128,8 @@ public class TaskActions : BaseInvocable
         if (downloadLink is null)
             throw new("No string found for this task");
         
-        var fileContent = await FileDownloader.DownloadFileBytes(downloadLink.Url, _fileManagementClient);
-
-        return new(fileContent);
+        var fileContent = await FileDownloader.DownloadFileBytes(downloadLink.Url);
+        var file = await _fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType, fileContent.Name);
+        return new(file);
     }
 }

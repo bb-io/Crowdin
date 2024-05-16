@@ -49,8 +49,7 @@ public class TranslationActions : BaseInvocable
             EngineId = intEngineId,
             DuplicateTranslations = input.DuplicateTranslations,
             TranslateUntranslatedOnly = input.TranslateUntranslatedOnly,
-            TranslateWithPerfectMatchOnly = input.TranslateWithPerfectMatchOnly,
-            MarkAddedTranslationsAsDone = input.MarkAddedTranslationsAsDone
+            TranslateWithPerfectMatchOnly = input.TranslateWithPerfectMatchOnly
         };
         var response = await client.Translations
             .ApplyPreTranslation(intProjectId!.Value, request);
