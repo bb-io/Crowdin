@@ -42,11 +42,16 @@ public class TranslationActions : BaseInvocable
 
         var client = new CrowdinClient(Creds);
 
+        PreTranslationMethod? method = input.Method is null ? null : input.Method == "Mt" ? PreTranslationMethod.Mt : PreTranslationMethod.Tm;
+        AutoApproveOption? option = input.AutoApproveOption is null ? null : input.AutoApproveOption == "None" ? AutoApproveOption.None : input.AutoApproveOption == "All" ? AutoApproveOption.All : input.AutoApproveOption == "ExceptAutoSubstituted" ? AutoApproveOption.ExceptAutoSubstituted : AutoApproveOption.PerfectMatchOnly;
+
         var request = new ApplyPreTranslationRequest
         {
             LanguageIds = input.LanguageIds.ToList(),
             FileIds = input.FileIds.Select(fileId => IntParser.Parse(fileId, nameof(fileId))!.Value).ToList(),
             EngineId = intEngineId,
+            Method = method,
+            AutoApproveOption = option,
             DuplicateTranslations = input.DuplicateTranslations,
             TranslateUntranslatedOnly = input.TranslateUntranslatedOnly,
             TranslateWithPerfectMatchOnly = input.TranslateWithPerfectMatchOnly
