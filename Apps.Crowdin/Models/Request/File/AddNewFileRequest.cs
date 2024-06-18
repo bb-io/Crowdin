@@ -22,7 +22,4 @@ public class AddNewFileRequest
 
     [Display("Attach label IDs")]
     public IEnumerable<int>? AttachLabelIds { get; set; }
-
-    [Display("Type", Description = "File type, by default: auto"), StaticDataSource(typeof(TypeDataSource))]
-    public string? Type { get; set; }
 }

@@ -1,11 +1,6 @@
 ﻿using Apps.Crowdin.Constants;
-using Apps.Crowdin.Models.Dtos;
 using Blackbird.Applications.Sdk.Common.Authentication;
-using Blackbird.Applications.Sdk.Utils.Extensions.Files;
-using Blackbird.Applications.Sdk.Utils.Extensions.Http;
 using Crowdin.Api;
-using Newtonsoft.Json;
-using RestSharp;
 
 namespace Apps.Crowdin.Api;
 
