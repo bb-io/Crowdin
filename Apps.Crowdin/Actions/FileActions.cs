@@ -67,43 +67,28 @@ public class FileActions : BaseInvocable
         [ActionParameter] ProjectRequest project,
         [ActionParameter] AddNewFileRequest input)
     {
-        try
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
+        var intBranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId));
+        var intDirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId));
+        var client = new CrowdinClient(Creds);
+
+        var fileStream = await _fileManagementClient.DownloadAsync(input.File);
+        var storage = await client.Storage.AddStorage(fileStream, input.File.Name);
+        var request = new AddFileRequest
         {
-            var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
-            var intBranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId));
-            var intDirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId));
-            var client = new CrowdinClient(Creds);
-
-            var fileStream = await _fileManagementClient.DownloadAsync(input.File);
-            var storage = await client.AddStorageAsync(input.File.Name, fileStream);
-
-            var request = new AddFileRequestDto
-            {
-                StorageId = storage.Id,
-                Name = input.File.Name,
-                BranchId = intBranchId,
-                DirectoryId = intDirectoryId,
-                Title = input.Title,
-                ExcludedTargetLanguages = input.ExcludedTargetLanguages?.ToList(),
-                AttachLabelIds = input.AttachLabelIds?.ToList(),
-                Type = input.Type ?? "auto"
-            };
-
-            var file = await client.AddFileAsync(intProjectId!.Value, request);
-            return new(file);
-        }
-        catch (Exception e)
-        {
-            await Logger.LogAsync(new
-            {
-                ExceptionMessage = e.Message,
-                ExceptionStackTrace = e.StackTrace,
-                ExceptionType = e.GetType().ToString(),
-            });
-            throw;
-        }
+            StorageId = storage.Id,
+            Name = input.File.Name,
+            BranchId = intBranchId,
+            DirectoryId = intDirectoryId,
+            Title = input.Title,
+            ExcludedTargetLanguages = input.ExcludedTargetLanguages?.ToList(),
+            AttachLabelIds = input.AttachLabelIds?.ToList()
+        };
+        
+        var file = await client.SourceFiles.AddFile(intProjectId!.Value, request);
+        return new(file);
     }
-
+    
     [Action("Update file", Description = "Update an existing file with new content")]
     public async Task<FileEntity> UpdateFile(
         [ActionParameter] ProjectRequest project,

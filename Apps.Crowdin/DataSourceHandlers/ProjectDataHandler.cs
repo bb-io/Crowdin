@@ -8,23 +8,23 @@ using Crowdin.Api.ProjectsGroups;
 
 namespace Apps.Crowdin.DataSourceHandlers;
 
-public class ProjectDataHandler : BaseInvocable, IAsyncDataSourceHandler
+public class ProjectDataHandler(InvocationContext invocationContext)
+    : BaseInvocable(invocationContext), IAsyncDataSourceHandler
 {
     private AuthenticationCredentialsProvider[] Creds =>
         InvocationContext.AuthenticationCredentialsProviders.ToArray();
-
-    public ProjectDataHandler(InvocationContext invocationContext) : base(invocationContext)
-    {
-    }
 
     public async Task<Dictionary<string, string>> GetDataAsync(DataSourceContext context,
         CancellationToken cancellationToken)
     {
         var client = new CrowdinClient(Creds);
 
-        var items = await Paginator.Paginate((lim, offset)
-            => client.ProjectsGroups.ListProjects<ProjectBase>(null, null, false, lim, offset));
-
+        var fileBasedItems = await Paginator.Paginate((lim, offset)
+            => client.ProjectsGroups.ListProjects<ProjectBase>(null, null, false, ProjectType.FileBased, offset));
+        var stringBasedItems = await Paginator.Paginate((lim, offset)
+            => client.ProjectsGroups.ListProjects<ProjectBase>(null, null, false, ProjectType.StringBased, offset));
+        
+        var items = fileBasedItems.Concat(stringBasedItems).ToArray();
         return items
             .Where(x => context.SearchString == null ||
                         x.Name.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
