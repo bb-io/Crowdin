@@ -11,6 +11,7 @@ using Crowdin.Api;
 using Crowdin.Api.Webhooks;
 using Newtonsoft.Json;
 using RestSharp;
+using EventType = Crowdin.Api.Webhooks.EventType;
 
 namespace Apps.Crowdin.Webhooks.Handlers.Base;
 

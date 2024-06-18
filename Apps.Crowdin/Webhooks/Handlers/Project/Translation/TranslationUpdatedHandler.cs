@@ -1,7 +1,7 @@
 ﻿using Apps.Crowdin.Webhooks.Handlers.Base;
 using Apps.Crowdin.Webhooks.Models.Inputs;
 using Blackbird.Applications.Sdk.Common.Webhooks;
-using Crowdin.Api.Webhooks;
+using EventType = Crowdin.Api.Webhooks.EventType;
 
 namespace Apps.Crowdin.Webhooks.Handlers.Project.Translation;
 
