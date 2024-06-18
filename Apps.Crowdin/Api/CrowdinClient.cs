@@ -34,17 +34,21 @@ public class CrowdinClient : CrowdinApiClient
     {
         var credentials = GetCrowdinCreds(_creds);
         var baseUrl = GetBaseUrl(credentials);
-
+        
+        await Logger.LogAsync(new
+        {
+            Credentials = credentials,
+        });
+        
         using var memoryStream = new MemoryStream();
         await fileStream.CopyToAsync(memoryStream);
         var bytes = memoryStream.ToArray();
 
-        var restClient = new RestClient(baseUrl);
         var restRequest = new RestRequest("/storages", Method.Post)
             .AddHeader("Crowdin-API-FileName", Uri.EscapeDataString(fileName))
             .AddHeader("Authorization", $"Bearer {credentials.AccessToken}")
             .AddHeader("Content-Type", "application/octet-stream");
-
+        
         restRequest.AddParameter("application/octet-stream", bytes, ParameterType.RequestBody);
 
         var response = await ExecuteRequestAsync<DataWrapper<StorageResourceDto>>(restRequest, baseUrl);
@@ -55,6 +59,11 @@ public class CrowdinClient : CrowdinApiClient
     {
         var credentials = GetCrowdinCreds(_creds);
         var baseUrl = GetBaseUrl(credentials);
+        
+        await Logger.LogAsync(new
+        {
+            Credentials = credentials,
+        });
         
         var restClient = new RestClient(baseUrl);
         var restRequest = new RestRequest($"/projects/{projectId}/files", Method.Post)
