@@ -85,7 +85,12 @@ public class FileActions : BaseInvocable
                 DirectoryId = intDirectoryId,
                 Title = input.Title,
                 ExcludedTargetLanguages = input.ExcludedTargetLanguages?.ToList(),
-                AttachLabelIds = input.AttachLabelIds?.ToList()
+                AttachLabelIds = input.AttachLabelIds?.ToList(),
+                Type = input.Type == null 
+                    ? ProjectFileType.Auto
+                    : int.TryParse(input.Type, out var type)
+                        ? (ProjectFileType)type
+                        : ProjectFileType.Auto
             };
 
             var file = await client.AddFileAsync(intProjectId!.Value, request);

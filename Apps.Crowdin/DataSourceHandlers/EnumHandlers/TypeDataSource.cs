@@ -1,0 +1,77 @@
+﻿using Blackbird.Applications.Sdk.Common.Dictionaries;
+
+namespace Apps.Crowdin.DataSourceHandlers.EnumHandlers;
+
+public class TypeDataSource : IStaticDataSourceHandler
+{
+    public Dictionary<string, string> GetData()
+    {
+        return new()
+        {
+            { "0", "auto" },
+            { "1", "android" },
+            { "2", "macosx" },
+            { "3", "resx" },
+            { "4", "properties" },
+            { "5", "gettext" },
+            { "6", "yaml" },
+            { "7", "php" },
+            { "8", "json" },
+            { "9", "fjs" },
+            { "10", "xml" },
+            { "11", "ini" },
+            { "12", "rc" },
+            { "13", "resw" },
+            { "14", "resjson" },
+            { "15", "qtts" },
+            { "16", "joomla" },
+            { "17", "chrome" },
+            { "18", "react_intl" },
+            { "19", "dtd" },
+            { "20", "dklang" },
+            { "21", "flex" },
+            { "22", "nsh" },
+            { "23", "wxl" },
+            { "24", "xliff" },
+            { "25", "xliff_two" },
+            { "26", "html" },
+            { "27", "haml" },
+            { "28", "txt" },
+            { "29", "csv" },
+            { "30", "md" },
+            { "31", "mdx_v1" },
+            { "32", "mdx_v2" },
+            { "33", "flsnp" },
+            { "34", "fm_html" },
+            { "35", "fm_md" },
+            { "36", "mediawiki" },
+            { "37", "docx" },
+            { "38", "sbv" },
+            { "39", "properties_play" },
+            { "40", "properties_xml" },
+            { "41", "maxthon" },
+            { "42", "go_json" },
+            { "43", "dita" },
+            { "44", "mif" },
+            { "45", "idml" },
+            { "46", "stringsdict" },
+            { "47", "plist" },
+            { "48", "vtt" },
+            { "49", "vdf" },
+            { "50", "srt" },
+            { "51", "stf" },
+            { "52", "toml" },
+            { "53", "contentful_rt" },
+            { "54", "svg" },
+            { "55", "js" },
+            { "56", "coffee" },
+            { "57", "ts" },
+            { "58", "fbt" },
+            { "59", "i18next_json" },
+            { "60", "xaml" },
+            { "61", "arb" },
+            { "62", "adoc" },
+            { "63", "webxml" }
+        };
+    }
+}
