@@ -31,13 +31,9 @@ public class ProjectActions : BaseInvocable
         var client = new CrowdinClient(Creds);
 
         var items = await Paginator.Paginate((lim, offset)
-            => client.ProjectsGroups.ListProjects<ProjectBase>(userId, groupId, input.HasManagerAccess ?? false, ProjectType.FileBased, offset));
-        var stringBasedItems = await Paginator.Paginate((lim, offset)
-            => client.ProjectsGroups.ListProjects<ProjectBase>(userId, groupId, input.HasManagerAccess ?? false, ProjectType.StringBased, offset));
+            => client.ProjectsGroups.ListProjects<ProjectBase>(userId, groupId, input.HasManagerAccess ?? false, null, lim, offset));
         
-        items = items.Concat(stringBasedItems).ToList();
         var projects = items.Select(x => new ProjectEntity(x)).ToArray();
-
         return new(projects);
     }
     

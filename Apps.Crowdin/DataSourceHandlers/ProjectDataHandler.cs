@@ -19,12 +19,8 @@ public class ProjectDataHandler(InvocationContext invocationContext)
     {
         var client = new CrowdinClient(Creds);
 
-        var fileBasedItems = await Paginator.Paginate((lim, offset)
-            => client.ProjectsGroups.ListProjects<ProjectBase>(null, null, false, ProjectType.FileBased, offset));
-        var stringBasedItems = await Paginator.Paginate((lim, offset)
-            => client.ProjectsGroups.ListProjects<ProjectBase>(null, null, false, ProjectType.StringBased, offset));
-        
-        var items = fileBasedItems.Concat(stringBasedItems).ToArray();
+        var items = await Paginator.Paginate((lim, offset)
+            => client.ProjectsGroups.ListProjects<ProjectBase>(null, null, false, null, lim, offset));
         return items
             .Where(x => context.SearchString == null ||
                         x.Name.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
