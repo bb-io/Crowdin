@@ -1,4 +1,6 @@
-﻿using Apps.Crowdin.Api;
+﻿using System.Reflection;
+using Apps.Crowdin.Api;
+using Apps.Crowdin.Models.Dtos;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.File;
 using Apps.Crowdin.Models.Request.Project;
@@ -10,7 +12,9 @@ using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Parsers;
+using Crowdin.Api;
 using Crowdin.Api.SourceFiles;
+using Crowdin.Api.Storage;
 using RestSharp;
 
 namespace Apps.Crowdin.Actions;
@@ -69,8 +73,9 @@ public class FileActions : BaseInvocable
         var client = new CrowdinClient(Creds);
 
         var fileStream = await _fileManagementClient.DownloadAsync(input.File);
-        var storage = await client.Storage.AddStorage(fileStream, input.File.Name);
-        var request = new AddFileRequest
+        var storage = await client.AddStorageAsync(input.File.Name, fileStream);
+
+        var request = new AddFileRequestDto
         {
             StorageId = storage.Id,
             Name = input.File.Name,
@@ -80,8 +85,8 @@ public class FileActions : BaseInvocable
             ExcludedTargetLanguages = input.ExcludedTargetLanguages?.ToList(),
             AttachLabelIds = input.AttachLabelIds?.ToList()
         };
-        var file = await client.SourceFiles.AddFile(intProjectId!.Value, request);
-
+        
+        var file = await client.AddFileAsync(intProjectId!.Value, request);
         return new(file);
     }
 
