@@ -80,11 +80,11 @@ public class FileActions : BaseInvocable
             ExcludedTargetLanguages = input.ExcludedTargetLanguages?.ToList(),
             AttachLabelIds = input.AttachLabelIds?.ToList()
         };
+        
         var file = await client.SourceFiles.AddFile(intProjectId!.Value, request);
-
         return new(file);
     }
-
+    
     [Action("Update file", Description = "Update an existing file with new content")]
     public async Task<FileEntity> UpdateFile(
         [ActionParameter] ProjectRequest project,

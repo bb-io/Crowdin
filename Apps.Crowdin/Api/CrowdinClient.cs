@@ -6,9 +6,12 @@ namespace Apps.Crowdin.Api;
 
 public class CrowdinClient : CrowdinApiClient
 {
-    public CrowdinClient(IEnumerable<AuthenticationCredentialsProvider> creds) 
+    private readonly AuthenticationCredentialsProvider[] _creds;
+    
+    public CrowdinClient(IEnumerable<AuthenticationCredentialsProvider> creds)
         : base(GetCrowdinCreds(creds))
     {
+        this._creds = creds.ToArray();
     }
 
     private static CrowdinCredentials GetCrowdinCreds(
