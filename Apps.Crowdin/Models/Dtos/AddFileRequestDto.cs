@@ -24,7 +24,7 @@ public class AddFileRequestDto
     public string? Context { get; set; }
 
     [JsonProperty("type")]
-    public ProjectFileType? Type { get; set; }
+    public string Type { get; set; }
 
     [JsonProperty("importOptions")]
     public FileImportOptions? ImportOptions { get; set; }
