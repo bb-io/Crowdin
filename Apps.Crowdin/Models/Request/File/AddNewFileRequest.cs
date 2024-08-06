@@ -15,6 +15,9 @@ public class AddNewFileRequest
     [Display("Directory ID")]
     public string? DirectoryId { get; set; }
 
+    [Display("File context")]
+    public string? Context { get; set; }
+
     public string? Title { get; set; }
 
     [Display("Excluded target languages")]
