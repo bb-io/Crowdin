@@ -17,8 +17,8 @@ public static class Paginator
             response = await request(Limit, offset);
             offset += Limit;    
             
-            items.AddRange(response.Data);
-        } while (response.Data.Any());
+            items.AddRange(response.Data ?? []);
+        } while (response.Data?.Any() is true);
 
         return items;
     }

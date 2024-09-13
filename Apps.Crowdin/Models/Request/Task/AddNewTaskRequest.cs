@@ -43,9 +43,6 @@ public class AddNewTaskRequest
     [Display("Label IDs")]
     public IEnumerable<string>? LabelIds { get; set; }
 
-    [Display("Assignee IDs")]
-    public IEnumerable<string>? Assignees { get; set; }
-
     public DateTime? Deadline { get; set; }
 
     [Display("Date from")]
