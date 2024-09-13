@@ -14,7 +14,7 @@ using Blackbird.Applications.Sdk.Utils.Parsers;
 using Blackbird.Applications.Sdk.Utils.Utilities;
 using Crowdin.Api.Tasks;
 using TaskStatus = Crowdin.Api.Tasks.TaskStatus;
-using System.IO;
+using Apps.Crowdin.Models.Request;
 
 namespace Apps.Crowdin.Actions;
 
@@ -63,7 +63,7 @@ public class TaskActions : BaseInvocable
 
     [Action("Add task", Description = "Add new task")]
     public async Task<TaskEntity> AddTask(
-        [ActionParameter] ProjectRequest project,
+        [ActionParameter] AssigneesRequest project,
         [ActionParameter] AddNewTaskRequest input)
     {
         var vendorTaskTypes = new[] { "TranslateByVendor", "ProofreadByVendor" };
@@ -88,7 +88,7 @@ public class TaskActions : BaseInvocable
             SkipAssignedStrings = input.SkipAssignedStrings,
             SkipUntranslatedStrings = input.SkipUntranslatedStrings,
             LabelIds = input.LabelIds?.Select(labelId => IntParser.Parse(labelId, nameof(labelId))!.Value).ToList(),
-            Assignees = input.Assignees?.Select(assigneeId => new TaskAssigneeForm { Id = IntParser.Parse(assigneeId, nameof(assigneeId))!.Value }).ToList(),
+            Assignees = project.Assignees?.Select(assigneeId => new TaskAssigneeForm { Id = IntParser.Parse(assigneeId, nameof(assigneeId))!.Value }).ToList(),
             DeadLine = input.Deadline,
             DateFrom = input.DateFrom,
             DateTo = input.DateTo,
