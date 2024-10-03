@@ -8,6 +8,7 @@ namespace Apps.Crowdin.DataSourceHandlers.EnumHandlers
         {
             { "Mt", "Machine translation" },
             { "Tm", "Translation memory" },
+            { "Ai", "Artificial intelligence" }
         };
     }
 }

@@ -15,6 +15,7 @@ using Crowdin.Api.SourceFiles;
 using Crowdin.Api.StringTranslations;
 using Crowdin.Api.Translations;
 using RestSharp;
+using Apps.Crowdin.Models.Request;
 
 namespace Apps.Crowdin.Actions;
 
@@ -35,14 +36,18 @@ public class TranslationActions : BaseInvocable
     [Action("Apply pre-translation", Description = "Apply pre-translation to chosen files")]
     public async Task<PreTranslationEntity> PreTranslate(
         [ActionParameter] ProjectRequest project,
-        [ActionParameter] PreTranslateRequest input)
+        [ActionParameter] PreTranslateRequest input,
+        [ActionParameter] UserRequest user)
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intEngineId = IntParser.Parse(input.EngineId, nameof(input.EngineId));
 
         var client = new CrowdinClient(Creds);
 
-        PreTranslationMethod? method = input.Method is null ? null : input.Method == "Mt" ? PreTranslationMethod.Mt : PreTranslationMethod.Tm;
+        PreTranslationMethod? method = input.Method is null ? null :
+            input.Method == "Mt" ? PreTranslationMethod.Mt :
+            input.Method == "Tm" ? PreTranslationMethod.Tm :
+            PreTranslationMethod.Ai;
         AutoApproveOption? option = input.AutoApproveOption is null ? null : input.AutoApproveOption == "None" ? AutoApproveOption.None : input.AutoApproveOption == "All" ? AutoApproveOption.All : input.AutoApproveOption == "ExceptAutoSubstituted" ? AutoApproveOption.ExceptAutoSubstituted : AutoApproveOption.PerfectMatchOnly;
 
         var request = new ApplyPreTranslationRequest
@@ -51,6 +56,7 @@ public class TranslationActions : BaseInvocable
             FileIds = input.FileIds.Select(fileId => IntParser.Parse(fileId, nameof(fileId))!.Value).ToList(),
             EngineId = intEngineId,
             Method = method,
+            AiPromptId = input.aiPromptId is null ? null : IntParser.Parse(input.aiPromptId, nameof(input.aiPromptId)),
             AutoApproveOption = option,
             DuplicateTranslations = input.DuplicateTranslations,
             TranslateUntranslatedOnly = input.TranslateUntranslatedOnly,

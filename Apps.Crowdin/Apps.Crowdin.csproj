@@ -5,14 +5,14 @@
     <Nullable>enable</Nullable>
     <Product>Crowdin</Product>
     <Description>Cloud-based solution that streamlines localization management</Description>
-    <Version>1.0.9</Version>
+    <Version>1.0.10</Version>
     <AssemblyName>Apps.Crowdin</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.8.0" />
     <PackageReference Include="Blackbird.Applications.SDK.Extensions.FileManagement" Version="1.0.1" />
     <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.0.25" />
-    <PackageReference Include="Crowdin.Api" Version="2.23.1" />
+    <PackageReference Include="Crowdin.Api" Version="2.25.0" />
     <PackageReference Include="MimeTypes" Version="2.4.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

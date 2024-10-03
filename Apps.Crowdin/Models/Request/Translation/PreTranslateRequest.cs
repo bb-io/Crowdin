@@ -32,4 +32,8 @@ public class PreTranslateRequest
     [Display("Pre translation method")]
     public string? Method { get; set; }
 
+    [DataSource(typeof(AiPromptIdDataHandler))]
+    [Display("AI prompt ID")]
+    public string? aiPromptId { get; set; }
+
 }
