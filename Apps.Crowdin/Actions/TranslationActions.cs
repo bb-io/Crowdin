@@ -42,7 +42,10 @@ public class TranslationActions : BaseInvocable
 
         var client = new CrowdinClient(Creds);
 
-        PreTranslationMethod? method = input.Method is null ? null : input.Method == "Mt" ? PreTranslationMethod.Mt : PreTranslationMethod.Tm;
+        PreTranslationMethod? method = input.Method is null ? null :
+            input.Method == "Mt" ? PreTranslationMethod.Mt :
+            input.Method == "Tm" ? PreTranslationMethod.Tm :
+            PreTranslationMethod.Ai;
         AutoApproveOption? option = input.AutoApproveOption is null ? null : input.AutoApproveOption == "None" ? AutoApproveOption.None : input.AutoApproveOption == "All" ? AutoApproveOption.All : input.AutoApproveOption == "ExceptAutoSubstituted" ? AutoApproveOption.ExceptAutoSubstituted : AutoApproveOption.PerfectMatchOnly;
 
         var request = new ApplyPreTranslationRequest
@@ -51,6 +54,7 @@ public class TranslationActions : BaseInvocable
             FileIds = input.FileIds.Select(fileId => IntParser.Parse(fileId, nameof(fileId))!.Value).ToList(),
             EngineId = intEngineId,
             Method = method,
+            AiPromptId = input.aiPromptId is null ? null : IntParser.Parse(input.aiPromptId, nameof(input.aiPromptId)),
             AutoApproveOption = option,
             DuplicateTranslations = input.DuplicateTranslations,
             TranslateUntranslatedOnly = input.TranslateUntranslatedOnly,
