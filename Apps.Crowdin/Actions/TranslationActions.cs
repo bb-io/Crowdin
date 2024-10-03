@@ -15,6 +15,7 @@ using Crowdin.Api.SourceFiles;
 using Crowdin.Api.StringTranslations;
 using Crowdin.Api.Translations;
 using RestSharp;
+using Apps.Crowdin.Models.Request;
 
 namespace Apps.Crowdin.Actions;
 
@@ -35,7 +36,8 @@ public class TranslationActions : BaseInvocable
     [Action("Apply pre-translation", Description = "Apply pre-translation to chosen files")]
     public async Task<PreTranslationEntity> PreTranslate(
         [ActionParameter] ProjectRequest project,
-        [ActionParameter] PreTranslateRequest input)
+        [ActionParameter] PreTranslateRequest input,
+        [ActionParameter] UserRequest user)
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intEngineId = IntParser.Parse(input.EngineId, nameof(input.EngineId));

@@ -16,8 +16,8 @@ namespace Apps.Crowdin.DataSourceHandlers;
 
 public class AiPromptIdDataHandler(
     InvocationContext invocationContext,
-    [ActionParameter] ProjectRequest project, 
-    [ActionParameter][Display("User ID")] string? UserId) 
+    [ActionParameter] ProjectRequest project,
+    [ActionParameter] UserRequest user) 
 
     : BaseInvocable(invocationContext), IAsyncDataSourceHandler
 {
@@ -27,7 +27,7 @@ public class AiPromptIdDataHandler(
     public async Task<Dictionary<string, string>> GetDataAsync(DataSourceContext context,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrEmpty(project.ProjectId) || string.IsNullOrEmpty(UserId))
+        if (string.IsNullOrEmpty(project.ProjectId) || string.IsNullOrEmpty(user.UserId))
             throw new("You should input Project ID and User ID first");
 
         var client = new CrowdinRestClient();
@@ -37,7 +37,7 @@ public class AiPromptIdDataHandler(
         {
             var request =
                 new CrowdinRestRequest(
-                    $"/users/{UserId}/ai/prompts?limit={lim}&offset={offset}",
+                    $"/users/{user.UserId}/ai/prompts?limit={lim}&offset={offset}",
                     Method.Get, Creds);
             request.AddQueryParameter("projectId", project.ProjectId);
             request.AddQueryParameter("action", "pre_translate");
