@@ -14,7 +14,7 @@ using Blackbird.Applications.Sdk.Utils.Parsers;
 using Blackbird.Applications.Sdk.Utils.Utilities;
 using Crowdin.Api.Tasks;
 using TaskStatus = Crowdin.Api.Tasks.TaskStatus;
-using Apps.Crowdin.Models.Request;
+using Apps.Crowdin.Models.Request.Users;
 
 namespace Apps.Crowdin.Actions;
 

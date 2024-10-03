@@ -1,6 +1,6 @@
 using Apps.Crowdin.Api.RestSharp;
 using Apps.Crowdin.Models.Entities;
-using Apps.Crowdin.Models.Request;
+using Apps.Crowdin.Models.Request.Users;
 using Apps.Crowdin.Models.Response;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
