@@ -10,7 +10,7 @@ public class AddNewTaskRequest
 {
     public string Title { get; set; }
 
-    [Display("Language")]
+    [Display("Language ID")]
     [DataSource(typeof(LanguagesDataHandler))]
     public string LanguageId { get; set; }
 

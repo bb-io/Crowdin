@@ -15,7 +15,7 @@ using Crowdin.Api.SourceFiles;
 using Crowdin.Api.StringTranslations;
 using Crowdin.Api.Translations;
 using RestSharp;
-using Apps.Crowdin.Models.Request;
+using Apps.Crowdin.Models.Request.Users;
 
 namespace Apps.Crowdin.Actions;
 
