@@ -17,7 +17,7 @@ namespace Apps.Crowdin.Models.Request.Users
         public string? LanguageId { get; set; }
 
         [StaticDataSource(typeof(UserRoleHandler))]
-        public string Role { get; set; }
+        public string? Role { get; set; }
 
     }
 }

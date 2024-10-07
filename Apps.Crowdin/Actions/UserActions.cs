@@ -24,8 +24,8 @@ namespace Apps.Crowdin.Actions;
         {
         }
 
-        [Action("Search users in project", Description = "Returns all matching project members")]
-        public async Task<SearchUsersResponse> SearchProjectUsers([ActionParameter] SearchUsersRequest input)
+        [Action("Search project members", Description = "Get all matching project members")]
+        public async Task<SearchUsersResponse> SearchProjectMembers([ActionParameter] SearchUsersRequest input)
         {
 
             var client = new CrowdinRestClient();
@@ -36,17 +36,43 @@ namespace Apps.Crowdin.Actions;
                 new CrowdinRestRequest(
                         $"/projects/{input.ProjectId}/members?limit={lim}&offset={offset}",
                         Method.Get, Creds);
-                request.AddQueryParameter("role", input.Role);
+                if (input.Role != null)
+                { request.AddQueryParameter("role", input.Role); }
                 if (input.LanguageId != null)
                 { request.AddQueryParameter("languageId", input.LanguageId); }
                 var response = await client.ExecuteAsync(request);
                 return JsonConvert.DeserializeObject<ResponseList<DataResponse<AssigneeEntity>>>(response.Content);
             });
 
-
-            var users = items.Select(x => new AssigneeEntity(x)).ToArray();
-            return new(users);
+            var users = items.Select(x => x.Data).ToArray();
+            return new SearchUsersResponse(users) ;
         }
-        
+
+    [Action("Find project member", Description = "Get first matching project member")]
+    public async Task<AssigneeEntity> FindProjectUsers([ActionParameter] FindUserRequest input)
+    {
+
+        var client = new CrowdinRestClient();
+        var items = await Paginator.Paginate(async (lim, offset)
+            =>
+        {
+            var request =
+            new CrowdinRestRequest(
+                    $"/projects/{input.ProjectId}/members?limit={lim}&offset={offset}",
+                    Method.Get, Creds);
+            if (input.Role != null)
+            { request.AddQueryParameter("role", input.Role); }
+            if (input.LanguageId != null)
+            { request.AddQueryParameter("languageId", input.LanguageId); }
+            if (input.search != null)
+            { request.AddQueryParameter("search", input.search); }
+            var response = await client.ExecuteAsync(request);
+            return JsonConvert.DeserializeObject<ResponseList<DataResponse<AssigneeEntity>>>(response.Content);
+        });
+
+        var users = items.Select(x => x.Data).ToArray();
+        return users.FirstOrDefault();
     }
+
+}
 
