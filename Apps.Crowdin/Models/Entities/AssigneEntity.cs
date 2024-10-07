@@ -4,13 +4,6 @@ namespace Apps.Crowdin.Models.Entities;
 
 public class AssigneeEntity
 {
-    private DataResponse<AssigneeEntity> x;
-
-    public AssigneeEntity(DataResponse<AssigneeEntity> x)
-    {
-        this.x = x;
-    }
-
     public string Id { get; set; }
     public string FirstName { get; set; }
     public string LastName { get; set; }

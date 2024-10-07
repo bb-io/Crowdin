@@ -87,6 +87,11 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 - **Get translation memory** Get specific translation memory
 - **List translation memories** List all translation memories
 
+### Users
+
+- **Search project members** Get all matching project members. Filter by role or language.
+- **Find project member** Get first matching project member. Filter by role, language or username/fist name/last name.
+
 ## Events
 
 ### Comment 
