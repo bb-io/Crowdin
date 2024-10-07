@@ -1,27 +1,20 @@
-﻿
-
-using Blackbird.Applications.Sdk.Common.Authentication;
+﻿using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common;
-using Apps.Crowdin.Api;
 using Apps.Crowdin.Models.Entities;
-using Apps.Crowdin.Models.Request.Task;
-using Apps.Crowdin.Models.Response.Task;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Utils.Parsers;
 using Apps.Crowdin.Api.RestSharp;
 using Apps.Crowdin.Models.Request.Users;
 using Apps.Crowdin.Models.Response;
 using Crowdin.Api;
 using Newtonsoft.Json;
 using RestSharp;
-using System.Threading;
 using Apps.Crowdin.Models.Response.Project;
-using System.Linq;
 
-namespace Apps.Crowdin.Actions
-{
+namespace Apps.Crowdin.Actions;
+
+    [ActionList]
     public class UserActions : BaseInvocable
     {
         private AuthenticationCredentialsProvider[] Creds =>
@@ -56,4 +49,4 @@ namespace Apps.Crowdin.Actions
         }
         
     }
-}
+
