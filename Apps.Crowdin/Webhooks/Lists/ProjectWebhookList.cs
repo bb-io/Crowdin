@@ -258,8 +258,26 @@ public class ProjectWebhookList
     #region Suggestion
 
     [Webhook("On suggestion added", typeof(SuggestionAddedHandler), Description = "On suggestion added")]
-    public Task<WebhookResponse<SuggestionWebhookResponse>> OnSuggestionAdded(WebhookRequest webhookRequest)
-        => HandleWehookRequest<SuggestionWrapper, SuggestionWebhookResponse>(webhookRequest);
+    public Task<WebhookResponse<SuggestionWebhookResponse>> OnSuggestionAdded(WebhookRequest webhookRequest,
+        [WebhookParameter] GetProjectOptionalRequest projectOptionalRequest,
+        [WebhookParameter] GetSuggestionOptionalRequest fileOptionalRequest)
+    {
+        var result = HandleWehookRequest<SuggestionWrapper, SuggestionWebhookResponse>(webhookRequest);
+        
+        if (projectOptionalRequest.ProjectId != null &&
+            projectOptionalRequest.ProjectId != result.Result.Result?.ProjectId)
+        {
+            return Task.FromResult(PreflightResponse<SuggestionWebhookResponse>());
+        }
+        
+        if(fileOptionalRequest.SuggestionId != null &&
+           fileOptionalRequest.SuggestionId != result.Result.Result?.Id)
+        {
+            return Task.FromResult(PreflightResponse<SuggestionWebhookResponse>());
+        }
+        
+        return result;
+    }
 
     [Webhook("On suggestion approved", typeof(SuggestionApprovedHandler), Description = "On suggestion approved")]
     public Task<WebhookResponse<SuggestionWebhookResponse>> OnSuggestionApproved(WebhookRequest webhookRequest,
