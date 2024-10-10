@@ -4,9 +4,9 @@ using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Crowdin.Models.Request.Project;
 
-public class ProjectRequest
+public class GetProjectOptionalRequest
 {
     [Display("Project ID")]
     [DataSource(typeof(ProjectDataHandler))]
-    public string ProjectId { get; set; }
+    public string? ProjectId { get; set; }
 }
