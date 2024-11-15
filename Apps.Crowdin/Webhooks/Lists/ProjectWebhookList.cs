@@ -11,6 +11,7 @@ using Apps.Crowdin.Webhooks.Handlers.Project.Suggestion;
 using Apps.Crowdin.Webhooks.Handlers.Project.Task;
 using Apps.Crowdin.Webhooks.Handlers.Project.Translation;
 using Apps.Crowdin.Webhooks.Models;
+using Apps.Crowdin.Webhooks.Models.Inputs;
 using Apps.Crowdin.Webhooks.Models.Payload;
 using Apps.Crowdin.Webhooks.Models.Payload.File.Response;
 using Apps.Crowdin.Webhooks.Models.Payload.File.Wrappers;
@@ -42,16 +43,9 @@ public class ProjectWebhookList
 
     [Webhook("On file approved", typeof(FileApprovedHandler), Description = "On file approved")]
     public Task<WebhookResponse<FileWithLanguageWebhookResponse>> OnFileApproved(WebhookRequest webhookRequest,
-        [WebhookParameter] GetProjectOptionalRequest projectOptionalRequest,
         [WebhookParameter] GetFileOptionalRequest fileOptionalRequest)
     {
         var result = HandleWehookRequest<FileWithLanguageWrapper, FileWithLanguageWebhookResponse>(webhookRequest);
-
-        if (projectOptionalRequest.ProjectId != null &&
-            projectOptionalRequest.ProjectId != result.Result.Result?.File.ProjectId)
-        {
-            return Task.FromResult(PreflightResponse<FileWithLanguageWebhookResponse>());
-        }
         
         if(fileOptionalRequest.FileId != null &&
            fileOptionalRequest.FileId != result.Result.Result?.File.Id)
@@ -68,16 +62,10 @@ public class ProjectWebhookList
 
     [Webhook("On file reverted", typeof(FileRevertedHandler), Description = "On file reverted")]
     public Task<WebhookResponse<FileWithUserWebhookResponse>> OnFileReverted(WebhookRequest webhookRequest,
-        [WebhookParameter] GetProjectOptionalRequest projectOptionalRequest,
         [WebhookParameter] GetFileOptionalRequest fileOptionalRequest)
     {
         var result = HandleWehookRequest<FileWithUserWrapper, FileWithUserWebhookResponse>(webhookRequest);
         
-        if (projectOptionalRequest.ProjectId != null &&
-            projectOptionalRequest.ProjectId != result.Result.Result?.File.ProjectId)
-        {
-            return Task.FromResult(PreflightResponse<FileWithUserWebhookResponse>());
-        }
         
         if(fileOptionalRequest.FileId != null &&
            fileOptionalRequest.FileId != result.Result.Result?.File.Id)
@@ -90,16 +78,9 @@ public class ProjectWebhookList
 
     [Webhook("On file translated", typeof(FileTranslatedHandler), Description = "On file fully translated")]
     public Task<WebhookResponse<FileWithLanguageWebhookResponse>> OnFileTranslated(WebhookRequest webhookRequest,
-        [WebhookParameter] GetProjectOptionalRequest projectOptionalRequest,
         [WebhookParameter] GetFileOptionalRequest fileOptionalRequest)
     {
         var result = HandleWehookRequest<FileWithLanguageWrapper, FileWithLanguageWebhookResponse>(webhookRequest);
-        
-        if (projectOptionalRequest.ProjectId != null &&
-            projectOptionalRequest.ProjectId != result.Result.Result?.File.ProjectId)
-        {
-            return Task.FromResult(PreflightResponse<FileWithLanguageWebhookResponse>());
-        }
         
         if(fileOptionalRequest.FileId != null &&
            fileOptionalRequest.FileId != result.Result.Result?.File.Id)
@@ -112,16 +93,9 @@ public class ProjectWebhookList
 
     [Webhook("On file updated", typeof(FileUpdatedHandler), Description = "On file updated")]
     public Task<WebhookResponse<FileWithUserWebhookResponse>> OnFileUpdated(WebhookRequest webhookRequest,
-        [WebhookParameter] GetProjectOptionalRequest projectOptionalRequest,
         [WebhookParameter] GetFileOptionalRequest fileOptionalRequest)
     {
         var result = HandleWehookRequest<FileWithUserWrapper, FileWithUserWebhookResponse>(webhookRequest);
-        
-        if (projectOptionalRequest.ProjectId != null &&
-            projectOptionalRequest.ProjectId != result.Result.Result?.File.ProjectId)
-        {
-            return Task.FromResult(PreflightResponse<FileWithUserWebhookResponse>());
-        }
         
         if(fileOptionalRequest.FileId != null &&
            fileOptionalRequest.FileId != result.Result.Result?.File.Id)
@@ -137,32 +111,16 @@ public class ProjectWebhookList
     #region Project
 
     [Webhook("On project approved", typeof(ProjectApprovedHandler), Description = "On project approved")]
-    public Task<WebhookResponse<ProjectWithLanguageWebhookResponse>> OnProjectApproved(WebhookRequest webhookRequest,
-        [WebhookParameter] GetProjectOptionalRequest projectOptionalRequest)
+    public Task<WebhookResponse<ProjectWithLanguageWebhookResponse>> OnProjectApproved(WebhookRequest webhookRequest)
     {
         var result = HandleWehookRequest<ProjectWithLanguageWrapper, ProjectWithLanguageWebhookResponse>(webhookRequest);
-        
-        if (projectOptionalRequest.ProjectId != null &&
-            projectOptionalRequest.ProjectId != result.Result.Result?.Project.Id)
-        {
-            return Task.FromResult(PreflightResponse<ProjectWithLanguageWebhookResponse>());
-        }
-        
         return result;
     }
 
     [Webhook("On project translated", typeof(ProjectTranslatedHandler), Description = "On project translated")]
-    public Task<WebhookResponse<ProjectWithLanguageWebhookResponse>> OnProjectTranslated(WebhookRequest webhookRequest,
-        [WebhookParameter] GetProjectOptionalRequest projectOptionalRequest)
+    public Task<WebhookResponse<ProjectWithLanguageWebhookResponse>> OnProjectTranslated(WebhookRequest webhookRequest)
     {
         var result = HandleWehookRequest<ProjectWithLanguageWrapper, ProjectWithLanguageWebhookResponse>(webhookRequest);
-        
-        if (projectOptionalRequest.ProjectId != null &&
-            projectOptionalRequest.ProjectId != result.Result.Result?.Project.Id)
-        {
-            return Task.FromResult(PreflightResponse<ProjectWithLanguageWebhookResponse>());
-        }
-        
         return result;
     }
 
@@ -176,16 +134,9 @@ public class ProjectWebhookList
 
     [Webhook("On string added", typeof(StringAddedHandler), Description = "On string added")]
     public Task<WebhookResponse<SourceStringWebhookResponse>> OnStringAdded(WebhookRequest webhookRequest,
-        [WebhookParameter] GetProjectOptionalRequest projectOptionalRequest,
         [WebhookParameter] GetFileOptionalRequest fileOptionalRequest)
     {
         var result = HandleWehookRequest<EventsWebhookResponse<SourceStringWrapper>, SourceStringWebhookResponse>(webhookRequest);
-        
-        if (projectOptionalRequest.ProjectId != null &&
-            projectOptionalRequest.ProjectId != result.Result.Result?.String.ProjectId)
-        {
-            return Task.FromResult(PreflightResponse<SourceStringWebhookResponse>());
-        }
         
         if(fileOptionalRequest.FileId != null &&
            fileOptionalRequest.FileId != result.Result.Result?.String.FileId)
@@ -202,17 +153,10 @@ public class ProjectWebhookList
 
     [Webhook("On string updated", typeof(StringUpdatedHandler), Description = "On string updated")]
     public Task<WebhookResponse<SourceStringWebhookResponse>> OnStringUpdated(WebhookRequest webhookRequest,
-        [WebhookParameter] GetProjectOptionalRequest projectOptionalRequest,
         [WebhookParameter] GetFileOptionalRequest fileOptionalRequest,
         [WebhookParameter] GetSourceStringOptionalRequest stringOptionalRequest)
     {
         var result =HandleWehookRequest<EventsWebhookResponse<SourceStringWrapper>, SourceStringWebhookResponse>(webhookRequest);
-        
-        if (projectOptionalRequest.ProjectId != null &&
-            projectOptionalRequest.ProjectId != result.Result.Result?.String.ProjectId)
-        {
-            return Task.FromResult(PreflightResponse<SourceStringWebhookResponse>());
-        }
         
         if(fileOptionalRequest.FileId != null &&
            fileOptionalRequest.FileId != result.Result.Result?.String.FileId)
@@ -259,16 +203,9 @@ public class ProjectWebhookList
 
     [Webhook("On suggestion added", typeof(SuggestionAddedHandler), Description = "On suggestion added")]
     public Task<WebhookResponse<SuggestionWebhookResponse>> OnSuggestionAdded(WebhookRequest webhookRequest,
-        [WebhookParameter] GetProjectOptionalRequest projectOptionalRequest,
         [WebhookParameter] GetSuggestionOptionalRequest fileOptionalRequest)
     {
         var result = HandleWehookRequest<SuggestionWrapper, SuggestionWebhookResponse>(webhookRequest);
-        
-        if (projectOptionalRequest.ProjectId != null &&
-            projectOptionalRequest.ProjectId != result.Result.Result?.ProjectId)
-        {
-            return Task.FromResult(PreflightResponse<SuggestionWebhookResponse>());
-        }
         
         if(fileOptionalRequest.SuggestionId != null &&
            fileOptionalRequest.SuggestionId != result.Result.Result?.Id)
@@ -281,16 +218,9 @@ public class ProjectWebhookList
 
     [Webhook("On suggestion approved", typeof(SuggestionApprovedHandler), Description = "On suggestion approved")]
     public Task<WebhookResponse<SuggestionWebhookResponse>> OnSuggestionApproved(WebhookRequest webhookRequest,
-        [WebhookParameter] GetProjectOptionalRequest projectOptionalRequest,
         [WebhookParameter] GetSuggestionOptionalRequest fileOptionalRequest)
     {
         var result = HandleWehookRequest<SuggestionWrapper, SuggestionWebhookResponse>(webhookRequest);
-        
-        if (projectOptionalRequest.ProjectId != null &&
-            projectOptionalRequest.ProjectId != result.Result.Result?.ProjectId)
-        {
-            return Task.FromResult(PreflightResponse<SuggestionWebhookResponse>());
-        }
         
         if(fileOptionalRequest.SuggestionId != null &&
            fileOptionalRequest.SuggestionId != result.Result.Result?.Id)
@@ -308,16 +238,9 @@ public class ProjectWebhookList
     [Webhook("On suggestion disapproved", typeof(SuggestionDisapprovedHandler),
         Description = "On suggestion disapproved")]
     public Task<WebhookResponse<SuggestionWebhookResponse>> OnSuggestionDisapproved(WebhookRequest webhookRequest,
-        [WebhookParameter] GetProjectOptionalRequest projectOptionalRequest,
         [WebhookParameter] GetSuggestionOptionalRequest fileOptionalRequest)
     {
         var result = HandleWehookRequest<SuggestionWrapper, SuggestionWebhookResponse>(webhookRequest);
-        
-        if (projectOptionalRequest.ProjectId != null &&
-            projectOptionalRequest.ProjectId != result.Result.Result?.ProjectId)
-        {
-            return Task.FromResult(PreflightResponse<SuggestionWebhookResponse>());
-        }
         
         if(fileOptionalRequest.SuggestionId != null &&
            fileOptionalRequest.SuggestionId != result.Result.Result?.Id)
@@ -346,17 +269,10 @@ public class ProjectWebhookList
 
     [Webhook("On task status changed", typeof(TaskStatusChangedHandler), Description = "On task status changed")]
     public Task<WebhookResponse<TaskStatusChangedWebhookResponse>> OnTaskStatusChanged(WebhookRequest webhookRequest,
-        [WebhookParameter] GetProjectOptionalRequest projectOptionalRequest,
         [WebhookParameter] GetTaskOptionalRequest taskOptionalRequest)
     {
         var result = HandleWehookRequest<TaskStatusChangedWrapper, TaskStatusChangedWebhookResponse>(webhookRequest);
-        
-        if (projectOptionalRequest.ProjectId != null &&
-            projectOptionalRequest.ProjectId != result.Result.Result?.ProjectId)
-        {
-            return Task.FromResult(PreflightResponse<TaskStatusChangedWebhookResponse>());
-        }
-        
+
         if(taskOptionalRequest.TaskId != null &&
            taskOptionalRequest.TaskId != result.Result.Result?.Id)
         {
@@ -372,7 +288,6 @@ public class ProjectWebhookList
 
     [Webhook("On translation updated", typeof(TranslationUpdatedHandler), Description = "On translation updated")]
     public WebhookResponse<TranslationUpdatedWebhookResponse> OnTranslationUpdated(WebhookRequest webhookRequest,
-        [WebhookParameter] GetProjectOptionalRequest projectOptionalRequest,
         [WebhookParameter] GetFileOptionalRequest fileOptionalRequest,
         [WebhookParameter] GetSourceStringOptionalRequest sourceStringOptionalRequest)
     {
@@ -383,12 +298,6 @@ public class ProjectWebhookList
 
         var result = new TranslationUpdatedWebhookResponse();
         result.ConfigureResponse(data);
-        
-        if (projectOptionalRequest.ProjectId != null &&
-            projectOptionalRequest.ProjectId != result.NewTranslation.SourceString.ProjectId)
-        {
-            return PreflightResponse<TranslationUpdatedWebhookResponse>();
-        }
         
         if(fileOptionalRequest.FileId != null &&
            fileOptionalRequest.FileId != result.NewTranslation.SourceString.FileId)

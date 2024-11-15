@@ -8,6 +8,11 @@ Blackbird is the new automation backbone for the language technology industry. B
 
 Crowdin is a cloud-based localization platform that helps businesses and organizations manage the translation of their software, apps, websites, and other digital content into multiple languages. It provides a collaborative environment where translators and project managers can work together to translate and localize content efficiently.
 
+## Before Connecting
+
+1. Make sure you have access to an account on the CrowdIn instance you want to connect to.
+2. If you want to make use of events. Make sure your account has sufficient permissions to create webhooks.
+
 ## Connecting
 
 1. Navigate to apps and search for Crowdin. If you cannot find Crowdin then click _Add App_ in the top right corner, select Crowdin and add the app to your Blackbird environment.
