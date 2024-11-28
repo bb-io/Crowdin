@@ -179,8 +179,22 @@ public class ProjectWebhookList
 
     [Webhook("On string comment created", typeof(StringCommentCreatedHandler),
         Description = "On string comment created")]
-    public Task<WebhookResponse<StringCommentWebhookResponse>> OnStringCommentCreated(WebhookRequest webhookRequest)
-        => HandleWehookRequest<StringCommentWrapper, StringCommentWebhookResponse>(webhookRequest);
+    public async Task<WebhookResponse<StringCommentWebhookResponse>> OnStringCommentCreated(WebhookRequest webhookRequest , [WebhookParameter] ContainsInputRequest input)
+       {
+        
+        var response = await  HandleWehookRequest<StringCommentWrapper, StringCommentWebhookResponse>(webhookRequest);
+
+        if (!string.IsNullOrWhiteSpace(input.Text))
+        {
+            //if it`s null or result does not contain the input string, it will stop the webhook
+            if (response.Result == null || !response.Result.Text.Contains(input.Text))
+            {
+                return PreflightResponse<StringCommentWebhookResponse>();
+            }
+        }
+
+        return response;
+    }
 
     [Webhook("On string comment deleted", typeof(StringCommentDeletedHandler),
         Description = "On string comment deleted")]
