@@ -9,7 +9,7 @@ public class TaskAddedHandler : ProjectWebhookHandler
 {
     protected override EventType SubscriptionEvent => EventType.TaskAdded;
 
-    public TaskAddedHandler([WebhookParameter] ProjectWebhookInput input) : base(input)
+    public TaskAddedHandler([WebhookParameter(true)] ProjectWebhookInput input) : base(input)
     {
     }
 }

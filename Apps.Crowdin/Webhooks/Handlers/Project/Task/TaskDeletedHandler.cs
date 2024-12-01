@@ -9,7 +9,7 @@ public class TaskDeletedHandler : ProjectWebhookHandler
 {
     protected override EventType SubscriptionEvent => EventType.TaskDeleted;
 
-    public TaskDeletedHandler([WebhookParameter] ProjectWebhookInput input) : base(input)
+    public TaskDeletedHandler([WebhookParameter(true)] ProjectWebhookInput input) : base(input)
     {
     }
 }

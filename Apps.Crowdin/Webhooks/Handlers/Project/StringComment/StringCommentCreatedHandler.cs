@@ -9,7 +9,7 @@ public class StringCommentCreatedHandler : ProjectWebhookHandler
 {
     protected override EventType SubscriptionEvent => EventType.StringCommentCreated;
 
-    public StringCommentCreatedHandler([WebhookParameter] ProjectWebhookInput input) : base(input)
+    public StringCommentCreatedHandler([WebhookParameter(true)] ProjectWebhookInput input) : base(input)
     {
     }
 }

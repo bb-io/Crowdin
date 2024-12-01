@@ -9,7 +9,7 @@ public class TranslationUpdatedHandler : ProjectWebhookHandler
 {
     protected override EventType SubscriptionEvent => EventType.TranslationUpdated;
 
-    public TranslationUpdatedHandler([WebhookParameter] ProjectWebhookInput input) : base(input)
+    public TranslationUpdatedHandler([WebhookParameter(true)] ProjectWebhookInput input) : base(input)
     {
     }
 }

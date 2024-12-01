@@ -9,7 +9,7 @@ public class StringCommentDeletedHandler : ProjectWebhookHandler
 {
     protected override EventType SubscriptionEvent => EventType.StringCommentDeleted;
 
-    public StringCommentDeletedHandler([WebhookParameter] ProjectWebhookInput input) : base(input)
+    public StringCommentDeletedHandler([WebhookParameter(true)] ProjectWebhookInput input) : base(input)
     {
     }
 }

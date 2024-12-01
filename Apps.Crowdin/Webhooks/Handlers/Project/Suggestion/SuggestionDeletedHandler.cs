@@ -9,7 +9,7 @@ public class SuggestionDeletedHandler : ProjectWebhookHandler
 {
     protected override EventType SubscriptionEvent => EventType.SuggestionDeleted;
 
-    public SuggestionDeletedHandler([WebhookParameter] ProjectWebhookInput input) : base(input)
+    public SuggestionDeletedHandler([WebhookParameter(true)] ProjectWebhookInput input) : base(input)
     {
     }
 }

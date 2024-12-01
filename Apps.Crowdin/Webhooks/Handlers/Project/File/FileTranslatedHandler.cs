@@ -9,7 +9,7 @@ public class FileTranslatedHandler : ProjectWebhookHandler
 {
     protected override EventType SubscriptionEvent => EventType.FileTranslated;
 
-    public FileTranslatedHandler([WebhookParameter] ProjectWebhookInput input) : base(input)
+    public FileTranslatedHandler([WebhookParameter(true)] ProjectWebhookInput input) : base(input)
     {
     }
 }

@@ -9,7 +9,7 @@ public class StringUpdatedHandler : ProjectWebhookHandler
 {
     protected override EventType SubscriptionEvent => EventType.StringAdded;
 
-    public StringUpdatedHandler([WebhookParameter] ProjectWebhookInput input) : base(input, true)
+    public StringUpdatedHandler([WebhookParameter(true)] ProjectWebhookInput input) : base(input, true)
     {
     }
 }

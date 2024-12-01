@@ -9,7 +9,7 @@ public class SuggestionDisapprovedHandler : ProjectWebhookHandler
 {
     protected override EventType SubscriptionEvent => EventType.SuggestionDisapproved;
 
-    public SuggestionDisapprovedHandler([WebhookParameter] ProjectWebhookInput input) : base(input)
+    public SuggestionDisapprovedHandler([WebhookParameter(true)] ProjectWebhookInput input) : base(input)
     {
     }
 }

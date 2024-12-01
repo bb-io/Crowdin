@@ -9,7 +9,7 @@ public class SuggestionUpdatedHandler : ProjectWebhookHandler
 {
     protected override EventType SubscriptionEvent => EventType.SuggestionUpdated;
 
-    public SuggestionUpdatedHandler([WebhookParameter] ProjectWebhookInput input) : base(input)
+    public SuggestionUpdatedHandler([WebhookParameter(true)] ProjectWebhookInput input) : base(input)
     {
     }
 }
