@@ -9,7 +9,7 @@ public class TaskStatusChangedHandler : ProjectWebhookHandler
 {
     protected override EventType SubscriptionEvent => EventType.TaskStatusChanged;
 
-    public TaskStatusChangedHandler([WebhookParameter] ProjectWebhookInput input) : base(input)
+    public TaskStatusChangedHandler([WebhookParameter(true)] ProjectWebhookInput input) : base(input)
     {
     }
 }

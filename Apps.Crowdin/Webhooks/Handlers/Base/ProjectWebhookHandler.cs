@@ -21,7 +21,7 @@ public abstract class ProjectWebhookHandler : IWebhookEventHandler
     private int ProjectId { get; }
     private bool EnableBatchingWebhooks { get; }
 
-    protected ProjectWebhookHandler([WebhookParameter] ProjectWebhookInput input, bool enableBatching = false)
+    protected ProjectWebhookHandler([WebhookParameter(true)] ProjectWebhookInput input, bool enableBatching = false)
     {
         ProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId))!.Value;
         EnableBatchingWebhooks = enableBatching;

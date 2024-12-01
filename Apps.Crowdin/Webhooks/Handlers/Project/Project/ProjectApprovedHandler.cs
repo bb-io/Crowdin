@@ -9,7 +9,7 @@ public class ProjectApprovedHandler : ProjectWebhookHandler
 {
     protected override EventType SubscriptionEvent => EventType.ProjectApproved;
 
-    public ProjectApprovedHandler([WebhookParameter] ProjectWebhookInput input) : base(input)
+    public ProjectApprovedHandler([WebhookParameter(true)] ProjectWebhookInput input) : base(input)
     {
     }
 }

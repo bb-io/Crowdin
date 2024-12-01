@@ -9,7 +9,7 @@ public class FileRevertedHandler : ProjectWebhookHandler
 {
     protected override EventType SubscriptionEvent => EventType.FileReverted;
 
-    public FileRevertedHandler([WebhookParameter] ProjectWebhookInput input) : base(input)
+    public FileRevertedHandler([WebhookParameter(true)] ProjectWebhookInput input) : base(input)
     {
     }
 }
