@@ -15,17 +15,14 @@ using EventType = Crowdin.Api.Webhooks.EventType;
 
 namespace Apps.Crowdin.Webhooks.Handlers.Base;
 
-public abstract class ProjectWebhookHandler : IWebhookEventHandler
+public abstract class ProjectWebhookHandler(
+    [WebhookParameter(true)] ProjectWebhookInput input,
+    bool enableBatching = false)
+    : IWebhookEventHandler
 {
-    protected abstract EventType SubscriptionEvent { get; }
-    private int ProjectId { get; }
-    private bool EnableBatchingWebhooks { get; }
-
-    protected ProjectWebhookHandler([WebhookParameter(true)] ProjectWebhookInput input, bool enableBatching = false)
-    {
-        ProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId))!.Value;
-        EnableBatchingWebhooks = enableBatching;
-    }
+    protected abstract List<EventType> SubscriptionEvents { get; }
+    private int ProjectId { get; } = IntParser.Parse(input.ProjectId, nameof(input.ProjectId))!.Value;
+    private bool EnableBatchingWebhooks { get; } = enableBatching;
 
     public async Task SubscribeAsync(
         IEnumerable<AuthenticationCredentialsProvider> creds,
@@ -35,10 +32,10 @@ public abstract class ProjectWebhookHandler : IWebhookEventHandler
 
         var request = new AddWebhookRequest
         {
-            Name = $"BlackBird-{SubscriptionEvent}-{Guid.NewGuid()}",
+            Name = $"BlackBird-{Guid.NewGuid()}",
             Url = values["payloadUrl"],
             RequestType = RequestType.POST,
-            Events = new List<EventType> { SubscriptionEvent },
+            Events = SubscriptionEvents,
             BatchingEnabled = EnableBatchingWebhooks
         };
 

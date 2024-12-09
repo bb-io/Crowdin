@@ -114,6 +114,7 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 - **On file reverted** On file reverted
 - **On file translated** On file fully translated
 - **On file updated** On file updated
+- **On file added or updated** Triggers when file added or updated
 
 ### Project
 

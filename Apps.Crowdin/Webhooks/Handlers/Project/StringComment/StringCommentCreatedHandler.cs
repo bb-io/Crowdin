@@ -5,11 +5,8 @@ using EventType = Crowdin.Api.Webhooks.EventType;
 
 namespace Apps.Crowdin.Webhooks.Handlers.Project.StringComment;
 
-public class StringCommentCreatedHandler : ProjectWebhookHandler
+public class StringCommentCreatedHandler([WebhookParameter(true)] ProjectWebhookInput input)
+    : ProjectWebhookHandler(input)
 {
-    protected override EventType SubscriptionEvent => EventType.StringCommentCreated;
-
-    public StringCommentCreatedHandler([WebhookParameter(true)] ProjectWebhookInput input) : base(input)
-    {
-    }
+    protected override List<EventType> SubscriptionEvents => new() { EventType.StringCommentCreated };
 }

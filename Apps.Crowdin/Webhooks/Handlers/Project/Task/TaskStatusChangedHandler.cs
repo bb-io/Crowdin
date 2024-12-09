@@ -5,11 +5,7 @@ using EventType = Crowdin.Api.Webhooks.EventType;
 
 namespace Apps.Crowdin.Webhooks.Handlers.Project.Task;
 
-public class TaskStatusChangedHandler : ProjectWebhookHandler
+public class TaskStatusChangedHandler([WebhookParameter(true)] ProjectWebhookInput input) : ProjectWebhookHandler(input)
 {
-    protected override EventType SubscriptionEvent => EventType.TaskStatusChanged;
-
-    public TaskStatusChangedHandler([WebhookParameter(true)] ProjectWebhookInput input) : base(input)
-    {
-    }
+    protected override List<EventType> SubscriptionEvents => new() { EventType.TaskStatusChanged };
 }
