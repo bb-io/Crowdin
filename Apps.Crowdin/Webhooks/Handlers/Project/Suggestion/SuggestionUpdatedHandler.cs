@@ -5,11 +5,7 @@ using EventType = Crowdin.Api.Webhooks.EventType;
 
 namespace Apps.Crowdin.Webhooks.Handlers.Project.Suggestion;
 
-public class SuggestionUpdatedHandler : ProjectWebhookHandler
-{
-    protected override EventType SubscriptionEvent => EventType.SuggestionUpdated;
-
-    public SuggestionUpdatedHandler([WebhookParameter(true)] ProjectWebhookInput input) : base(input)
-    {
-    }
+public class SuggestionUpdatedHandler([WebhookParameter(true)] ProjectWebhookInput input) : ProjectWebhookHandler(input)
+{ 
+    protected override List<EventType> SubscriptionEvents => new() { EventType.SuggestionUpdated };
 }

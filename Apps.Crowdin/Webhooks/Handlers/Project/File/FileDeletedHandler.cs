@@ -5,11 +5,7 @@ using EventType = Crowdin.Api.Webhooks.EventType;
 
 namespace Apps.Crowdin.Webhooks.Handlers.Project.File;
 
-public class FileDeletedHandler : ProjectWebhookHandler
+public class FileDeletedHandler([WebhookParameter(true)] ProjectWebhookInput input) : ProjectWebhookHandler(input)
 {
-    protected override EventType SubscriptionEvent => EventType.FileDeleted;
-
-    public FileDeletedHandler([WebhookParameter(true)] ProjectWebhookInput input) : base(input)
-    {
-    }
+    protected override List<EventType> SubscriptionEvents => new() { EventType.FileDeleted };
 }

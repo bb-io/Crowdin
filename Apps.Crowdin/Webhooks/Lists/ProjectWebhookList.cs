@@ -37,6 +37,22 @@ public class ProjectWebhookList
 {
     #region File
 
+    [Webhook("On file added or updated", typeof(FileAddedOrUpdatedHandler),
+        Description = "Triggers when file added or updated")]
+    public async Task<WebhookResponse<FileWithUserWebhookResponse>> OnFileAddedOrUpdated(WebhookRequest webhookRequest,
+        [WebhookParameter] GetFileOptionalRequest fileOptionalRequest)
+    {
+        var result = await HandleWehookRequest<FileWithUserWrapper, FileWithUserWebhookResponse>(webhookRequest);
+        
+        if(fileOptionalRequest.FileId != null &&
+           fileOptionalRequest.FileId != result.Result?.File.Id)
+        {
+            return PreflightResponse<FileWithUserWebhookResponse>();
+        }
+        
+        return result;
+    }
+
     [Webhook("On file added", typeof(FileAddedHandler), Description = "On file added")]
     public Task<WebhookResponse<FileWithUserWebhookResponse>> OnFileAdded(WebhookRequest webhookRequest)
         => HandleWehookRequest<FileWithUserWrapper, FileWithUserWebhookResponse>(webhookRequest);
@@ -92,15 +108,15 @@ public class ProjectWebhookList
     }
 
     [Webhook("On file updated", typeof(FileUpdatedHandler), Description = "On file updated")]
-    public Task<WebhookResponse<FileWithUserWebhookResponse>> OnFileUpdated(WebhookRequest webhookRequest,
+    public async Task<WebhookResponse<FileWithUserWebhookResponse>> OnFileUpdated(WebhookRequest webhookRequest,
         [WebhookParameter] GetFileOptionalRequest fileOptionalRequest)
     {
-        var result = HandleWehookRequest<FileWithUserWrapper, FileWithUserWebhookResponse>(webhookRequest);
+        var result = await HandleWehookRequest<FileWithUserWrapper, FileWithUserWebhookResponse>(webhookRequest);
         
         if(fileOptionalRequest.FileId != null &&
-           fileOptionalRequest.FileId != result.Result.Result?.File.Id)
+           fileOptionalRequest.FileId != result.Result?.File.Id)
         {
-            return Task.FromResult(PreflightResponse<FileWithUserWebhookResponse>());
+            return PreflightResponse<FileWithUserWebhookResponse>();
         }
         
         return result;

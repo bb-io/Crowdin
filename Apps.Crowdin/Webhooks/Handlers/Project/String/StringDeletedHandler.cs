@@ -5,11 +5,8 @@ using EventType = Crowdin.Api.Webhooks.EventType;
 
 namespace Apps.Crowdin.Webhooks.Handlers.Project.String;
 
-public class StringDeletedHandler : ProjectWebhookHandler
+public class StringDeletedHandler([WebhookParameter(true)] ProjectWebhookInput input)
+    : ProjectWebhookHandler(input, true)
 {
-    protected override EventType SubscriptionEvent => EventType.StringDeleted;
-
-    public StringDeletedHandler([WebhookParameter(true)] ProjectWebhookInput input) : base(input, true)
-    {
-    }
+    protected override List<EventType> SubscriptionEvents => new() { EventType.StringDeleted };
 }
