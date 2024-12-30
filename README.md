@@ -148,6 +148,10 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 
 - **On translation updated** On translation updated
 
+### Pre-translations
+
+- **On pre-translation status changed** Triggered when the status of a pre-translation changes to one of the specified statuses.
+
 ## Feedback
 
 Do you want to use this app or do you have feedback on our implementation? Reach out to us using the [established channels](https://www.blackbird.io/) or create an issue.
