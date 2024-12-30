@@ -20,19 +20,12 @@ using Apps.Crowdin.Models.Request.Users;
 namespace Apps.Crowdin.Actions;
 
 [ActionList]
-public class TranslationActions : BaseInvocable
+public class TranslationActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+    : BaseInvocable(invocationContext)
 {
     private AuthenticationCredentialsProvider[] Creds =>
         InvocationContext.AuthenticationCredentialsProviders.ToArray();
 
-    private readonly IFileManagementClient _fileManagementClient;
-
-    public TranslationActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(
-        invocationContext)
-    {
-        _fileManagementClient = fileManagementClient;
-    }
-    
     [Action("Apply pre-translation", Description = "Apply pre-translation to chosen files")]
     public async Task<PreTranslationEntity> PreTranslate(
         [ActionParameter] ProjectRequest project,
@@ -163,7 +156,7 @@ public class TranslationActions : BaseInvocable
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var client = new CrowdinClient(Creds);
 
-        var fileStream = await _fileManagementClient.DownloadAsync(input.File);
+        var fileStream = await fileManagementClient.DownloadAsync(input.File);
         var storageResult = await client.Storage.AddStorage(fileStream, input.File.Name);
 
         var request = new UploadTranslationsRequest
@@ -217,7 +210,7 @@ public class TranslationActions : BaseInvocable
 
         var bytes = new RestClient(build.Link.Url).Get(new RestRequest("/")).RawBytes;
 
-        var file = await _fileManagementClient.UploadAsync(new MemoryStream(bytes), contentType, fileInfo.Name);
+        var file = await fileManagementClient.UploadAsync(new MemoryStream(bytes), contentType, fileInfo.Name);
         return new(file);
     }
 }

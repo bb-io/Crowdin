@@ -8,5 +8,5 @@ public class ProjectRequest
 {
     [Display("Project ID")]
     [DataSource(typeof(ProjectDataHandler))]
-    public string ProjectId { get; set; }
+    public string ProjectId { get; set; } = default!;
 }

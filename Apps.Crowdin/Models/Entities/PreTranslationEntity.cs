@@ -3,15 +3,11 @@ using Crowdin.Api.Translations;
 
 namespace Apps.Crowdin.Models.Entities;
 
-public class PreTranslationEntity
+public class PreTranslationEntity(PreTranslation preTranslation)
 {
-    [Display("ID")] public string Id { get; set; }
+    [Display("Pre-translation ID")] 
+    public string Id { get; set; } = preTranslation.Identifier;
 
-    public string Status { get; set; }
-
-    public PreTranslationEntity(PreTranslation preTranslation)
-    {
-        Id = preTranslation.Identifier;
-        Status = preTranslation.Status.ToString();
-    }
+    [Display("Pre-translation status")] 
+    public string Status { get; set; } = preTranslation.Status.ToString();
 }
