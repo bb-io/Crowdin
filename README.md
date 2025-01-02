@@ -150,7 +150,7 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 
 ### Pre-translations
 
-- **On pre-translation status changed** Triggered when the status of a pre-translation changes to one of the specified statuses.
+- **On pre-translations status changed** Triggered when the status of all pre-translations in a project changes to one of the specified statuses.
 
 ## Feedback
 

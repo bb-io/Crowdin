@@ -2,6 +2,7 @@
 using Apps.Crowdin.Polling.Models;
 using Apps.Crowdin.Polling.Models.Requests;
 using Apps.Crowdin.Polling.Models.Responses;
+using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Polling;
@@ -11,9 +12,9 @@ namespace Apps.Crowdin.Polling;
 [PollingEventList]
 public class PreTranslationPollingList(InvocationContext invocationContext) : BaseInvocable(invocationContext)
 {
-    [PollingEvent("On pre-translation status changed",
-        "Triggered when the status of a pre-translation changes to one of the specified statuses.")]
-    public async Task<PollingEventResponse<PollingMemory, PreTranslationResponse>> OnPreTranslationStatusChanged(
+    [PollingEvent("On pre-translations status changed", Description = 
+        "Triggered when the status of all pre-translations in a project changes to one of the specified statuses")]
+    public async Task<PollingEventResponse<PollingMemory, PreTranslationsResponse>> OnPreTranslationStatusChanged(
         PollingEventRequest<PollingMemory> request,
         [PollingEventParameter] PreTranslationStatusChangedRequest preTranslationStatusChangedRequest)
     {
@@ -31,17 +32,24 @@ public class PreTranslationPollingList(InvocationContext invocationContext) : Ba
         }
 
         var client = new CrowdinClient(InvocationContext.AuthenticationCredentialsProviders);
-        var preTranslation = await client.Translations.GetPreTranslationStatus(
-            int.Parse(preTranslationStatusChangedRequest.ProjectId),
-            preTranslationStatusChangedRequest.PreTranslationId);
+        var preTranslations =
+            await Paginator.Paginate((lim, offset)
+                => client.Translations.ListPreTranslations(int.Parse(preTranslationStatusChangedRequest.ProjectId), lim, offset));
 
-        var hasRightStatus = preTranslationStatusChangedRequest.GetCrowdinBuildStatuses()
-            .Any(x => preTranslation.Status == x);
-        var triggered = hasRightStatus && !request.Memory.Triggered;
+        if (preTranslationStatusChangedRequest.PreTranslationIds != null)
+        {
+            preTranslations = preTranslations
+                .Where(x => preTranslationStatusChangedRequest.PreTranslationIds.Contains(x.Identifier))
+                .ToList();
+        }
+
+        var allPreTranslationsHasRightStatus = preTranslations.All(y => preTranslationStatusChangedRequest.GetCrowdinBuildStatuses()
+            .Any(x => y.Status == x));
+        var triggered = allPreTranslationsHasRightStatus && !request.Memory.Triggered;
         return new()
         {
             FlyBird = triggered,
-            Result = new(preTranslation),
+            Result = new(preTranslations.Select(x => new PreTranslationResponse(x)).ToList()),
             Memory = new()
             {
                 LastPollingTime = DateTime.UtcNow,
