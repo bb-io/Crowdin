@@ -1,13 +1,20 @@
-﻿using Apps.Crowdin.DataSourceHandlers.EnumHandlers;
-using Apps.Crowdin.Models.Request.PreTranslations;
+﻿using Apps.Crowdin.DataSourceHandlers;
+using Apps.Crowdin.DataSourceHandlers.EnumHandlers;
+using Apps.Crowdin.Models.Request.Project;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dictionaries;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 using Crowdin.Api;
 
 namespace Apps.Crowdin.Polling.Models.Requests;
 
-public class PreTranslationStatusChangedRequest : PreTranslationRequest
+public class PreTranslationStatusChangedRequest : ProjectRequest
 {
+    [Display("Pre-translation IDs",
+         Description = "If you specify this property, the event will not check all pre-translations within the specific project, but will only check the specified pre-translations."),
+     DataSource(typeof(PreTranslationDataSource))]
+    public IEnumerable<string>? PreTranslationIds { get; set; } = default!;
+
     [Display("Statuses"), StaticDataSource(typeof(PreTranslationStatusDataSource))]
     public List<string> Statuses { get; set; } = new();
 
