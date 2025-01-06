@@ -2,7 +2,7 @@
 using Blackbird.Applications.Sdk.Common.Authentication;
 using RestSharp;
 
-namespace Apps.Crowdin.Api.RestSharp;
+namespace Apps.Crowdin.Api.RestSharp.Basic;
 
 public class CrowdinRestRequest : RestRequest
 {

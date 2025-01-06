@@ -1,5 +1,6 @@
 ﻿using Apps.Crowdin.Api;
 using Apps.Crowdin.Api.RestSharp;
+using Apps.Crowdin.Api.RestSharp.Basic;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Response;
 using Apps.Crowdin.Utils;

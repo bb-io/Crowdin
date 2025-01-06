@@ -6,13 +6,10 @@ using Newtonsoft.Json;
 
 namespace Apps.Crowdin.Connections.OAuth;
 
-public class OAuth2TokenService : BaseInvocable, IOAuth2TokenService
+public class OAuth2TokenService(InvocationContext invocationContext)
+    : BaseInvocable(invocationContext), IOAuth2TokenService
 {
     private const string ExpiresAtKeyName = "expires_at";
-
-    public OAuth2TokenService(InvocationContext invocationContext) : base(invocationContext)
-    {
-    }
 
     #region Token actions
 

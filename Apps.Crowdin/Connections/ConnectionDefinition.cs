@@ -1,4 +1,5 @@
-﻿using Blackbird.Applications.Sdk.Common.Authentication;
+﻿using Apps.Crowdin.Constants;
+using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Connections;
 
 namespace Apps.Crowdin.Connections;
@@ -11,9 +12,27 @@ public class ConnectionDefinition : IConnectionDefinition
         {
             Name = "OAuth",
             AuthenticationType = ConnectionAuthenticationType.OAuth2,
-            ConnectionUsage = ConnectionUsage.Actions,
             ConnectionProperties = new List<ConnectionProperty>()
-        }
+        },
+        new()
+        {
+            Name = "Other properties",
+            AuthenticationType = ConnectionAuthenticationType.Undefined,
+            ConnectionProperties = new List<ConnectionProperty>
+            {
+                new(CredsNames.CrowdinPlan)
+                {
+                    DisplayName = "Crowdin plan",
+                    Description = "The plan of the Crowdin account. It could be either Basic or Enterprise. " +
+                                  "See more at https://crowdin.com/pricing",
+                    DataItems =
+                    [
+                        new("basic", "(Basic) Crowdin"),
+                        new("enterprise", "(Enterprise) Crowdin Enterprise")
+                    ]
+                }
+            }
+        },
     };
 
     public IEnumerable<AuthenticationCredentialsProvider> CreateAuthorizationCredentialsProviders(

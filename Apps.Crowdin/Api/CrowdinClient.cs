@@ -11,7 +11,12 @@ public class CrowdinClient : CrowdinApiClient
     public CrowdinClient(IEnumerable<AuthenticationCredentialsProvider> creds)
         : base(GetCrowdinCreds(creds))
     {
-        this._creds = creds.ToArray();
+        _creds = creds.ToArray();
+    }
+
+    public CrowdinClient(CrowdinCredentials credentials, AuthenticationCredentialsProvider[] creds) : base(credentials)
+    {
+        _creds = creds;
     }
 
     private static CrowdinCredentials GetCrowdinCreds(
