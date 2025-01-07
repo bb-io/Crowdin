@@ -1,10 +1,11 @@
 ﻿using Blackbird.Applications.Sdk.Common.Dictionaries;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Crowdin.DataSourceHandlers.EnumHandlers;
 
-public class UserRoleHandler : IStaticDataSourceHandler
+public class UserRoleHandler : IStaticDataSourceItemHandler
 {
-    public Dictionary<string, string> GetData() => new()
+    private static Dictionary<string, string> Data => new()
     {
         {"all", "All"},
         {"manager", "Manager"},
@@ -15,4 +16,9 @@ public class UserRoleHandler : IStaticDataSourceHandler
         {"blocked", "Blocked"},
         {"pending", "Pending"}
     };
+
+    public IEnumerable<DataSourceItem> GetData()
+    {
+        return Data.Select(x => new DataSourceItem(x.Key, x.Value));
+    }
 }

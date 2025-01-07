@@ -1,5 +1,6 @@
 using Apps.Crowdin.Api.RestSharp;
 using Apps.Crowdin.Api.RestSharp.Basic;
+using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Users;
 using Apps.Crowdin.Models.Response;
@@ -17,19 +18,13 @@ namespace Apps.Crowdin.DataSourceHandlers;
 public class ProjectMemberDataSourceHandler(
     InvocationContext invocationContext,
     [ActionParameter] AssigneesRequest assigneesRequest)
-    : BaseInvocable(invocationContext), IAsyncDataSourceHandler
+    : AppInvocable(invocationContext), IAsyncDataSourceItemHandler
 {
-    private AuthenticationCredentialsProvider[] Creds =>
-        InvocationContext.AuthenticationCredentialsProviders.ToArray();
-
-    public async Task<Dictionary<string, string>> GetDataAsync(DataSourceContext context,
-        CancellationToken cancellationToken)
+    public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(assigneesRequest.ProjectId))
             throw new("You should input Project ID first");
-
-        var client = new CrowdinRestClient();
-
+        
         var items = await Paginator.Paginate(async (lim, offset)
             =>
         {
@@ -37,8 +32,8 @@ public class ProjectMemberDataSourceHandler(
                 new CrowdinRestRequest(
                     $"/projects/{assigneesRequest.ProjectId}/members?limit={lim}&offset={offset}",
                     Method.Get, Creds);
-            var response = await client.ExecuteAsync(request, cancellationToken: cancellationToken);
-            return JsonConvert.DeserializeObject<ResponseList<DataResponse<AssigneeEntity>>>(response.Content);
+            var response = await RestClient.ExecuteAsync(request, cancellationToken: cancellationToken);
+            return JsonConvert.DeserializeObject<ResponseList<DataResponse<AssigneeEntity>>>(response.Content!)!;
         });
 
         return items
@@ -46,7 +41,6 @@ public class ProjectMemberDataSourceHandler(
             .Where(x => context.SearchString == null ||
                         x.FullName.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(x => x.GivenAccessAt)
-            .Take(20)
-            .ToDictionary(x => x.Id.ToString(), x => x.FullName);
+            .Select(x => new DataSourceItem(x.Id.ToString(), x.FullName));
     }
 }

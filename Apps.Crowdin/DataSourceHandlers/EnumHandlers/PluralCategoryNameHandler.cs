@@ -1,10 +1,11 @@
 ﻿using Blackbird.Applications.Sdk.Common.Dictionaries;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Crowdin.DataSourceHandlers.EnumHandlers;
 
-public class PluralCategoryNameHandler : IStaticDataSourceHandler
+public class PluralCategoryNameHandler : IStaticDataSourceItemHandler
 {
-    public Dictionary<string, string> GetData() => new()
+    private static Dictionary<string, string> Data => new()
     {
         { "Zero", "Zero" },
         { "One", "One" },
@@ -13,4 +14,9 @@ public class PluralCategoryNameHandler : IStaticDataSourceHandler
         { "Many", "Many" },
         { "Other", "Other" },
     };
+
+    public IEnumerable<DataSourceItem> GetData()
+    {
+        return Data.Select(x => new DataSourceItem(x.Key, x.Value));
+    }
 }
