@@ -1,6 +1,5 @@
-﻿using Apps.Crowdin.Api;
-using Apps.Crowdin.Api.RestSharp;
-using Apps.Crowdin.Api.RestSharp.Basic;
+﻿using Apps.Crowdin.Api.RestSharp;
+using Apps.Crowdin.Factories;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Response;
 using Apps.Crowdin.Utils;
@@ -18,12 +17,14 @@ namespace Apps.Crowdin.Webhooks.Handlers.Base;
 public abstract class OrganizationWebhookHandler : IWebhookEventHandler
 {
     protected abstract OrganizationEventType SubscriptionEvent { get; }
+    
+    private static readonly IApiClientFactory ApiClientFactory = new ApiClientFactory();    
 
     public async Task SubscribeAsync(
         IEnumerable<AuthenticationCredentialsProvider> creds,
         Dictionary<string, string> values)
     {
-        var client = new CrowdinClient(creds);
+        var client = ApiClientFactory.BuildSdkClient(creds);
         var executor = new OrganizationWebhooksApiExecutor(client);
 
         var request = new AddWebhookRequest
@@ -47,7 +48,7 @@ public abstract class OrganizationWebhookHandler : IWebhookEventHandler
     public async Task UnsubscribeAsync(IEnumerable<AuthenticationCredentialsProvider> creds,
         Dictionary<string, string> values)
     {
-        var client = new CrowdinClient(creds);
+        var client = ApiClientFactory.BuildSdkClient(creds);
         var executor = new OrganizationWebhooksApiExecutor(client);
 
         var allWebhooks = await GetAllWebhooks(creds);
@@ -63,7 +64,7 @@ public abstract class OrganizationWebhookHandler : IWebhookEventHandler
         IEnumerable<AuthenticationCredentialsProvider> creds)
     {
         var endpoint = "/webhooks";
-        var client = new CrowdinRestClient();
+        var client = ApiClientFactory.BuildRestClient(creds);
         
         return Paginator.Paginate(async (lim, offset) =>
         {
@@ -71,7 +72,7 @@ public abstract class OrganizationWebhookHandler : IWebhookEventHandler
             var request = new CrowdinRestRequest(source, Method.Get, creds);
 
             var response = await client.ExecuteAsync<ResponseList<DataResponse<WebhookEntity>>>(request);
-            return response.Data;
+            return response.Data!;
         });
     }
 }

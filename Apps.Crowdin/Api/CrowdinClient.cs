@@ -10,36 +10,13 @@ using RestSharp;
 
 namespace Apps.Crowdin.Api;
 
-public class CrowdinClient : CrowdinApiClient
+public class CrowdinClient(CrowdinCredentials credentials, AuthenticationCredentialsProvider[] creds)
+    : CrowdinApiClient(credentials)
 {
-    private readonly AuthenticationCredentialsProvider[] _creds;
-    
-    public CrowdinClient(IEnumerable<AuthenticationCredentialsProvider> creds)
-        : base(GetCrowdinCreds(creds))
-    {
-        _creds = creds.ToArray();
-    }
-
-    public CrowdinClient(CrowdinCredentials credentials, AuthenticationCredentialsProvider[] creds) : base(credentials)
-    {
-        _creds = creds;
-    }
-
-    private static CrowdinCredentials GetCrowdinCreds(
-        IEnumerable<AuthenticationCredentialsProvider> creds)
-    {
-        var token = creds.First(x => x.KeyName == CredsNames.ApiToken);
-
-        return new()
-        {
-            AccessToken = token.Value
-        };
-    }
-    
     public async Task<ExportGlossaryModel> ExportGlossaryAsync(int glossaryId)
     {
-        var organization = _creds.Get(CredsNames.OrganizationDomain).Value;
-        var token = _creds.Get(CredsNames.ApiToken).Value;
+        var organization = creds.Get(CredsNames.OrganizationDomain).Value;
+        var token = creds.Get(CredsNames.ApiToken).Value;
         
         var restClient = new RestClient($"https://{organization}.api.crowdin.com/api/v2");
         
