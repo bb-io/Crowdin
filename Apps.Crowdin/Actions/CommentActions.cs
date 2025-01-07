@@ -1,4 +1,4 @@
-﻿using Apps.Crowdin.Api;
+﻿using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Comments;
 using Apps.Crowdin.Models.Request.Project;
@@ -14,23 +14,17 @@ using Crowdin.Api.StringComments;
 namespace Apps.Crowdin.Actions;
 
 [ActionList]
-public class CommentActions : BaseInvocable
+public class CommentActions(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
     private AuthenticationCredentialsProvider[] Creds =>
         InvocationContext.AuthenticationCredentialsProviders.ToArray();
 
-    public CommentActions(InvocationContext invocationContext) : base(invocationContext)
-    {
-    }
-
-    [Action("List comments", Description = "List string comments for a project")]
+    [Action("Search comments", Description = "List string comments for a project")]
     public async Task<ListCommentsResponse> ListComments([ActionParameter] ListCommentsRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intStringId = IntParser.Parse(input.StringId, nameof(input.StringId));
-
-        var client = new CrowdinClient(Creds);
-
+        
         var items = await Paginator.Paginate((lim, offset)
             =>
         {
@@ -46,7 +40,7 @@ public class CommentActions : BaseInvocable
                         EnumParser.Parse<IssueType>(issueType, nameof(issueType))!.Value)
                     .ToHashSet() ?? new()
             };
-            return client.StringComments.ListStringComments(intProjectId!.Value, request);
+            return SdkClient.StringComments.ListStringComments(intProjectId!.Value, request);
         });
 
         var comments = items.Select(x => new CommentEntity(x)).ToArray();
@@ -61,10 +55,8 @@ public class CommentActions : BaseInvocable
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intCommentId = IntParser.Parse(commentId, nameof(commentId));
-
-        var client = new CrowdinClient(Creds);
-
-        var response = await client.StringComments.GetStringComment(intProjectId!.Value, intCommentId!.Value);
+        
+        var response = await SdkClient.StringComments.GetStringComment(intProjectId!.Value, intCommentId!.Value);
         return new(response);
     }
 
@@ -73,9 +65,7 @@ public class CommentActions : BaseInvocable
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intStringId = IntParser.Parse(input.StringId, nameof(input.StringId));
-
-        var client = new CrowdinClient(Creds);
-
+        
         var request = new AddStringCommentRequest
         {
             StringId = intStringId!.Value,
@@ -86,7 +76,7 @@ public class CommentActions : BaseInvocable
             IssueType = EnumParser.Parse<IssueType>(input.IssueType, nameof(input.IssueType))
         };
 
-        var response = await client.StringComments.AddStringComment(intProjectId!.Value, request);
+        var response = await SdkClient.StringComments.AddStringComment(intProjectId!.Value, request);
         return new(response);
     }
 
@@ -98,9 +88,7 @@ public class CommentActions : BaseInvocable
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intCommentId = IntParser.Parse(commentId, nameof(commentId));
-
-        var client = new CrowdinClient(Creds);
-
-        return client.StringComments.DeleteStringComment(intProjectId!.Value, intCommentId!.Value);
+        
+        return SdkClient.StringComments.DeleteStringComment(intProjectId!.Value, intCommentId!.Value);
     }
 }

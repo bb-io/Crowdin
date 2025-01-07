@@ -1,4 +1,5 @@
 ﻿using Apps.Crowdin.Api;
+using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.Task;
@@ -19,29 +20,17 @@ using Apps.Crowdin.Models.Request.Users;
 namespace Apps.Crowdin.Actions;
 
 [ActionList]
-public class TaskActions : BaseInvocable
+public class TaskActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : AppInvocable(invocationContext)
 {
-    private AuthenticationCredentialsProvider[] Creds =>
-        InvocationContext.AuthenticationCredentialsProviders.ToArray();
-
-    private readonly IFileManagementClient _fileManagementClient;
-
-    public TaskActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(
-        invocationContext)
-    {
-        _fileManagementClient = fileManagementClient;
-    }
-    
-    [Action("List tasks", Description = "List all tasks")]
+    [Action("Search tasks", Description = "List all tasks")]
     public async Task<ListTasksResponse> ListTasks([ActionParameter] ListTasksRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intAssigneeId = IntParser.Parse(input.AssigneeId, nameof(input.AssigneeId));
         var status = EnumParser.Parse<TaskStatus>(input.Status, nameof(input.Status));
 
-        var client = new CrowdinClient(Creds);
         var items = await Paginator.Paginate((lim, offset)
-            => client.Tasks.ListTasks(intProjectId!.Value, lim, offset, status, intAssigneeId));
+            => SdkClient.Tasks.ListTasks(intProjectId!.Value, lim, offset, status, intAssigneeId));
 
         var tasks = items.Select(x => new TaskEntity(x)).ToArray();
         return new(tasks);
@@ -55,9 +44,7 @@ public class TaskActions : BaseInvocable
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intTaskId = IntParser.Parse(taskId, nameof(taskId));
 
-        var client = new CrowdinClient(Creds);
-
-        var response = await client.Tasks.GetTask(intProjectId!.Value, intTaskId!.Value);
+        var response = await SdkClient.Tasks.GetTask(intProjectId!.Value, intTaskId!.Value);
         return new(response);
     }
 
@@ -75,7 +62,6 @@ public class TaskActions : BaseInvocable
         
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
 
-        var client = new CrowdinClient(Creds);
         var request = new CrowdinTaskCreateForm()
         {
             Title = input.Title,
@@ -96,7 +82,7 @@ public class TaskActions : BaseInvocable
             Vendor = input.Vendor
         };
         
-        var response = await client.Tasks.AddTask(intProjectId!.Value, request);
+        var response = await SdkClient.Tasks.AddTask(intProjectId!.Value, request);
         return new(response);
     }
 
@@ -107,10 +93,8 @@ public class TaskActions : BaseInvocable
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intTaskId = IntParser.Parse(taskId, nameof(taskId));
-
-        var client = new CrowdinClient(Creds);
-
-        return client.Tasks.DeleteTask(intProjectId!.Value, intTaskId!.Value);
+        
+        return SdkClient.Tasks.DeleteTask(intProjectId!.Value, intTaskId!.Value);
     }
 
     [Action("Download task strings as XLIFF", Description = "Download specific task strings as XLIFF")]
@@ -120,16 +104,14 @@ public class TaskActions : BaseInvocable
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intTaskId = IntParser.Parse(taskId, nameof(taskId));
-
-        var client = new CrowdinClient(Creds);
-
-        var downloadLink = await client.Tasks.ExportTaskStrings(intProjectId!.Value, intTaskId!.Value);
+        
+        var downloadLink = await SdkClient.Tasks.ExportTaskStrings(intProjectId!.Value, intTaskId!.Value);
 
         if (downloadLink is null)
             throw new("No string found for this task");
         
         var fileContent = await FileDownloader.DownloadFileBytes(downloadLink.Url);
-        var file = await _fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType, fileContent.Name);
+        var file = await fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType, fileContent.Name);
         return new(file);
     }
 }

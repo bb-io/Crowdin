@@ -1,4 +1,6 @@
 ﻿using Apps.Crowdin.Api;
+using Apps.Crowdin.Constants;
+using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.Translation;
@@ -16,16 +18,14 @@ using Crowdin.Api.StringTranslations;
 using Crowdin.Api.Translations;
 using RestSharp;
 using Apps.Crowdin.Models.Request.Users;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Crowdin.Actions;
 
 [ActionList]
 public class TranslationActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
-    : BaseInvocable(invocationContext)
+    : AppInvocable(invocationContext)
 {
-    private AuthenticationCredentialsProvider[] Creds =>
-        InvocationContext.AuthenticationCredentialsProviders.ToArray();
-
     [Action("Apply pre-translation", Description = "Apply pre-translation to chosen files")]
     public async Task<PreTranslationEntity> PreTranslate(
         [ActionParameter] ProjectRequest project,
@@ -34,9 +34,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intEngineId = IntParser.Parse(input.EngineId, nameof(input.EngineId));
-
-        var client = new CrowdinClient(Creds);
-
+        
         PreTranslationMethod? method = input.Method is null ? null :
             input.Method == "Mt" ? PreTranslationMethod.Mt :
             input.Method == "Tm" ? PreTranslationMethod.Tm :
@@ -55,20 +53,19 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
             TranslateUntranslatedOnly = input.TranslateUntranslatedOnly,
             TranslateWithPerfectMatchOnly = input.TranslateWithPerfectMatchOnly
         };
-        var response = await client.Translations
+        var response = await SdkClient.Translations
             .ApplyPreTranslation(intProjectId!.Value, request);
 
         return new(response);
     }
-    [Action("List language translations", Description = "List project language translations")]
+    
+    [Action("Search language translations", Description = "List project language translations")]
     public async Task<ListTranslationsResponse> ListLangTranslations(
         [ActionParameter] ListLanguageTranslationsRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intFileId = IntParser.Parse(input.FileId, nameof(input.FileId));
-    
-        var client = new CrowdinClient(Creds);
-    
+        
         var items = await Paginator.Paginate((lim, offset) =>
         {
             var request = new LanguageTranslationsListParams
@@ -81,7 +78,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
                 CroQL = input.CroQL,
                 DenormalizePlaceholders = input.DenormalizePlaceholders
             };
-            return client.StringTranslations.ListLanguageTranslations(intProjectId!.Value, input.LanguageId, request);
+            return SdkClient.StringTranslations.ListLanguageTranslations(intProjectId!.Value, input.LanguageId, request);
         });
 
         var castedItems = items.Cast<PlainLanguageTranslations>();
@@ -90,15 +87,13 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         return new(translations);
     }
 
-    [Action("List string translations", Description = "List project string translations")]
+    [Action("Search string translations", Description = "List project string translations")]
     public async Task<ListTranslationsResponse> ListTranslations(
         [ActionParameter] ListStringTranslationsRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intStringId = IntParser.Parse(input.StringId, nameof(input.StringId));
-
-        var client = new CrowdinClient(Creds);
-
+        
         var items = await Paginator.Paginate((lim, offset) =>
         {
             var request = new StringTranslationsListParams
@@ -109,7 +104,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
                 LanguageId = input.LanguageId,
                 DenormalizePlaceholders = input.DenormalizePlaceholders
             };
-            return client.StringTranslations.ListStringTranslations(intProjectId!.Value, request);
+            return SdkClient.StringTranslations.ListStringTranslations(intProjectId!.Value, request);
         });
 
         var translations = items.Select(x => new TranslationEntity(x)).ToArray();
@@ -121,10 +116,8 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intTransId = IntParser.Parse(input.TranslationId, nameof(input.TranslationId));
-
-        var client = new CrowdinClient(Creds);
-
-        var response = await client.StringTranslations
+        
+        var response = await SdkClient.StringTranslations
             .GetTranslation(intProjectId!.Value, intTransId!.Value, input.DenormalizePlaceholders);
 
         return new(response);
@@ -135,9 +128,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intStringId = IntParser.Parse(input.StringId, nameof(input.StringId));
-
-        var client = new CrowdinClient(Creds);
-
+        
         var request = new AddTranslationRequest
         {
             StringId = intStringId!.Value,
@@ -146,15 +137,34 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
             PluralCategoryName = EnumParser.Parse<PluralCategoryName>(input.PluralCategoryName, nameof(input.PluralCategoryName))
         };
         
-        var response = await client.StringTranslations.AddTranslation(intProjectId!.Value,request);
-        return new(response);
+        try
+        {
+            var response = await SdkClient.StringTranslations.AddTranslation(intProjectId!.Value, request);
+            return new(response);
+        }
+        catch (Exception ex)
+        {
+            if (!ex.Message.Contains(Errors.IdenticalTranslation))
+            {
+                throw new PluginMisconfigurationException(ex.Message);
+            }
+
+            var translations = await ListTranslations(new()
+            {
+                ProjectId = input.ProjectId,
+                StringId = input.StringId,
+                LanguageId = input.LanguageId
+            });
+
+            return translations.Translations.First(x => x.Text == input.Text);
+        }
     }
 
-    [Action("Add file translation", Description = "Add new file translation")]
+    [Action("[Basic] Add file translation", Description = "Add new file translation")]
     public async Task<FileTranslationEntity> AddFileTranslation([ActionParameter] AddNewFileTranslationRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
-        var client = new CrowdinClient(Creds);
+        var client = SdkClient;
 
         var fileStream = await fileManagementClient.DownloadAsync(input.File);
         var storageResult = await client.Storage.AddStorage(fileStream, input.File.Name);
@@ -177,14 +187,12 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intTransId = IntParser.Parse(input.TranslationId, nameof(input.TranslationId));
-
-        var client = new CrowdinClient(Creds);
-
-        return client.StringTranslations
+        
+        return SdkClient.StringTranslations
             .DeleteTranslation(intProjectId!.Value, intTransId!.Value);
     }
 
-    [Action("Download file translation", Description = "Builds and downloads the translation of a file")]
+    [Action("[Basic] Download file translation", Description = "Builds and downloads the translation of a file")]
     public async Task<DownloadFileResponse> DownloadTranslationFile(
         [ActionParameter] ProjectRequest project,
         [ActionParameter] DownloadFileTranslationRequest request
@@ -193,10 +201,9 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intFileId = IntParser.Parse(request.FileId, nameof(request.FileId));
 
-        var client = new CrowdinClient(Creds);
+        var client = SdkClient;
 
         var fileInfo = await client.SourceFiles.GetFile<FileResource>(intProjectId!.Value, intFileId!.Value);
-
         var build = await client.Translations.BuildProjectFileTranslation(intProjectId!.Value, intFileId!.Value, new BuildProjectFileTranslationRequest
         {
             TargetLanguageId = request.TargetLanguage,

@@ -13,7 +13,8 @@ public class ApiClientFactory : IApiClientFactory
 {
     public RestClient BuildRestClient(IEnumerable<AuthenticationCredentialsProvider> credentialsProviders)
     {
-        var crowdinPlan = credentialsProviders.Get(CredsNames.CrowdinPlan).Value;
+        var authenticationCredentialsProviders = credentialsProviders as AuthenticationCredentialsProvider[] ?? credentialsProviders.ToArray();
+        var crowdinPlan = authenticationCredentialsProviders.Get(CredsNames.CrowdinPlan).Value;
         
         if (crowdinPlan == Plans.BasicPlan)
         {
@@ -22,7 +23,7 @@ public class ApiClientFactory : IApiClientFactory
 
         if (crowdinPlan == Plans.Enterprise)
         {
-            return new CrowdinEnterpriseRestClient(credentialsProviders);
+            return new CrowdinEnterpriseRestClient(authenticationCredentialsProviders);
         }
 
         throw new Exception($"Unsupported crowdin plan provided: {crowdinPlan}");
