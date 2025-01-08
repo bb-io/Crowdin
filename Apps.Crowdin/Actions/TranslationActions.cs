@@ -160,7 +160,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         }
     }
 
-    [Action("[Basic] Add file translation", Description = "Add new file translation")]
+    [Action("Add file translation", Description = "Add new file translation")]
     public async Task<FileTranslationEntity> AddFileTranslation([ActionParameter] AddNewFileTranslationRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
@@ -192,7 +192,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
             .DeleteTranslation(intProjectId!.Value, intTransId!.Value);
     }
 
-    [Action("[Basic] Download file translation", Description = "Builds and downloads the translation of a file")]
+    [Action("Download file translation", Description = "Builds and downloads the translation of a file")]
     public async Task<DownloadFileResponse> DownloadTranslationFile(
         [ActionParameter] ProjectRequest project,
         [ActionParameter] DownloadFileTranslationRequest request

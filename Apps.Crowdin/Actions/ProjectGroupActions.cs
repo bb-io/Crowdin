@@ -15,11 +15,13 @@ namespace Apps.Crowdin.Actions;
 [ActionList]
 public class ProjectGroupActions(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
-    [Action("[Enterprise] List project groups", Description = "List all project groups")]
+    [Action("[Enterprise] Search project groups", Description = "List all project groups")]
     public async Task<ListGroupsResponse> ListProjectGroups(
         [ActionParameter] [Display("Parent group ID")] [DataSource(typeof(ProjectGroupDataHandler))]
         string? parentId)
     {
+        CheckAccessToEnterpriseAction();
+        
         var intParentId = IntParser.Parse(parentId, nameof(parentId));
         var response = await Paginator.Paginate((lim, offset) =>
             SdkClient.ProjectsGroups.ListGroups(intParentId, lim, offset));
@@ -32,6 +34,8 @@ public class ProjectGroupActions(InvocationContext invocationContext) : AppInvoc
     public async Task<GroupEntity> GetProjectGroup(
         [ActionParameter] ProjectGroupRequest group)
     {
+        CheckAccessToEnterpriseAction();
+        
         var intGroupId = IntParser.Parse(group.ProjectGroupId, nameof(group.ProjectGroupId))!.Value;
         var response = await SdkClient.ProjectsGroups.GetGroup(intGroupId);
         return new(response);
@@ -41,6 +45,8 @@ public class ProjectGroupActions(InvocationContext invocationContext) : AppInvoc
     public async Task<GroupEntity> AddProjectGroup(
         [ActionParameter] AddProjectGroupRequest input)
     {
+        CheckAccessToEnterpriseAction();
+        
         var response = await SdkClient.ProjectsGroups.AddGroup(new()
         {
             Name = input.Name,
@@ -55,6 +61,7 @@ public class ProjectGroupActions(InvocationContext invocationContext) : AppInvoc
     public Task DeleteProjectGroup(
         [ActionParameter] ProjectGroupRequest group)
     {
+        CheckAccessToEnterpriseAction();
         return SdkClient.ProjectsGroups.DeleteGroup(IntParser.Parse(group.ProjectGroupId, nameof(group.ProjectGroupId))!.Value);
     }
 }

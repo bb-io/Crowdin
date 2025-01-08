@@ -7,7 +7,7 @@ namespace Apps.Crowdin.Models.Request.File;
 
 public class ManageFileRequest
 {
-    [Display("[Enterprise] Storage ID"), DataSource(typeof(StorageDataHandler))]
+    [Display("Storage ID"), DataSource(typeof(StorageDataHandler))]
     public string? StorageId { get; set; }
     
     public FileReference? File { get; set; }

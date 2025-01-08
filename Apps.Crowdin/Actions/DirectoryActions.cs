@@ -16,7 +16,7 @@ namespace Apps.Crowdin.Actions;
 [ActionList]
 public class DirectoryActions(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
-    [Action("[Enterprise] List directories", Description = "List all directories")]
+    [Action("Search directories", Description = "List all directories")]
     public async Task<ListDirectoriesResponse> ListDirectories(
         [ActionParameter] ProjectRequest project,
         [ActionParameter] ListDirectoriesRequest input)
@@ -39,7 +39,7 @@ public class DirectoryActions(InvocationContext invocationContext) : AppInvocabl
         return new(result);
     }
     
-    [Action("[Enterprise] Get directory by ID", Description = "Get a specific directory by ID")]
+    [Action("Get directory by ID", Description = "Get a specific directory by ID")]
     public async Task<DirectoryEntity> GetDirectoryById(
         [ActionParameter] ProjectRequest project,
         [ActionParameter] DirectoryRequest directory)
@@ -51,7 +51,7 @@ public class DirectoryActions(InvocationContext invocationContext) : AppInvocabl
         return new(response);
     }
     
-    [Action("[Enterprise] Get directory by path", Description = "Get a specific directory by path")]
+    [Action("Get directory by path", Description = "Get a specific directory by path")]
     public async Task<DirectoryEntity> GetDirectoryByPath(
         [ActionParameter] ProjectRequest project,
         [ActionParameter] GetDirectoryByPathRequest input)
@@ -89,7 +89,7 @@ public class DirectoryActions(InvocationContext invocationContext) : AppInvocabl
         });
     }
 
-    [Action("[Enterprise] Add directory", Description = "Add a new directory")]
+    [Action("Add directory", Description = "Add a new directory")]
     public async Task<DirectoryEntity> AddDirectory(
         [ActionParameter] ProjectRequest project,
         [ActionParameter] AddNewDirectoryRequest input)
@@ -99,12 +99,14 @@ public class DirectoryActions(InvocationContext invocationContext) : AppInvocabl
             : input.Path;
         
         if(string.IsNullOrWhiteSpace(purePath))
+        {
             return new()
             {
                 Id = null,
                 ProjectId = project.ProjectId,
                 Name = "Root"
             };
+        }
         
         var folders = purePath.Trim('/').Split("/");
 

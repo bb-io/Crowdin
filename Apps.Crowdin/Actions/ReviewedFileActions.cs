@@ -18,7 +18,7 @@ namespace Apps.Crowdin.Actions;
 [ActionList]
 public class ReviewedFileActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : AppInvocable(invocationContext)
 {
-    [Action("[Enterprise] List reviewed source files builds", Description = "List all reviewed source files builds of specific project")]
+    [Action("Search reviewed source files builds", Description = "List all reviewed source files builds of specific project")]
     public async Task<ListReviewedFileBuildsResponse> ListFileBuilds([ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("Branch ID")] string? branchId)
     {
@@ -32,7 +32,7 @@ public class ReviewedFileActions(InvocationContext invocationContext, IFileManag
         return new(result);
     }  
     
-    [Action("[Enterprise] Build reviewed source files", Description = "Build reviewed source files of specific project")]
+    [Action("Build reviewed source files", Description = "Build reviewed source files of specific project")]
     public async Task<ReviewedFileBuildEntity> BuildReviewedSourceFiles([ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("Branch ID")]
         string? branchId)
@@ -48,7 +48,7 @@ public class ReviewedFileActions(InvocationContext invocationContext, IFileManag
         return new(response);
     }
     
-    [Action("[Enterprise] Get reviewed source files build", Description = "Get specific reviewed source files build")]
+    [Action("Get reviewed source files build", Description = "Get specific reviewed source files build")]
     public async Task<ReviewedFileBuildEntity> GetReviewedSourceFilesBuild([ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("Build ID")]
         string buildId)
@@ -59,7 +59,7 @@ public class ReviewedFileActions(InvocationContext invocationContext, IFileManag
         return new(response);
     }
     
-    [Action("[Enterprise] Download reviewed source files as ZIP", Description = "Download reviewed source files of specific build as ZIP")]
+    [Action("Download reviewed source files as ZIP", Description = "Download reviewed source files of specific build as ZIP")]
     public async Task<DownloadFileResponse> DownloadReviewedSourceFilesAsZip([ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("Build ID")]
         string buildId)
@@ -76,7 +76,7 @@ public class ReviewedFileActions(InvocationContext invocationContext, IFileManag
         return new(fileReference);
     }
     
-    [Action("[Enterprise] Download reviewed source files", Description = "Download reviewed source files of specific build")]
+    [Action("Download reviewed source files", Description = "Download reviewed source files of specific build")]
     public async Task<DownloadFilesResponse> DownloadReviewedSourceFiles([ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("Build ID")]
         string buildId)

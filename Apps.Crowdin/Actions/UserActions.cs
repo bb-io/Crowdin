@@ -11,6 +11,7 @@ using Crowdin.Api;
 using Newtonsoft.Json;
 using RestSharp;
 using Apps.Crowdin.Models.Response.Project;
+using Blackbird.Applications.Sdk.Utils.Parsers;
 
 namespace Apps.Crowdin.Actions;
 
@@ -76,5 +77,28 @@ public class UserActions(InvocationContext invocationContext) : AppInvocable(inv
 
         var users = items.Select(x => x.Data).ToArray();
         return users.FirstOrDefault();
+    }
+
+    [Action("Invite user", Description = "Add a new user")]
+    public async Task<UserEnterpriseEntity> InviteUser(
+        [ActionParameter] InviteUserRequest input)
+    {
+        var response = await SdkClient.Users.InviteUser(new()
+        {
+            Email = input.Email,
+            FirstName = input.FirstName,
+            LastName = input.LastName,
+            TimeZone = input.Timezone,
+            AdminAccess = input.IsAdmin
+        });
+
+        return new(response);
+    }
+
+    [Action("Delete user", Description = "Delete specific user")]
+    public Task DeleteUser(
+        [ActionParameter] UserRequest user)
+    {
+        return SdkClient.Users.DeleteUser(IntParser.Parse(user.UserId, nameof(user.UserId))!.Value);
     }
 }

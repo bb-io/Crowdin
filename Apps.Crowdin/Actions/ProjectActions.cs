@@ -8,6 +8,7 @@ using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
@@ -81,7 +82,7 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
         return SdkClient.ProjectsGroups.DeleteProject(intProjectId!.Value);
     }
     
-    [Action("[Enterprise] Build project", Description = "Build project translation")]
+    [Action("Build project", Description = "Build project translation")]
     public async Task<ProjectBuildEntity> BuildProject([ActionParameter] ProjectRequest project,
         [ActionParameter] BuildProjectRequest input)
     {
@@ -100,7 +101,7 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
         return new(response);
     }
 
-    [Action("[Enterprise] Download translations as ZIP", Description = "Download project translations as ZIP")]
+    [Action("Download translations as ZIP", Description = "Download project translations as ZIP")]
     public async Task<DownloadFileResponse> DownloadTranslationsAsZip(
         [ActionParameter] ProjectRequest project,
         [ActionParameter] BuildRequest build)
@@ -111,16 +112,22 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
         var response = await SdkClient.Translations.DownloadProjectTranslations(intProjectId, intBuildId);
 
         if (response.Link is null)
-            throw new("Project build is in progress, you can't download the data now");
+        {
+            throw new PluginMisconfigurationException("Project build is in progress, you can't download the data now");
+        }
 
         var file = await FileDownloader.DownloadFileBytes(response.Link.Url);
-        file.Name = $"{project.ProjectId}";
+        file.Name = $"{project.ProjectId}.zip";
+
+        var memoryStream = new MemoryStream();
+        await file.FileStream.CopyToAsync(memoryStream);
+        memoryStream.Position = 0;
         
-        var fileReference = await fileManagementClient.UploadAsync(file.FileStream, file.ContentType, file.Name);
+        var fileReference = await fileManagementClient.UploadAsync(memoryStream, file.ContentType, file.Name);
         return new(fileReference);
     }
 
-    [Action("[Enterprise] Download translations", Description = "Download project translations")]
+    [Action("Download translations", Description = "Download project translations")]
     public async Task<DownloadFilesResponse> DownloadTranslations(
         [ActionParameter] ProjectRequest project,
         [ActionParameter] BuildRequest build)

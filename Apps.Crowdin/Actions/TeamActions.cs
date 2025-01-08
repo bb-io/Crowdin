@@ -18,6 +18,7 @@ public class TeamActions(InvocationContext invocationContext) : AppInvocable(inv
     [Action("[Enterprise] Search teams", Description = "List all teams")]
     public async Task<ListTeamsResponse> ListTeams()
     {
+        CheckAccessToEnterpriseAction();
         var response = await Paginator.Paginate(ListTeamsAsync);
 
         var teams = response.Select(x => new TeamEntity(x)).ToArray();
@@ -28,6 +29,7 @@ public class TeamActions(InvocationContext invocationContext) : AppInvocable(inv
     public async Task<TeamEntity> GetTeam(
         [ActionParameter] TeamRequest team)
     {
+        CheckAccessToEnterpriseAction();
         var intTeamId = IntParser.Parse(team.TeamId, nameof(team.TeamId))!.Value;
         var response = await SdkClient.Teams.GetTeam(intTeamId);
         return new(response);
@@ -37,6 +39,7 @@ public class TeamActions(InvocationContext invocationContext) : AppInvocable(inv
     public async Task<TeamEntity> AddTeam(
         [ActionParameter] [Display("Name")] string name)
     {
+        CheckAccessToEnterpriseAction();
         var response = await SdkClient.Teams.AddTeam(new()
         {
             Name = name
@@ -49,6 +52,7 @@ public class TeamActions(InvocationContext invocationContext) : AppInvocable(inv
     public Task DeleteTeam(
         [ActionParameter] TeamRequest team)
     {
+        CheckAccessToEnterpriseAction();
         return SdkClient.Teams.DeleteTeam(IntParser.Parse(team.TeamId, nameof(team.TeamId))!.Value);
     }
     

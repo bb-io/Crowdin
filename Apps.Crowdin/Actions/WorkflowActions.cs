@@ -16,6 +16,8 @@ public class WorkflowActions(InvocationContext invocationContext) : AppInvocable
     [Action("[Enterprise] Search workflow steps", Description = "Search all workflow steps of project")]
     public async Task<ListWorkflowStepsResponse> ListWorkflowSteps([ActionParameter] ProjectRequest project)
     {
+        CheckAccessToEnterpriseAction();
+        
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId))!.Value;
         var executor = new WorkflowsApiExecutor(SdkClient);
 

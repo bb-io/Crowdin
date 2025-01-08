@@ -200,7 +200,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         return new(fileReference);
     }
 
-    [Action("[Basic] Add or update file", Description = "Add or update file")]
+    [Action("Add or update file", Description = "Add or update file")]
     public async Task<FileEntity> AddOrUpdateFile(
         [ActionParameter] ProjectRequest project,
         [ActionParameter] AddOrUpdateFileRequest input)
