@@ -3,10 +3,10 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Product>Crowdin</Product>
+    <Product>Crowdin (Merged)</Product>
     <Description>Cloud-based solution that streamlines localization management</Description>
-    <Version>1.0.19</Version>
-    <AssemblyName>Apps.Crowdin</AssemblyName>
+    <Version>1.0.22</Version>
+    <AssemblyName>Apps.CrowdinMerged</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.11.0" />

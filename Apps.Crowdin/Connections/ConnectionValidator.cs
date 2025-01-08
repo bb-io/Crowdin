@@ -10,8 +10,10 @@ public class ConnectionValidator : IConnectionValidator
         IEnumerable<AuthenticationCredentialsProvider> authProviders, CancellationToken cancellationToken)
     {
         IApiClientFactory factory = new ApiClientFactory();
-        var client = factory.BuildSdkClient(authProviders);
-
+        
+        var authenticationCredentialsProviders = authProviders as AuthenticationCredentialsProvider[] ?? authProviders.ToArray();
+        var client = factory.BuildSdkClient(authenticationCredentialsProviders);
+        
         try
         {
             await client.Languages.ListSupportedLanguages();

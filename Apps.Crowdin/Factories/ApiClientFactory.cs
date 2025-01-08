@@ -11,12 +11,17 @@ namespace Apps.Crowdin.Factories;
 
 public class ApiClientFactory : IApiClientFactory
 {
+    public string GetPlan(IEnumerable<AuthenticationCredentialsProvider> credentialsProviders)
+    {
+        return credentialsProviders.Get(CredsNames.CrowdinPlan).Value;
+    }
+
     public RestClient BuildRestClient(IEnumerable<AuthenticationCredentialsProvider> credentialsProviders)
     {
         var authenticationCredentialsProviders = credentialsProviders as AuthenticationCredentialsProvider[] ?? credentialsProviders.ToArray();
         var crowdinPlan = authenticationCredentialsProviders.Get(CredsNames.CrowdinPlan).Value;
         
-        if (crowdinPlan == Plans.BasicPlan)
+        if (crowdinPlan == Plans.Basic)
         {
             return new CrowdinRestClient();
         }
