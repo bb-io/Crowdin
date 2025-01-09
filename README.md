@@ -173,8 +173,8 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 
 ### Project groups
 
-- **[Enterprise] On group created** On group created
-- **[Enterprise] On group deleted** On group deleted
+- **[Enterprise] On group created** On group created (enterprise only)
+- **[Enterprise] On group deleted** On group deleted (enterprise only)
 
 ### String
 
