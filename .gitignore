@@ -355,5 +355,7 @@ healthchecksdb
 *.dmg
 *.env
 /Apps.Crowdin/ApplicationConstants.cs
-/Apps.Crowdin/ApplicationConstants.cs
 /ConsoleApp1
+/ConsoleApp2
+/ConsoleApp3
+/Tests.Crowdin/appsettings.json

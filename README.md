@@ -18,13 +18,16 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 1. Navigate to apps and search for Crowdin. If you cannot find Crowdin then click _Add App_ in the top right corner, select Crowdin and add the app to your Blackbird environment.
 2. Click _Add Connection_.
 3. Name your connection for future reference e.g. 'My Crowdin connection'.
-4. Click _Authorize connection_.
-5. As a new window pops up, follow the instructions from Crowdin.
-6. When you return to Blackbird, confirm that the connection has appeared and the status is _Connected_.
+4. Select your Crowdin plan. It could be either Basic or Enterprise. See more at https://crowdin.com/pricing
+5. Click _Authorize connection_.
+6. As a new window pops up, follow the instructions from Crowdin.
+7. When you return to Blackbird, confirm that the connection has appeared and the status is _Connected_.
 
 ![CrowdinBlackbirdConnection](image/README/CrowdinBlackbirdConnection.png)
 
 ## Actions
+
+> Please note that the app works with both Crowdin plans: Enterprise and Basic. However, some actions are unavailable on the Basic plan. These actions are marked as [Enterprise] at the beginning of their name and are only available for the Enterprise plan.
 
 ### Comment 
 
@@ -32,6 +35,13 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 - **Delete string comment** Delete specific string comment
 - **Get string comment** Get specific string comment
 - **List comments** List string comments for a project
+
+### Directory
+
+- **Search directories** List all directories
+- **Add directory** Add a new directory
+- **Get directory by ID** Get a specific directory by ID
+- **Get directory by path** Get a specific directory by path
 
 ### File 
 
@@ -42,6 +52,11 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 - **Get file** Get specific file info
 - **List files** List project files
 - **Update file** Update an existing file with new content
+
+### Glossary
+
+- **Import glossary** Import glossary from TBX file
+- **Export glossary** Export glossary as TBX file
 
 ### Machine Translation 
 
@@ -54,14 +69,37 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 - **Add project** Add new project
 - **Delete project** Delete specific project
 - **Get project** Get specific project
-- **List projects** List all projects
+- **Search projects** List all projects
+- **Build project** Build project translation
+
+### Project Group
+
+- **[Enterprise] Add project group** Add a new project group
+- **[Enterprise] Delete project group** Delete specific project group
+- **[Enterprise] Get project group** Get specific project group
+- **[Enterprise] Search project groups** List all project groups
+
+### Reviewed File
+
+- **Build reviewed source files** Build reviewed source files of specific project
+- **Download reviewed source files as ZIP** Download reviewed source files of specific build as ZIP
+- **Download reviewed source files** Download reviewed source files of specific build
+- **Get reviewed source files build** Get specific reviewed source files build
+- **Search reviewed source files builds** List all reviewed source files builds of specific project
 
 ### Source String 
 
 - **Add source string** Add new source string
 - **Delete source string** Delete specific source string
 - **Get source string** Get specific source string
-- **List strings** List all project source strings
+- **Search strings** List all project source strings
+
+### Storage
+
+- **Add storage** Add new storage
+- **Delete storage** Delete specific storage
+- **Get storage** Get specific storage
+- **Search storages** List all storages
 
 ### Task 
 
@@ -69,7 +107,14 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 - **Delete task** Delete specific task
 - **Download task strings as XLIFF** Download specific task strings as XLIFF
 - **Get task** Get specific task
-- **List tasks** List all tasks
+- **Search tasks** List all tasks
+
+### Team
+
+- **[Enterprise] Add team** Add a new team
+- **[Enterprise] Delete team** Delete specific team
+- **[Enterprise] Get team** Get specific team
+- **[Enterprise] Search teams** List all teams
 
 ### Translation 
 
@@ -90,12 +135,14 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 - **Download translation memory** Download specific translation memory
 - **Export translation memory** Export specific translation memory
 - **Get translation memory** Get specific translation memory
-- **List translation memories** List all translation memories
+- **Search translation memories** List all translation memories
 
 ### Users
 
 - **Search project members** Get all matching project members. Filter by role or language.
 - **Find project member** Get first matching project member. Filter by role, language or username/fist name/last name.
+- **Invite user** Add a new user
+- **Delete user** Delete specific user
 
 ## Events
 
@@ -123,6 +170,11 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 - **On project created** On project created
 - **On project deleted** On project deleted
 - **On project translated** On project translated
+
+### Project groups
+
+- **[Enterprise] On group created** On group created (enterprise only)
+- **[Enterprise] On group deleted** On group deleted (enterprise only)
 
 ### String
 

@@ -1,11 +1,11 @@
 ﻿using Apps.Crowdin.Api;
+using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.SourceString;
 using Apps.Crowdin.Models.Response.SourceString;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Crowdin.Api.SourceStrings;
@@ -13,22 +13,13 @@ using Crowdin.Api.SourceStrings;
 namespace Apps.Crowdin.Actions;
 
 [ActionList]
-public class SourceStringAction : BaseInvocable
+public class SourceStringAction(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
-    private AuthenticationCredentialsProvider[] Creds =>
-        InvocationContext.AuthenticationCredentialsProviders.ToArray();
-
-    public SourceStringAction(InvocationContext invocationContext) : base(invocationContext)
-    {
-    }
-    
-    [Action("List strings", Description = "List all project source strings")]
+    [Action("Search strings", Description = "List all project source strings")]
     public async Task<ListStringsResponse> ListStrings([ActionParameter] ListStringsRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
-
-        var client = new CrowdinClient(Creds);
-
+        
         var items = await Paginator.Paginate((lim, offset)
             =>
         {
@@ -45,7 +36,7 @@ public class SourceStringAction : BaseInvocable
                 Scope = EnumParser.Parse<StringScope>(input.Scope, nameof(input.Scope)),
                 DenormalizePlaceholders = input.DenormalizePlaceholders is true ? 1 : 0,
             };
-            return client.SourceStrings.ListStrings(intProjectId!.Value, request);
+            return SdkClient.SourceStrings.ListStrings(intProjectId!.Value, request);
         });
 
         var strings = items.Select(x => new SourceStringEntity(x)).ToArray();
@@ -57,10 +48,8 @@ public class SourceStringAction : BaseInvocable
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intStringId = IntParser.Parse(input.StringId, nameof(input.StringId));
-
-        var client = new CrowdinClient(Creds);
-
-        var response = await client.SourceStrings
+        
+        var response = await SdkClient.SourceStrings
             .GetString(intProjectId!.Value, intStringId!.Value, input.DenormalizePlaceholders ?? false);
         return new(response);
     }
@@ -69,9 +58,6 @@ public class SourceStringAction : BaseInvocable
     public async Task<SourceStringEntity> AddString([ActionParameter] AddSourceStringRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
-
-        var client = new CrowdinClient(Creds);
-
         var request = new AddStringRequest
         {
             Text = input.Text,
@@ -82,7 +68,7 @@ public class SourceStringAction : BaseInvocable
             MaxLength = input.MaxLength,
             LabelIds = input.LabelIds?.Select(labelId => IntParser.Parse(labelId, nameof(labelId))!.Value).ToList()
         };
-        var response = await client.SourceStrings
+        var response = await SdkClient.SourceStrings
             .AddString(intProjectId!.Value, request);
         
         return new(response);
@@ -93,9 +79,7 @@ public class SourceStringAction : BaseInvocable
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intStringId = IntParser.Parse(input.StringId, nameof(input.StringId));
-
-        var client = new CrowdinClient(Creds);
-
-        return client.SourceStrings.DeleteString(intProjectId!.Value, intStringId!.Value);
+        
+        return SdkClient.SourceStrings.DeleteString(intProjectId!.Value, intStringId!.Value);
     }
 }

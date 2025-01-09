@@ -1,4 +1,5 @@
 ﻿using Apps.Crowdin.Api;
+using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Polling.Models;
 using Apps.Crowdin.Polling.Models.Requests;
 using Apps.Crowdin.Polling.Models.Responses;
@@ -10,7 +11,7 @@ using Blackbird.Applications.Sdk.Common.Polling;
 namespace Apps.Crowdin.Polling;
 
 [PollingEventList]
-public class PreTranslationPollingList(InvocationContext invocationContext) : BaseInvocable(invocationContext)
+public class PreTranslationPollingList(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
     [PollingEvent("On pre-translations status changed", Description = 
         "Triggered when the status of all pre-translations in a project changes to one of the specified statuses")]
@@ -31,10 +32,9 @@ public class PreTranslationPollingList(InvocationContext invocationContext) : Ba
             };
         }
 
-        var client = new CrowdinClient(InvocationContext.AuthenticationCredentialsProviders);
         var preTranslations =
             await Paginator.Paginate((lim, offset)
-                => client.Translations.ListPreTranslations(int.Parse(preTranslationStatusChangedRequest.ProjectId), lim, offset));
+                => SdkClient.Translations.ListPreTranslations(int.Parse(preTranslationStatusChangedRequest.ProjectId), lim, offset));
 
         if (preTranslationStatusChangedRequest.PreTranslationIds != null)
         {
