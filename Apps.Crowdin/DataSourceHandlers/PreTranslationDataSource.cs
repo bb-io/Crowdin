@@ -1,4 +1,5 @@
 ﻿using Apps.Crowdin.Api;
+using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
@@ -13,13 +14,8 @@ namespace Apps.Crowdin.DataSourceHandlers;
 
 public class PreTranslationDataSource(
     InvocationContext invocationContext,
-    [ActionParameter] ProjectRequest projectRequest)
-    : BaseInvocable(invocationContext), IAsyncDataSourceItemHandler
+    [ActionParameter] ProjectRequest projectRequest) : AppInvocable(invocationContext), IAsyncDataSourceItemHandler
 {
-    private AuthenticationCredentialsProvider[] Creds =>
-        InvocationContext.AuthenticationCredentialsProviders.ToArray();
-
-
     public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(projectRequest.ProjectId))
@@ -27,9 +23,8 @@ public class PreTranslationDataSource(
             throw new PluginMisconfigurationException("Please, provide Project ID first");
         }
 
-        var client = new CrowdinClient(Creds);
         var items = await Paginator.Paginate((lim, offset)
-            => client.Translations.ListPreTranslations(int.Parse(projectRequest.ProjectId), lim, offset));
+            => SdkClient.Translations.ListPreTranslations(int.Parse(projectRequest.ProjectId), lim, offset));
 
         return items
             .Where(x => x.Status != BuildStatus.Failed && x.Status != BuildStatus.Canceled &&

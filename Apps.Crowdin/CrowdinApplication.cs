@@ -41,7 +41,7 @@ public class CrowdinApplication : BaseInvocable, IApplication, ICategoryProvider
     {
         return new Dictionary<Type, object>
         {
-            { typeof(IOAuth2AuthorizeService), new OAuth2AuthorizationSerivce(InvocationContext) },
+            { typeof(IOAuth2AuthorizeService), new OAuth2AuthorizationService(InvocationContext) },
             { typeof(IOAuth2TokenService), new OAuth2TokenService(InvocationContext) }
         };
     }

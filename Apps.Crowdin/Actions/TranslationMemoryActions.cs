@@ -6,41 +6,29 @@ using Apps.Crowdin.Models.Response.TranslationMemory;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Blackbird.Applications.Sdk.Utils.Utilities;
 using Crowdin.Api.TranslationMemory;
-using System.IO;
+using Apps.Crowdin.Invocables;
 
 namespace Apps.Crowdin.Actions;
 
 [ActionList]
-public class TranslationMemoryActions : BaseInvocable
+public class TranslationMemoryActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+    : AppInvocable(invocationContext)
 {
-    private AuthenticationCredentialsProvider[] Creds =>
-        InvocationContext.AuthenticationCredentialsProviders.ToArray();
 
-    private readonly IFileManagementClient _fileManagementClient;
-
-    public TranslationMemoryActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(
-        invocationContext)
-    {
-        _fileManagementClient = fileManagementClient;
-    }
-    
-    [Action("List translation memories", Description = "List all translation memories")]
+    [Action("Search translation memories", Description = "List all translation memories")]
     public async Task<ListTranslationMemoriesResponse> ListTranslationMemories(
         [ActionParameter] ListTranslationMemoryRequest input)
     {
         var intUserId = IntParser.Parse(input.UserId, nameof(input.UserId));
         var intGroupId = IntParser.Parse(input.GroupId, nameof(input.GroupId));
-
-        var client = new CrowdinClient(Creds);
-
+        
         var items = await Paginator.Paginate((lim, offset)
-            => client.TranslationMemory.ListTms(intUserId, intGroupId, lim, offset));
+            => SdkClient.TranslationMemory.ListTms(intUserId, intGroupId, lim, offset));
 
         var tms = items.Select(x => new TranslationMemoryEntity(x)).ToArray();
         return new(tms);
@@ -51,9 +39,7 @@ public class TranslationMemoryActions : BaseInvocable
         [ActionParameter] TranslationMemoryRequest tm)
     {
         var intTmId = IntParser.Parse(tm.TranslationMemoryId, nameof(tm.TranslationMemoryId));
-        var client = new CrowdinClient(Creds);
-
-        var response = await client.TranslationMemory.GetTm(intTmId!.Value);
+        var response = await SdkClient.TranslationMemory.GetTm(intTmId!.Value);
         return new(response);
     }
 
@@ -62,7 +48,6 @@ public class TranslationMemoryActions : BaseInvocable
         [ActionParameter] AddTranslationMemoryRequest input)
     {
         var intGroupId = IntParser.Parse(input.GroupId, nameof(input.GroupId));
-        var client = new CrowdinClient(Creds);
 
         var request = new AddTmRequest
         {
@@ -70,7 +55,7 @@ public class TranslationMemoryActions : BaseInvocable
             LanguageId = input.LanguageId,
             GroupId = intGroupId
         };
-        var response = await client.TranslationMemory.AddTm(request);
+        var response = await SdkClient.TranslationMemory.AddTm(request);
 
         return new(response);
     }
@@ -79,9 +64,7 @@ public class TranslationMemoryActions : BaseInvocable
     public Task DeleteTranslationMemory([ActionParameter] TranslationMemoryRequest tm)
     {
         var intTmId = IntParser.Parse(tm.TranslationMemoryId, nameof(tm.TranslationMemoryId));
-        var client = new CrowdinClient(Creds);
-
-        return client.TranslationMemory.DeleteTm(intTmId!.Value);
+        return SdkClient.TranslationMemory.DeleteTm(intTmId!.Value);
     }
 
     [Action("Export translation memory", Description = "Export specific translation memory")]
@@ -93,17 +76,15 @@ public class TranslationMemoryActions : BaseInvocable
 
         var formatEnum =
             EnumParser.Parse<TmFileFormat>(input.Format, nameof(input.Format));
-
-        var client = new CrowdinClient(Creds);
-
+        
         var request = new ExportTmRequest
         {
             SourceLanguageId = input.SourceLanguageId,
             TargetLanguageId = input.TargetLanguageId,
             Format = formatEnum
         };
-        var response = await client.TranslationMemory.ExportTm(intTmId!.Value, request);
-
+        
+        var response = await SdkClient.TranslationMemory.ExportTm(intTmId!.Value, request);
         return new(response);
     }
 
@@ -112,11 +93,9 @@ public class TranslationMemoryActions : BaseInvocable
         [ActionParameter] DownloadTranslationMemoryRequest input)
     {
         var intTmId = IntParser.Parse(input.TranslationMemoryId, nameof(input.TranslationMemoryId));
-        var client = new CrowdinClient(Creds);
-
-        var response = await client.TranslationMemory.DownloadTm(intTmId!.Value, input.ExportId);
+        var response = await SdkClient.TranslationMemory.DownloadTm(intTmId!.Value, input.ExportId);
         var fileContent = await FileDownloader.DownloadFileBytes(response.Url);
-        var file = await _fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType, fileContent.Name);
+        var file = await fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType, fileContent.Name);
         return new(file);
     }
 
@@ -125,7 +104,6 @@ public class TranslationMemoryActions : BaseInvocable
         [ActionParameter] AddTranslationMemorySegmentRequest input)
     {
         var intTmId = IntParser.Parse(input.TranslationMemoryId, nameof(input.TranslationMemoryId));
-        var client = new CrowdinClient(Creds);
 
         var request = new CreateTmSegmentRequest
         {
@@ -139,7 +117,7 @@ public class TranslationMemoryActions : BaseInvocable
             }
         };
 
-        var response = await client.TranslationMemory.CreateTmSegment(intTmId!.Value, request);
+        var response = await SdkClient.TranslationMemory.CreateTmSegment(intTmId!.Value, request);
         return new(response.Records.First());
     }
 }

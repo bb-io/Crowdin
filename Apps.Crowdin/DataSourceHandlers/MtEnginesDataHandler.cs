@@ -1,33 +1,20 @@
-﻿using Apps.Crowdin.Api;
+﻿using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Utils;
-using Blackbird.Applications.Sdk.Common;
-using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
 
 namespace Apps.Crowdin.DataSourceHandlers;
 
-public class MtEnginesDataHandler : BaseInvocable, IAsyncDataSourceHandler
+public class MtEnginesDataHandler(InvocationContext invocationContext)
+    : AppInvocable(invocationContext), IAsyncDataSourceItemHandler
 {
-    private AuthenticationCredentialsProvider[] Creds =>
-        InvocationContext.AuthenticationCredentialsProviders.ToArray();
-
-    public MtEnginesDataHandler(InvocationContext invocationContext) : base(invocationContext)
+    public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken cancellationToken)
     {
-    }
-
-    public async Task<Dictionary<string, string>> GetDataAsync(DataSourceContext context,
-        CancellationToken cancellationToken)
-    {
-        var client = new CrowdinClient(Creds);
-
         var items = await Paginator.Paginate((lim, offset)
-            => client.MachineTranslationEngines.ListMts(null, lim, offset));
-        
+            => SdkClient.MachineTranslationEngines.ListMts(null, lim, offset));
         return items
             .Where(x => context.SearchString == null ||
                         x.Name.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
-            .Take(20)
-            .ToDictionary(x => x.Id.ToString(), x => x.Name);
+            .Select(x => new DataSourceItem(x.Id.ToString(), x.Name));
     }
 }

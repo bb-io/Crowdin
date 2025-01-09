@@ -1,13 +1,11 @@
-﻿using Apps.Crowdin.DataSourceHandlers.EnumHandlers;
-using Blackbird.Applications.Sdk.Common;
-using Blackbird.Applications.Sdk.Common.Dictionaries;
-using Blackbird.Applications.Sdk.Common.Files;
+﻿using Blackbird.Applications.Sdk.Common;
 
 namespace Apps.Crowdin.Models.Request.File;
 
-public class AddNewFileRequest
+public class AddNewFileRequest : ManageFileRequest
 {    
-    public FileReference File { get; set; }
+    [Display("File name")]
+    public string? Name { get; set; }
     
     [Display("Branch ID")]
     public string? BranchId { get; set; }

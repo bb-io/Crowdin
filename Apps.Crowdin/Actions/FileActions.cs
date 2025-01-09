@@ -1,4 +1,6 @@
-﻿using Apps.Crowdin.Api;
+﻿using System.Net.Mime;
+using Apps.Crowdin.Api;
+using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.File;
 using Apps.Crowdin.Models.Request.Project;
@@ -7,29 +9,22 @@ using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Parsers;
+using Blackbird.Applications.Sdk.Utils.Utilities;
+using Crowdin.Api;
 using Crowdin.Api.SourceFiles;
 using RestSharp;
 
 namespace Apps.Crowdin.Actions;
 
 [ActionList]
-public class FileActions : BaseInvocable
+public class FileActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+    : AppInvocable(invocationContext)
 {
-    private AuthenticationCredentialsProvider[] Creds =>
-        InvocationContext.AuthenticationCredentialsProviders.ToArray();
-
-    private readonly IFileManagementClient _fileManagementClient;
-
-    public FileActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(
-        invocationContext)
-    {
-        _fileManagementClient = fileManagementClient;
-    }
-
-    [Action("List files", Description = "List project files")]
+    [Action("Search files", Description = "List project files")]
     public async Task<ListFilesResponse> ListFiles(
         [ActionParameter] ProjectRequest project,
         [ActionParameter] ListFilesRequest input)
@@ -37,8 +32,6 @@ public class FileActions : BaseInvocable
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intBranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId));
         var intDirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId));
-
-        var client = new CrowdinClient(Creds);
 
         var items = await Paginator.Paginate((lim, offset) =>
         {
@@ -51,11 +44,23 @@ public class FileActions : BaseInvocable
                 Offset = offset
             };
 
-            return client.SourceFiles.ListFiles<FileCollectionResource>(intProjectId!.Value, request);
+            return SdkClient.SourceFiles.ListFiles<FileCollectionResource>(intProjectId!.Value, request);
         });
 
         var files = items.Select(x => new FileEntity(x)).ToArray();
         return new(files);
+    }
+
+    [Action("Get file", Description = "Get specific file info")]
+    public async Task<FileEntity> GetFile(
+        [ActionParameter] ProjectRequest project,
+        [ActionParameter] FileRequest fileRequest)
+    {
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
+        var intFileId = IntParser.Parse(fileRequest.FileId, nameof(fileRequest.FileId));
+
+        var file = await SdkClient.SourceFiles.GetFile<FileResource>(intProjectId!.Value, intFileId!.Value);
+        return new(file);
     }
 
     [Action("Add file", Description = "Add new file")]
@@ -63,50 +68,136 @@ public class FileActions : BaseInvocable
         [ActionParameter] ProjectRequest project,
         [ActionParameter] AddNewFileRequest input)
     {
+        if (input.StorageId is null && input.File is null)
+        {
+            throw new PluginMisconfigurationException("You need to specify one of the parameters: Storage ID or File");
+        }
+
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
+        var intStorageId = LongParser.Parse(input.StorageId, nameof(input.StorageId));
         var intBranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId));
         var intDirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId));
-        var client = new CrowdinClient(Creds);
 
-        var fileStream = await _fileManagementClient.DownloadAsync(input.File);
-        var storage = await client.Storage.AddStorage(fileStream, input.File.Name);
-        var request = new AddFileRequest
+        var fileName = input.Name ?? input.File?.Name;
+
+        if (intStorageId is null && input.File != null)
         {
-            StorageId = storage.Id,
-            Name = input.File.Name,
-            BranchId = intBranchId,
-            DirectoryId = intDirectoryId,
-            Title = input.Title,
-            ExcludedTargetLanguages = input.ExcludedTargetLanguages?.ToList(),
-            AttachLabelIds = input.AttachLabelIds?.ToList(),
-            Context = input.Context
-        };
-        
-        var file = await client.SourceFiles.AddFile(intProjectId!.Value, request);
-        return new(file);
+            var fileStream = await fileManagementClient.DownloadAsync(input.File);
+            var storage = await SdkClient.Storage
+                .AddStorage(fileStream, fileName!);
+            intStorageId = storage.Id;
+        }
+
+        if (input.File is null)
+        {
+            var storage = await new StorageActions(InvocationContext, fileManagementClient).GetStorage(new()
+            {
+                StorageId = intStorageId.ToString()!
+            });
+
+            fileName = storage.FileName;
+        }
+
+        try
+        {
+            var request = new AddFileRequest
+            {
+                StorageId = intStorageId!.Value,
+                Name = fileName!,
+                BranchId = intBranchId,
+                DirectoryId = intDirectoryId,
+                Title = input.Title,
+                ExcludedTargetLanguages = input.ExcludedTargetLanguages?.ToList(),
+                AttachLabelIds = input.AttachLabelIds?.ToList(),
+                Context = input.Context
+            };
+
+            var file = await SdkClient.SourceFiles.AddFile(intProjectId!.Value, request);
+            return new(file);
+        }
+        catch (CrowdinApiException ex)
+        {
+            if (!ex.Message.Contains("Name must be unique"))
+            {
+                throw new PluginMisconfigurationException(ex.Message);
+            }
+
+            var allFiles = await ListFiles(project, new());
+            var fileToUpdate = allFiles.Files.First(x => x.Name == fileName);
+
+            return await UpdateFile(project, new()
+            {
+                FileId = fileToUpdate.Id
+            }, new()
+            {
+                StorageId = intStorageId.ToString()
+            }, new());
+        }
     }
-    
+
     [Action("Update file", Description = "Update an existing file with new content")]
     public async Task<FileEntity> UpdateFile(
         [ActionParameter] ProjectRequest project,
-        [ActionParameter] UpdateFileRequest input)
+        [ActionParameter] FileRequest file,
+        [ActionParameter] ManageFileRequest input,
+        [ActionParameter] UpdateFileRequest updateFileRequest)
+    {
+        if (input.StorageId is null && input.File is null)
+        {
+            throw new PluginMisconfigurationException("You need to specify one of the parameters: Storage ID or File");
+        }
+
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
+        var intStorageId = LongParser.Parse(input.StorageId, nameof(input.StorageId));
+        var intFileId = IntParser.Parse(file.FileId, nameof(file.FileId));
+
+        var client = SdkClient;
+
+        if (intStorageId is null)
+        {
+            var fileStream = await fileManagementClient.DownloadAsync(input.File);
+            var storage = await client.Storage
+                .AddStorage(fileStream, input.File.Name);
+            intStorageId = storage.Id;
+        }
+
+        var request = new ReplaceFileRequest
+        {
+            StorageId = intStorageId.Value,
+            UpdateOption = ToOptionEnum(updateFileRequest.UpdateOption)
+        };
+
+        var (result, isModified) = await client.SourceFiles.UpdateOrRestoreFile(
+            intProjectId!.Value,
+            intFileId!.Value,
+            request);
+
+        return new(result, isModified);
+    }
+
+    [Action("Download file", Description = "Download specific file")]
+    public async Task<DownloadFileResponse> DownloadFile(
+        [ActionParameter] ProjectRequest project,
+        [ActionParameter] FileRequest file)
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
-        var intFileId = IntParser.Parse(input.FileId, nameof(input.FileId));
+        var intFileId = IntParser.Parse(file.FileId, nameof(file.FileId));
 
-        var client = new CrowdinClient(Creds);
+        var client = SdkClient;
 
-        var fileStream = await _fileManagementClient.DownloadAsync(input.File);
-        var storage = await client.Storage.AddStorage(fileStream, input.File.Name);
+        var downloadLink = await client.SourceFiles.DownloadFile(intProjectId!.Value, intFileId!.Value);
 
-        var (file, isModified) = await client.SourceFiles.UpdateOrRestoreFile(intProjectId!.Value, intFileId!.Value,
-            new ReplaceFileRequest
-            {
-                StorageId = storage.Id,
-                UpdateOption = ToOptionEnum(input.UpdateOption)
-            });
+        var fileInfo = await client.SourceFiles.GetFile<FileResource>(intProjectId!.Value, intFileId!.Value);
+        var fileContent = await FileDownloader.DownloadFileBytes(downloadLink.Url);
 
-        return new(file, isModified);
+        fileContent.Name = fileInfo.Name;
+        fileContent.ContentType = fileContent.ContentType == MediaTypeNames.Text.Plain
+            ? MediaTypeNames.Application.Octet
+            : fileContent.ContentType;
+
+        var fileReference =
+            await fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType, fileContent.Name);
+        return new(fileReference);
     }
 
     [Action("Add or update file", Description = "Add or update file")]
@@ -118,49 +209,11 @@ public class FileActions : BaseInvocable
         var existingFile = projectFiles.Files.FirstOrDefault(f => f.Name == input.File.Name);
         if (existingFile != null)
         {
-            return await UpdateFile(project, new()
-                { File = input.File, FileId = existingFile.Id, UpdateOption = input.UpdateOption });
+            return await UpdateFile(project, new() { FileId = existingFile.Id }, new() { File = input.File }, 
+                new() { UpdateOption = input.UpdateOption });
         }
 
         return await AddFile(project, input);
-    }
-
-    [Action("Get file", Description = "Get specific file info")]
-    public async Task<FileEntity> GetFile(
-        [ActionParameter] ProjectRequest project,
-        [ActionParameter] [Display("File ID")] string fileId)
-    {
-        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
-        var intFileId = IntParser.Parse(fileId, nameof(fileId));
-
-        var client = new CrowdinClient(Creds);
-
-        var file = await client.SourceFiles.GetFile<FileResource>(intProjectId!.Value, intFileId!.Value);
-        return new(file);
-    }
-
-    [Action("Download file", Description = "Download specific file")]
-    public async Task<DownloadFileResponse> DownloadFile(
-        [ActionParameter] ProjectRequest project,
-        [ActionParameter] [Display("File ID")] string fileId)
-    {
-        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
-        var intFileId = IntParser.Parse(fileId, nameof(fileId));
-
-        var client = new CrowdinClient(Creds);
-
-        var fileInfo = await client.SourceFiles.GetFile<FileResource>(intProjectId!.Value, intFileId!.Value);
-
-        var downloadLink = await client.SourceFiles.DownloadFile(intProjectId!.Value, intFileId!.Value);
-
-        //temp fix https://dev.azure.com/blackbird-io/Blackbird.io/_workitems/edit/3397
-        //if (!MimeTypes.TryGetMimeType(fileInfo.Name, out var contentType))
-        string contentType = "application/octet-stream";
-
-        var bytes = new RestClient(downloadLink.Url).Get(new RestRequest("/")).RawBytes;
-
-        var file = await _fileManagementClient.UploadAsync(new MemoryStream(bytes), contentType, fileInfo.Name);
-        return new(file);
     }
 
     [Action("Delete file", Description = "Delete specific file")]
@@ -170,10 +223,7 @@ public class FileActions : BaseInvocable
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intFileId = IntParser.Parse(fileId, nameof(fileId));
-
-        var client = new CrowdinClient(Creds);
-
-        return client.SourceFiles.DeleteFile(intProjectId!.Value, intFileId!.Value);
+        return SdkClient.SourceFiles.DeleteFile(intProjectId!.Value, intFileId!.Value);
     }
 
     private FileUpdateOption? ToOptionEnum(string? option)

@@ -1,6 +1,9 @@
 ﻿using Apps.Crowdin.Api;
+using Apps.Crowdin.DataSourceHandlers;
+using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.MachineTranslation;
+using Apps.Crowdin.Models.Request.ProjectGroups;
 using Apps.Crowdin.Models.Response.MachineTranslation;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
@@ -13,25 +16,16 @@ using Crowdin.Api.MachineTranslationEngines;
 namespace Apps.Crowdin.Actions;
 
 [ActionList]
-public class MachineTranslationActions : BaseInvocable
+public class MachineTranslationActions(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
-    private AuthenticationCredentialsProvider[] Creds =>
-        InvocationContext.AuthenticationCredentialsProviders.ToArray();
-
-    public MachineTranslationActions(InvocationContext invocationContext) : base(invocationContext)
-    {
-    }
-    
-    [Action("List machine translation engines", Description = "List all machine translation engines")]
+    [Action("Search machine translation engines", Description = "List all machine translation engines")]
     public async Task<ListMtEnginesResponse> ListMtEnginges(
-        [ActionParameter] [Display("Group ID")] string? groupId)
+        [ActionParameter] ProjectGroupRequest projectGroupDataHandler)
     {
-        var intGroupId = IntParser.Parse(groupId, nameof(groupId));
+        var intGroupId = IntParser.Parse(projectGroupDataHandler.ProjectGroupId, nameof(projectGroupDataHandler.ProjectGroupId));
         
-        var client = new CrowdinClient(Creds);
-
         var items = await Paginator.Paginate((lim, offset)
-            => client.MachineTranslationEngines.ListMts(intGroupId, lim, offset));
+            => SdkClient.MachineTranslationEngines.ListMts(intGroupId, lim, offset));
 
         var mtEntities = items.Select(x => new MtEngineEntity(x)).ToArray();
         return new(mtEntities);
@@ -58,8 +52,6 @@ public class MachineTranslationActions : BaseInvocable
             EnumParser.Parse<LanguageRecognitionProvider>(input.LanguageRecognitionProvider,
                 nameof(input.LanguageRecognitionProvider));
 
-        var client = new CrowdinClient(Creds);
-
         var request = new TranslateViaMtRequest
         {
             TargetLanguageId = input.TargetLanguageId,
@@ -68,7 +60,7 @@ public class MachineTranslationActions : BaseInvocable
             LanguageRecognitionProvider = recognitionProvider
         };
 
-        var response = await client.MachineTranslationEngines
+        var response = await SdkClient.MachineTranslationEngines
             .TranslateViaMt(intMtId!.Value, request);
         return new(response);
     }

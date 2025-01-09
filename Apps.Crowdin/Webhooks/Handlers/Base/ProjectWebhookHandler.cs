@@ -1,5 +1,5 @@
-﻿using Apps.Crowdin.Api;
-using Apps.Crowdin.Api.RestSharp;
+﻿using Apps.Crowdin.Api.RestSharp;
+using Apps.Crowdin.Factories;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Response;
 using Apps.Crowdin.Utils;
@@ -21,14 +21,18 @@ public abstract class ProjectWebhookHandler(
     : IWebhookEventHandler
 {
     protected abstract List<EventType> SubscriptionEvents { get; }
+    
     private int ProjectId { get; } = IntParser.Parse(input.ProjectId, nameof(input.ProjectId))!.Value;
+    
     private bool EnableBatchingWebhooks { get; } = enableBatching;
+    
+    private static readonly IApiClientFactory ApiClientFactory = new ApiClientFactory();    
 
     public async Task SubscribeAsync(
         IEnumerable<AuthenticationCredentialsProvider> creds,
         Dictionary<string, string> values)
     {
-        var client = new CrowdinClient(creds);
+        var client = ApiClientFactory.BuildSdkClient(creds);
 
         var request = new AddWebhookRequest
         {
@@ -53,7 +57,7 @@ public abstract class ProjectWebhookHandler(
         IEnumerable<AuthenticationCredentialsProvider> creds,
         Dictionary<string, string> values)
     {
-        var client = new CrowdinClient(creds);
+        var client = ApiClientFactory.BuildSdkClient(creds);
         var allWebhooks = await GetAllWebhooks(creds);
 
         var webhookToDelete = allWebhooks.FirstOrDefault(x => x.Data.Url == values["payloadUrl"]);
@@ -68,7 +72,7 @@ public abstract class ProjectWebhookHandler(
         IEnumerable<AuthenticationCredentialsProvider> creds)
     {
         var endpoint = $"/projects/{ProjectId}/webhooks";
-        var client = new CrowdinRestClient();
+        var client = ApiClientFactory.BuildRestClient(creds);
         
         return Paginator.Paginate(async (lim, offset) =>
         {
@@ -76,7 +80,7 @@ public abstract class ProjectWebhookHandler(
             var request = new CrowdinRestRequest(source, Method.Get, creds);
 
             var response = await client.ExecuteAsync<ResponseList<DataResponse<WebhookEntity>>>(request);
-            return response.Data;
+            return response.Data!;
         });
     }
 }

@@ -6,15 +6,12 @@ using Microsoft.AspNetCore.WebUtilities;
 
 namespace Apps.Crowdin.Connections.OAuth;
 
-public class OAuth2AuthorizationSerivce : BaseInvocable, IOAuth2AuthorizeService
+public class OAuth2AuthorizationService(InvocationContext invocationContext)
+    : BaseInvocable(invocationContext), IOAuth2AuthorizeService
 {
-    public OAuth2AuthorizationSerivce(InvocationContext invocationContext) : base(invocationContext)
-    {
-    }
-
     public string GetAuthorizationUrl(Dictionary<string, string> values)
     {
-        string bridgeOauthUrl = $"{InvocationContext.UriInfo.BridgeServiceUrl.ToString().TrimEnd('/')}/oauth";
+        var bridgeOauthUrl = $"{InvocationContext.UriInfo.BridgeServiceUrl.ToString().TrimEnd('/')}/oauth";
         var parameters = new Dictionary<string, string>
         {
             { "scope", ApplicationConstants.Scope },
@@ -25,6 +22,7 @@ public class OAuth2AuthorizationSerivce : BaseInvocable, IOAuth2AuthorizeService
             { "authorization_url", Urls.OAuth},
             { "actual_redirect_uri", InvocationContext.UriInfo.AuthorizationCodeRedirectUri.ToString() },
         };
+        
         return QueryHelpers.AddQueryString(bridgeOauthUrl, parameters);
     }
 }
