@@ -1,8 +1,8 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using Apps.Crowdin.Constants;
+using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Connections;
-using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
 
 namespace Apps.Crowdin.Connections;
 
@@ -44,7 +44,7 @@ public class ConnectionDefinition : IConnectionDefinition
             .Select(x => new AuthenticationCredentialsProvider(x.Key, x.Value))
             .ToList();
 
-        var plan = credentials.Get(CredsNames.CrowdinPlan).Value;
+        var plan = credentials.GetCrowdinPlan();
         if (plan == Plans.Enterprise)
         {        
             var token = values.First(x => x.Key == CredsNames.ApiToken).Value;
