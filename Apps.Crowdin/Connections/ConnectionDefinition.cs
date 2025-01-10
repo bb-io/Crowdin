@@ -1,7 +1,9 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using Apps.Crowdin.Constants;
+using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Connections;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
 
 namespace Apps.Crowdin.Connections;
@@ -44,7 +46,13 @@ public class ConnectionDefinition : IConnectionDefinition
             .Select(x => new AuthenticationCredentialsProvider(x.Key, x.Value))
             .ToList();
 
-        var plan = credentials.Get(CredsNames.CrowdinPlan).Value;
+        if (credentials.All(x => x.KeyName != CredsNames.CrowdinPlan))
+        {
+            throw new PluginMisconfigurationException("It seems like you haven't updated the connection and specified the plan you are using in Crowdin. " +
+                                                      "Please update your connection or create a new one.");
+        }
+
+        var plan = credentials.GetCrowdinPlan();
         if (plan == Plans.Enterprise)
         {        
             var token = values.First(x => x.Key == CredsNames.ApiToken).Value;

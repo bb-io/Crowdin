@@ -1,5 +1,4 @@
-﻿using Apps.Crowdin.Api;
-using Apps.Crowdin.Constants;
+﻿using Apps.Crowdin.Constants;
 using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Project;
@@ -9,7 +8,6 @@ using Apps.Crowdin.Models.Response.Translation;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Parsers;
@@ -53,8 +51,9 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
             TranslateUntranslatedOnly = input.TranslateUntranslatedOnly,
             TranslateWithPerfectMatchOnly = input.TranslateWithPerfectMatchOnly
         };
-        var response = await SdkClient.Translations
-            .ApplyPreTranslation(intProjectId!.Value, request);
+
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => await SdkClient.Translations
+            .ApplyPreTranslation(intProjectId!.Value, request));
 
         return new(response);
     }
@@ -204,14 +203,16 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         var client = SdkClient;
 
         var fileInfo = await client.SourceFiles.GetFile<FileResource>(intProjectId!.Value, intFileId!.Value);
-        var build = await client.Translations.BuildProjectFileTranslation(intProjectId!.Value, intFileId!.Value, new BuildProjectFileTranslationRequest
-        {
-            TargetLanguageId = request.TargetLanguage,
-            SkipUntranslatedStrings = request.SkipUntranslatedStrings,
-            SkipUntranslatedFiles = request.SkipUntranslatedFiles,
-            ExportApprovedOnly = request.ExportApprovedOnly,
-        });
-
+        var build = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await client.Translations.BuildProjectFileTranslation(intProjectId!.Value, intFileId!.Value,
+                new BuildProjectFileTranslationRequest
+                {
+                    TargetLanguageId = request.TargetLanguage,
+                    SkipUntranslatedStrings = request.SkipUntranslatedStrings,
+                    SkipUntranslatedFiles = request.SkipUntranslatedFiles,
+                    ExportApprovedOnly = request.ExportApprovedOnly,
+                }));
+        
         if (!MimeTypes.TryGetMimeType(fileInfo.Name, out var contentType))
             contentType = "application/octet-stream";
 
