@@ -17,6 +17,7 @@ using Crowdin.Api.Translations;
 using RestSharp;
 using Apps.Crowdin.Models.Request.Users;
 using Blackbird.Applications.Sdk.Common.Exceptions;
+using Crowdin.Api;
 
 namespace Apps.Crowdin.Actions;
 
@@ -32,12 +33,16 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intEngineId = IntParser.Parse(input.EngineId, nameof(input.EngineId));
-        
+
         PreTranslationMethod? method = input.Method is null ? null :
             input.Method == "Mt" ? PreTranslationMethod.Mt :
             input.Method == "Tm" ? PreTranslationMethod.Tm :
             PreTranslationMethod.Ai;
-        AutoApproveOption? option = input.AutoApproveOption is null ? null : input.AutoApproveOption == "None" ? AutoApproveOption.None : input.AutoApproveOption == "All" ? AutoApproveOption.All : input.AutoApproveOption == "ExceptAutoSubstituted" ? AutoApproveOption.ExceptAutoSubstituted : AutoApproveOption.PerfectMatchOnly;
+        AutoApproveOption? option = input.AutoApproveOption is null ? null :
+            input.AutoApproveOption == "None" ? AutoApproveOption.None :
+            input.AutoApproveOption == "All" ? AutoApproveOption.All :
+            input.AutoApproveOption == "ExceptAutoSubstituted" ? AutoApproveOption.ExceptAutoSubstituted :
+            AutoApproveOption.PerfectMatchOnly;
 
         var request = new ApplyPreTranslationRequest
         {
@@ -57,14 +62,14 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
 
         return new(response);
     }
-    
+
     [Action("Search language translations", Description = "List project language translations")]
     public async Task<ListTranslationsResponse> ListLangTranslations(
         [ActionParameter] ListLanguageTranslationsRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intFileId = IntParser.Parse(input.FileId, nameof(input.FileId));
-        
+
         var items = await Paginator.Paginate((lim, offset) =>
         {
             var request = new LanguageTranslationsListParams
@@ -77,11 +82,12 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
                 CroQL = input.CroQL,
                 DenormalizePlaceholders = input.DenormalizePlaceholders
             };
-            return SdkClient.StringTranslations.ListLanguageTranslations(intProjectId!.Value, input.LanguageId, request);
+            return ExceptionWrapper.ExecuteWithErrorHandling(() =>
+                SdkClient.StringTranslations.ListLanguageTranslations(intProjectId!.Value, input.LanguageId, request));
         });
 
         var castedItems = items.Cast<PlainLanguageTranslations>();
-       
+
         var translations = castedItems.Select(x => new TranslationEntity(x)).ToArray();
         return new(translations);
     }
@@ -92,7 +98,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intStringId = IntParser.Parse(input.StringId, nameof(input.StringId));
-        
+
         var items = await Paginator.Paginate((lim, offset) =>
         {
             var request = new StringTranslationsListParams
@@ -103,7 +109,8 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
                 LanguageId = input.LanguageId,
                 DenormalizePlaceholders = input.DenormalizePlaceholders
             };
-            return SdkClient.StringTranslations.ListStringTranslations(intProjectId!.Value, request);
+            return ExceptionWrapper.ExecuteWithErrorHandling(() =>
+                SdkClient.StringTranslations.ListStringTranslations(intProjectId!.Value, request));
         });
 
         var translations = items.Select(x => new TranslationEntity(x)).ToArray();
@@ -115,9 +122,9 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intTransId = IntParser.Parse(input.TranslationId, nameof(input.TranslationId));
-        
-        var response = await SdkClient.StringTranslations
-            .GetTranslation(intProjectId!.Value, intTransId!.Value, input.DenormalizePlaceholders);
+
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => await SdkClient.StringTranslations
+            .GetTranslation(intProjectId!.Value, intTransId!.Value, input.DenormalizePlaceholders));
 
         return new(response);
     }
@@ -127,21 +134,22 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intStringId = IntParser.Parse(input.StringId, nameof(input.StringId));
-        
+
         var request = new AddTranslationRequest
         {
             StringId = intStringId!.Value,
             LanguageId = input.LanguageId,
             Text = input.Text,
-            PluralCategoryName = EnumParser.Parse<PluralCategoryName>(input.PluralCategoryName, nameof(input.PluralCategoryName))
+            PluralCategoryName =
+                EnumParser.Parse<PluralCategoryName>(input.PluralCategoryName, nameof(input.PluralCategoryName))
         };
-        
+
         try
         {
             var response = await SdkClient.StringTranslations.AddTranslation(intProjectId!.Value, request);
             return new(response);
         }
-        catch (Exception ex)
+        catch (CrowdinApiException ex)
         {
             if (!ex.Message.Contains(Errors.IdenticalTranslation))
             {
@@ -162,11 +170,24 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
     [Action("Add file translation", Description = "Add new file translation")]
     public async Task<FileTranslationEntity> AddFileTranslation([ActionParameter] AddNewFileTranslationRequest input)
     {
+        if (string.IsNullOrEmpty(input.LanguageId))
+        {
+            throw new PluginMisconfigurationException(
+                "Language ID cannot be null or empty. Please provide a valid language ID.");
+        }
+
+        if (string.IsNullOrEmpty(input.ProjectId))
+        {
+            throw new PluginMisconfigurationException(
+                "Project ID cannot be null or empty. Please provide a valid project ID.");
+        }
+
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var client = SdkClient;
 
         var fileStream = await fileManagementClient.DownloadAsync(input.File);
-        var storageResult = await client.Storage.AddStorage(fileStream, input.File.Name);
+        var storageResult = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
+            await client.Storage.AddStorage(fileStream, input.File.Name));
 
         var request = new UploadTranslationsRequest
         {
@@ -177,32 +198,35 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
             TranslateHidden = input.TranslateHidden
         };
 
-        var response = await client.Translations.UploadTranslations(intProjectId!.Value, input.LanguageId, request);
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await client.Translations.UploadTranslations(intProjectId!.Value, input.LanguageId, request));
         return new(response);
     }
 
     [Action("Delete translation", Description = "Delete specific translation")]
-    public Task DeleteTranslation([ActionParameter] DeleteTranslationRequest input)
+    public async Task DeleteTranslation([ActionParameter] DeleteTranslationRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intTransId = IntParser.Parse(input.TranslationId, nameof(input.TranslationId));
-        
-        return SdkClient.StringTranslations
-            .DeleteTranslation(intProjectId!.Value, intTransId!.Value);
+
+        await ExceptionWrapper.ExecuteWithErrorHandling(async () => await SdkClient.StringTranslations
+            .DeleteTranslation(intProjectId!.Value, intTransId!.Value));
     }
 
     [Action("Download file translation", Description = "Builds and downloads the translation of a file")]
     public async Task<DownloadFileResponse> DownloadTranslationFile(
         [ActionParameter] ProjectRequest project,
         [ActionParameter] DownloadFileTranslationRequest request
-        )
+    )
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intFileId = IntParser.Parse(request.FileId, nameof(request.FileId));
 
         var client = SdkClient;
 
-        var fileInfo = await client.SourceFiles.GetFile<FileResource>(intProjectId!.Value, intFileId!.Value);
+        var fileInfo = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
+            await client.SourceFiles.GetFile<FileResource>(intProjectId!.Value, intFileId!.Value));
+        
         var build = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
             await client.Translations.BuildProjectFileTranslation(intProjectId!.Value, intFileId!.Value,
                 new BuildProjectFileTranslationRequest
@@ -212,7 +236,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
                     SkipUntranslatedFiles = request.SkipUntranslatedFiles,
                     ExportApprovedOnly = request.ExportApprovedOnly,
                 }));
-        
+
         if (!MimeTypes.TryGetMimeType(fileInfo.Name, out var contentType))
             contentType = "application/octet-stream";
 

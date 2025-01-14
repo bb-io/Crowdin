@@ -16,9 +16,6 @@ namespace Apps.Crowdin.Actions;
 [ActionList]
 public class CommentActions(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
-    private AuthenticationCredentialsProvider[] Creds =>
-        InvocationContext.AuthenticationCredentialsProviders.ToArray();
-
     [Action("Search comments", Description = "List string comments for a project")]
     public async Task<ListCommentsResponse> ListComments([ActionParameter] ListCommentsRequest input)
     {
@@ -40,7 +37,9 @@ public class CommentActions(InvocationContext invocationContext) : AppInvocable(
                         EnumParser.Parse<IssueType>(issueType, nameof(issueType))!.Value)
                     .ToHashSet() ?? new()
             };
-            return SdkClient.StringComments.ListStringComments(intProjectId!.Value, request);
+            
+            return ExceptionWrapper.ExecuteWithErrorHandling(
+                () => SdkClient.StringComments.ListStringComments(intProjectId!.Value, request));
         });
 
         var comments = items.Select(x => new CommentEntity(x)).ToArray();
@@ -56,7 +55,8 @@ public class CommentActions(InvocationContext invocationContext) : AppInvocable(
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intCommentId = IntParser.Parse(commentId, nameof(commentId));
         
-        var response = await SdkClient.StringComments.GetStringComment(intProjectId!.Value, intCommentId!.Value);
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
+            await SdkClient.StringComments.GetStringComment(intProjectId!.Value, intCommentId!.Value));
         return new(response);
     }
 
@@ -76,12 +76,13 @@ public class CommentActions(InvocationContext invocationContext) : AppInvocable(
             IssueType = EnumParser.Parse<IssueType>(input.IssueType, nameof(input.IssueType))
         };
 
-        var response = await SdkClient.StringComments.AddStringComment(intProjectId!.Value, request);
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
+            await SdkClient.StringComments.AddStringComment(intProjectId!.Value, request));
         return new(response);
     }
 
     [Action("Delete string comment", Description = "Delete specific string comment")]
-    public Task DeleteComment(
+    public async Task DeleteComment(
         [ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("Comment ID")]
         string commentId)
@@ -89,6 +90,7 @@ public class CommentActions(InvocationContext invocationContext) : AppInvocable(
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intCommentId = IntParser.Parse(commentId, nameof(commentId));
         
-        return SdkClient.StringComments.DeleteStringComment(intProjectId!.Value, intCommentId!.Value);
+        await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
+            await SdkClient.StringComments.DeleteStringComment(intProjectId!.Value, intCommentId!.Value));
     }
 }

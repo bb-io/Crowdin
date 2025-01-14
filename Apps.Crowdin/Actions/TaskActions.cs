@@ -1,5 +1,4 @@
-﻿using Apps.Crowdin.Api;
-using Apps.Crowdin.Invocables;
+﻿using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.Task;
@@ -8,7 +7,6 @@ using Apps.Crowdin.Models.Response.Task;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Parsers;
@@ -16,11 +14,13 @@ using Blackbird.Applications.Sdk.Utils.Utilities;
 using Crowdin.Api.Tasks;
 using TaskStatus = Crowdin.Api.Tasks.TaskStatus;
 using Apps.Crowdin.Models.Request.Users;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Crowdin.Actions;
 
 [ActionList]
-public class TaskActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : AppInvocable(invocationContext)
+public class TaskActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+    : AppInvocable(invocationContext)
 {
     [Action("Search tasks", Description = "List all tasks")]
     public async Task<ListTasksResponse> ListTasks([ActionParameter] ListTasksRequest input)
@@ -30,7 +30,8 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         var status = EnumParser.Parse<TaskStatus>(input.Status, nameof(input.Status));
 
         var items = await Paginator.Paginate((lim, offset)
-            => SdkClient.Tasks.ListTasks(intProjectId!.Value, lim, offset, status, intAssigneeId));
+            => ExceptionWrapper.ExecuteWithErrorHandling(() =>
+                SdkClient.Tasks.ListTasks(intProjectId!.Value, lim, offset, status, intAssigneeId)));
 
         var tasks = items.Select(x => new TaskEntity(x)).ToArray();
         return new(tasks);
@@ -44,7 +45,8 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intTaskId = IntParser.Parse(taskId, nameof(taskId));
 
-        var response = await SdkClient.Tasks.GetTask(intProjectId!.Value, intTaskId!.Value);
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await SdkClient.Tasks.GetTask(intProjectId!.Value, intTaskId!.Value));
         return new(response);
     }
 
@@ -55,11 +57,16 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
     {
         var vendorTaskTypes = new[] { "TranslateByVendor", "ProofreadByVendor" };
         if (vendorTaskTypes.Contains(input.Type) && input.Vendor is null)
-            throw new("You should specify vendor for such task type");
+        {
+            throw new PluginMisconfigurationException("You should specify vendor for such task type");
+        }
 
         if (input.Vendor is not null && !vendorTaskTypes.Contains(input.Type))
-            throw new("Task with the chosen type can't contain vendor. If you want to specify a vendor, please change type to 'Translate by vendor' or 'Proofread by vendor'");
-        
+        {
+            throw new PluginMisconfigurationException(
+                "Task with the chosen type can't contain vendor. If you want to specify a vendor, please change type to 'Translate by vendor' or 'Proofread by vendor'");
+        }
+
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
 
         var request = new CrowdinTaskCreateForm()
@@ -74,27 +81,30 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
             SkipAssignedStrings = input.SkipAssignedStrings,
             SkipUntranslatedStrings = input.SkipUntranslatedStrings,
             LabelIds = input.LabelIds?.Select(labelId => IntParser.Parse(labelId, nameof(labelId))!.Value).ToList(),
-            Assignees = project.Assignees?.Select(assigneeId => new TaskAssigneeForm { Id = IntParser.Parse(assigneeId, nameof(assigneeId))!.Value }).ToList(),
+            Assignees = project.Assignees?.Select(assigneeId => new TaskAssigneeForm
+                { Id = IntParser.Parse(assigneeId, nameof(assigneeId))!.Value }).ToList(),
             DeadLine = input.Deadline,
             DateFrom = input.DateFrom,
             DateTo = input.DateTo,
             IncludePreTranslatedStringsOnly = input.IncludePreTranslatedStringsOnly,
             Vendor = input.Vendor
         };
-        
-        var response = await SdkClient.Tasks.AddTask(intProjectId!.Value, request);
+
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await SdkClient.Tasks.AddTask(intProjectId!.Value, request));
         return new(response);
     }
 
     [Action("Delete task", Description = "Delete specific task")]
-    public Task DeleteTask(
+    public async Task DeleteTask(
         [ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("Task ID")] string taskId)
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intTaskId = IntParser.Parse(taskId, nameof(taskId));
-        
-        return SdkClient.Tasks.DeleteTask(intProjectId!.Value, intTaskId!.Value);
+
+        await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await SdkClient.Tasks.DeleteTask(intProjectId!.Value, intTaskId!.Value));
     }
 
     [Action("Download task strings as XLIFF", Description = "Download specific task strings as XLIFF")]
@@ -104,14 +114,16 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intTaskId = IntParser.Parse(taskId, nameof(taskId));
-        
-        var downloadLink = await SdkClient.Tasks.ExportTaskStrings(intProjectId!.Value, intTaskId!.Value);
+
+        var downloadLink = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
+            await SdkClient.Tasks.ExportTaskStrings(intProjectId!.Value, intTaskId!.Value));
 
         if (downloadLink is null)
             throw new("No string found for this task");
-        
+
         var fileContent = await FileDownloader.DownloadFileBytes(downloadLink.Url);
-        var file = await fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType, fileContent.Name);
+        var file = await fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType,
+            fileContent.Name);
         return new(file);
     }
 }

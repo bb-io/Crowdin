@@ -47,7 +47,7 @@ public class UserActions(InvocationContext invocationContext) : AppInvocable(inv
     }
 
     [Action("Find project member", Description = "Get first matching project member")]
-    public async Task<AssigneeEntity> FindProjectUsers([ActionParameter] FindUserRequest input)
+    public async Task<AssigneeEntity?> FindProjectUsers([ActionParameter] FindUserRequest input)
     {
         var items = await Paginator.Paginate(async (lim, offset)
             =>
@@ -83,22 +83,24 @@ public class UserActions(InvocationContext invocationContext) : AppInvocable(inv
     public async Task<UserEnterpriseEntity> InviteUser(
         [ActionParameter] InviteUserRequest input)
     {
-        var response = await SdkClient.Users.InviteUser(new()
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await SdkClient.Users.InviteUser(new()
         {
             Email = input.Email,
             FirstName = input.FirstName,
             LastName = input.LastName,
             TimeZone = input.Timezone,
             AdminAccess = input.IsAdmin
-        });
+        }));
 
         return new(response);
     }
 
     [Action("Delete user", Description = "Delete specific user")]
-    public Task DeleteUser(
+    public async Task DeleteUser(
         [ActionParameter] UserRequest user)
     {
-        return SdkClient.Users.DeleteUser(IntParser.Parse(user.UserId, nameof(user.UserId))!.Value);
+        await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await SdkClient.Users.DeleteUser(IntParser.Parse(user.UserId, nameof(user.UserId))!.Value));
     }
 }

@@ -24,7 +24,7 @@ public class ProjectGroupActions(InvocationContext invocationContext) : AppInvoc
         
         var intParentId = IntParser.Parse(parentId, nameof(parentId));
         var response = await Paginator.Paginate((lim, offset) =>
-            SdkClient.ProjectsGroups.ListGroups(intParentId, lim, offset));
+            ExceptionWrapper.ExecuteWithErrorHandling(() => SdkClient.ProjectsGroups.ListGroups(intParentId, lim, offset)));
 
         var groups = response.Select(x => new GroupEntity(x)).ToArray();
         return new(groups);
@@ -37,7 +37,7 @@ public class ProjectGroupActions(InvocationContext invocationContext) : AppInvoc
         CheckAccessToEnterpriseAction();
         
         var intGroupId = IntParser.Parse(group.ProjectGroupId, nameof(group.ProjectGroupId))!.Value;
-        var response = await SdkClient.ProjectsGroups.GetGroup(intGroupId);
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => await SdkClient.ProjectsGroups.GetGroup(intGroupId));
         return new(response);
     }
 
@@ -47,21 +47,22 @@ public class ProjectGroupActions(InvocationContext invocationContext) : AppInvoc
     {
         CheckAccessToEnterpriseAction();
         
-        var response = await SdkClient.ProjectsGroups.AddGroup(new()
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => await SdkClient.ProjectsGroups.AddGroup(new()
         {
             Name = input.Name,
             Description = input.Description,
             ParentId = IntParser.Parse(input.ParentId, nameof(input.ParentId))
-        });
+        }));
         
         return new(response);
     }
 
     [Action("[Enterprise] Delete project group", Description = "Delete specific project group")]
-    public Task DeleteProjectGroup(
+    public async Task DeleteProjectGroup(
         [ActionParameter] ProjectGroupRequest group)
     {
         CheckAccessToEnterpriseAction();
-        return SdkClient.ProjectsGroups.DeleteGroup(IntParser.Parse(group.ProjectGroupId, nameof(group.ProjectGroupId))!.Value);
+        await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
+            await SdkClient.ProjectsGroups.DeleteGroup(IntParser.Parse(group.ProjectGroupId, nameof(group.ProjectGroupId))!.Value));
     }
 }

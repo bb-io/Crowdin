@@ -1,6 +1,4 @@
-﻿using Apps.Crowdin.Api;
-using Apps.Crowdin.DataSourceHandlers;
-using Apps.Crowdin.Invocables;
+﻿using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.MachineTranslation;
 using Apps.Crowdin.Models.Request.ProjectGroups;
@@ -8,7 +6,6 @@ using Apps.Crowdin.Models.Response.MachineTranslation;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Crowdin.Api.MachineTranslationEngines;
@@ -25,7 +22,7 @@ public class MachineTranslationActions(InvocationContext invocationContext) : Ap
         var intGroupId = IntParser.Parse(projectGroupDataHandler.ProjectGroupId, nameof(projectGroupDataHandler.ProjectGroupId));
         
         var items = await Paginator.Paginate((lim, offset)
-            => SdkClient.MachineTranslationEngines.ListMts(intGroupId, lim, offset));
+            => ExceptionWrapper.ExecuteWithErrorHandling(() => SdkClient.MachineTranslationEngines.ListMts(intGroupId, lim, offset)));
 
         var mtEntities = items.Select(x => new MtEngineEntity(x)).ToArray();
         return new(mtEntities);
@@ -60,8 +57,9 @@ public class MachineTranslationActions(InvocationContext invocationContext) : Ap
             LanguageRecognitionProvider = recognitionProvider
         };
 
-        var response = await SdkClient.MachineTranslationEngines
-            .TranslateViaMt(intMtId!.Value, request);
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
+            await SdkClient.MachineTranslationEngines
+            .TranslateViaMt(intMtId!.Value, request));
         return new(response);
     }
 }

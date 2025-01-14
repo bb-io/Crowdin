@@ -31,7 +31,7 @@ public class TeamActions(InvocationContext invocationContext) : AppInvocable(inv
     {
         CheckAccessToEnterpriseAction();
         var intTeamId = IntParser.Parse(team.TeamId, nameof(team.TeamId))!.Value;
-        var response = await SdkClient.Teams.GetTeam(intTeamId);
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => await SdkClient.Teams.GetTeam(intTeamId));
         return new(response);
     }
 
@@ -40,24 +40,25 @@ public class TeamActions(InvocationContext invocationContext) : AppInvocable(inv
         [ActionParameter] [Display("Name")] string name)
     {
         CheckAccessToEnterpriseAction();
-        var response = await SdkClient.Teams.AddTeam(new()
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => await SdkClient.Teams.AddTeam(new()
         {
             Name = name
-        });
+        }));
         
         return new(response);
     }
 
     [Action("[Enterprise] Delete team", Description = "Delete specific team")]
-    public Task DeleteTeam(
+    public async Task DeleteTeam(
         [ActionParameter] TeamRequest team)
     {
         CheckAccessToEnterpriseAction();
-        return SdkClient.Teams.DeleteTeam(IntParser.Parse(team.TeamId, nameof(team.TeamId))!.Value);
+        await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
+            await SdkClient.Teams.DeleteTeam(IntParser.Parse(team.TeamId, nameof(team.TeamId))!.Value));
     }
     
     private Task<ResponseList<Team>> ListTeamsAsync(int limit = 25, int offset = 0)
     {
-        return SdkClient.Teams.ListTeams(limit, offset);
+        return ExceptionWrapper.ExecuteWithErrorHandling(() => SdkClient.Teams.ListTeams(limit, offset));
     }
 }

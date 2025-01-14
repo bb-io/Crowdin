@@ -32,7 +32,7 @@ public class DirectoryActions(InvocationContext invocationContext) : AppInvocabl
                 DirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId)),
                 Filter = input.Name,
             };
-            return SdkClient.SourceFiles.ListDirectories(int.Parse(project.ProjectId), request);
+            return ExceptionWrapper.ExecuteWithErrorHandling(() => SdkClient.SourceFiles.ListDirectories(int.Parse(project.ProjectId), request));
         });
 
         var result = items.Select(x => new DirectoryEntity(x)).ToArray();
@@ -47,7 +47,7 @@ public class DirectoryActions(InvocationContext invocationContext) : AppInvocabl
         var projectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId))!.Value;
         var directoryId = IntParser.Parse(directory.DirectoryId, nameof(directory.DirectoryId))!.Value;
 
-        var response = await SdkClient.SourceFiles.GetDirectory(projectId, directoryId);
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => await SdkClient.SourceFiles.GetDirectory(projectId, directoryId));
         return new(response);
     }
     
@@ -138,15 +138,17 @@ public class DirectoryActions(InvocationContext invocationContext) : AppInvocabl
         }
 
         if (response is null)
+        {
             return await GetDirectoryById(project, new()
             {
                 DirectoryId = parentFolderId
             });
-
+        }
+        
         return new(response);
     }
     
-    private Task<Directory> CreateSingleDirectory(ProjectRequest proj, AddNewDirectoryRequest input)
+    private async Task<Directory> CreateSingleDirectory(ProjectRequest proj, AddNewDirectoryRequest input)
     {
         var request = new AddDirectoryRequest
         {
@@ -156,6 +158,7 @@ public class DirectoryActions(InvocationContext invocationContext) : AppInvocabl
             DirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId)),
         };
 
-        return SdkClient.SourceFiles.AddDirectory(int.Parse(proj.ProjectId), request);
+        return await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
+            await SdkClient.SourceFiles.AddDirectory(int.Parse(proj.ProjectId), request));
     }
 }

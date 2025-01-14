@@ -44,7 +44,8 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
                 Offset = offset
             };
 
-            return SdkClient.SourceFiles.ListFiles<FileCollectionResource>(intProjectId!.Value, request);
+            return ExceptionWrapper.ExecuteWithErrorHandling(() => 
+                SdkClient.SourceFiles.ListFiles<FileCollectionResource>(intProjectId!.Value, request));
         });
 
         var files = items.Select(x => new FileEntity(x)).ToArray();
@@ -59,7 +60,8 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intFileId = IntParser.Parse(fileRequest.FileId, nameof(fileRequest.FileId));
 
-        var file = await SdkClient.SourceFiles.GetFile<FileResource>(intProjectId!.Value, intFileId!.Value);
+        var file = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await SdkClient.SourceFiles.GetFile<FileResource>(intProjectId!.Value, intFileId!.Value));
         return new(file);
     }
 
@@ -156,8 +158,9 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         if (intStorageId is null)
         {
             var fileStream = await fileManagementClient.DownloadAsync(input.File);
-            var storage = await client.Storage
-                .AddStorage(fileStream, input.File.Name);
+            var storage = await ExceptionWrapper.ExecuteWithErrorHandling(async () => await client.Storage
+                .AddStorage(fileStream, input.File.Name));
+
             intStorageId = storage.Id;
         }
 
@@ -167,10 +170,11 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             UpdateOption = ToOptionEnum(updateFileRequest.UpdateOption)
         };
 
-        var (result, isModified) = await client.SourceFiles.UpdateOrRestoreFile(
-            intProjectId!.Value,
-            intFileId!.Value,
-            request);
+        var (result, isModified) = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await client.SourceFiles.UpdateOrRestoreFile(
+                intProjectId!.Value,
+                intFileId!.Value,
+                request));
 
         return new(result, isModified);
     }
@@ -187,7 +191,8 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
 
         var downloadLink = await client.SourceFiles.DownloadFile(intProjectId!.Value, intFileId!.Value);
 
-        var fileInfo = await client.SourceFiles.GetFile<FileResource>(intProjectId!.Value, intFileId!.Value);
+        var fileInfo = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await client.SourceFiles.GetFile<FileResource>(intProjectId!.Value, intFileId!.Value));
         var fileContent = await FileDownloader.DownloadFileBytes(downloadLink.Url);
 
         fileContent.Name = fileInfo.Name;
@@ -209,7 +214,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         var existingFile = projectFiles.Files.FirstOrDefault(f => f.Name == input.File.Name);
         if (existingFile != null)
         {
-            return await UpdateFile(project, new() { FileId = existingFile.Id }, new() { File = input.File }, 
+            return await UpdateFile(project, new() { FileId = existingFile.Id }, new() { File = input.File },
                 new() { UpdateOption = input.UpdateOption });
         }
 
@@ -217,13 +222,14 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
     }
 
     [Action("Delete file", Description = "Delete specific file")]
-    public Task DeleteFile(
+    public async Task DeleteFile(
         [ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("File ID")] string fileId)
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intFileId = IntParser.Parse(fileId, nameof(fileId));
-        return SdkClient.SourceFiles.DeleteFile(intProjectId!.Value, intFileId!.Value);
+        await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
+            await SdkClient.SourceFiles.DeleteFile(intProjectId!.Value, intFileId!.Value));
     }
 
     private FileUpdateOption? ToOptionEnum(string? option)
