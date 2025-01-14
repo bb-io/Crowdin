@@ -21,26 +21,30 @@ using Crowdin.Api.Translations;
 namespace Apps.Crowdin.Actions;
 
 [ActionList]
-public class ProjectActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : AppInvocable(invocationContext)
+public class ProjectActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+    : AppInvocable(invocationContext)
 {
     [Action("Search projects", Description = "List all projects")]
     public async Task<ListProjectsResponse> ListProjects([ActionParameter] ListProjectsRequest input)
     {
         var userId = IntParser.Parse(input.UserId, nameof(input.UserId));
         var groupId = IntParser.Parse(input.GroupID, nameof(input.GroupID));
-        
+
         var items = await Paginator.Paginate((lim, offset)
-            => SdkClient.ProjectsGroups.ListProjects<ProjectBase>(userId, groupId, input.HasManagerAccess ?? false, null, lim, offset));
-        
+            => ExceptionWrapper.ExecuteWithErrorHandling(() =>
+                SdkClient.ProjectsGroups.ListProjects<ProjectBase>(userId, groupId, input.HasManagerAccess ?? false,
+                    null, lim, offset)));
+
         var projects = items.Select(x => new ProjectEntity(x)).ToArray();
         return new(projects);
     }
-    
+
     [Action("Get project", Description = "Get specific project")]
     public async Task<ProjectEntity> GetProject([ActionParameter] ProjectRequest project)
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
-        var response = await SdkClient.ProjectsGroups.GetProject<ProjectBase>(intProjectId!.Value);
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await SdkClient.ProjectsGroups.GetProject<ProjectBase>(intProjectId!.Value));
         return new(response);
     }
 
@@ -70,33 +74,36 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
             InContextPseudoLanguageId = input.InContextPseudoLanguageId,
             QaCheckIsActive = input.QaCheckIsActive,
         };
-        
-        var response = await SdkClient.ProjectsGroups.AddProject<ProjectBase>(request);
+
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await SdkClient.ProjectsGroups.AddProject<ProjectBase>(request));
         return new(response);
     }
 
     [Action("Delete project", Description = "Delete specific project")]
-    public Task DeleteProject([ActionParameter] ProjectRequest project)
+    public async Task DeleteProject([ActionParameter] ProjectRequest project)
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
-        return SdkClient.ProjectsGroups.DeleteProject(intProjectId!.Value);
+        await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await SdkClient.ProjectsGroups.DeleteProject(intProjectId!.Value));
     }
-    
+
     [Action("Build project", Description = "Build project translation")]
     public async Task<ProjectBuildEntity> BuildProject([ActionParameter] ProjectRequest project,
         [ActionParameter] BuildProjectRequest input)
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
-        
-        var response = await SdkClient.Translations.BuildProjectTranslation(intProjectId!.Value,
-            new EnterpriseTranslationCreateProjectBuildForm()
-            {
-                BranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId)),
-                TargetLanguageIds = input.TargetLanguageIds?.ToList(),
-                SkipUntranslatedStrings = input.SkipUntranslatedStrings,
-                SkipUntranslatedFiles = input.SkipUntranslatedFiles,
-                ExportWithMinApprovalsCount = input.ExportWithMinApprovalsCount
-            });
+
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await SdkClient.Translations.BuildProjectTranslation(intProjectId!.Value,
+                new EnterpriseTranslationCreateProjectBuildForm
+                {
+                    BranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId)),
+                    TargetLanguageIds = input.TargetLanguageIds?.ToList(),
+                    SkipUntranslatedStrings = input.SkipUntranslatedStrings,
+                    SkipUntranslatedFiles = input.SkipUntranslatedFiles,
+                    ExportWithMinApprovalsCount = input.ExportWithMinApprovalsCount
+                }));
 
         return new(response);
     }
@@ -108,8 +115,9 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId))!.Value;
         var intBuildId = IntParser.Parse(build.BuildId, nameof(build.BuildId))!.Value;
-        
-        var response = await SdkClient.Translations.DownloadProjectTranslations(intProjectId, intBuildId);
+
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
+            await SdkClient.Translations.DownloadProjectTranslations(intProjectId, intBuildId));
 
         if (response.Link is null)
         {
@@ -122,7 +130,7 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
         var memoryStream = new MemoryStream();
         await file.FileStream.CopyToAsync(memoryStream);
         memoryStream.Position = 0;
-        
+
         var fileReference = await fileManagementClient.UploadAsync(memoryStream, file.ContentType, file.Name);
         return new(fileReference);
     }

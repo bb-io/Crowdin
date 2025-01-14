@@ -26,7 +26,7 @@ public class ReviewedFileActions(InvocationContext invocationContext, IFileManag
         var intBranchId = IntParser.Parse(branchId, nameof(branchId));
         
         var items = await Paginator.Paginate((lim, offset) =>
-            SdkClient.SourceFiles.ListReviewedSourceFilesBuilds(intProjectId, intBranchId, lim, offset));
+            ExceptionWrapper.ExecuteWithErrorHandling(() => SdkClient.SourceFiles.ListReviewedSourceFilesBuilds(intProjectId, intBranchId, lim, offset)));
 
         var result = items.Select(x => new ReviewedFileBuildEntity(x)).ToArray();
         return new(result);
@@ -40,10 +40,10 @@ public class ReviewedFileActions(InvocationContext invocationContext, IFileManag
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId))!.Value;
         var intBranchId = IntParser.Parse(branchId, nameof(branchId));
         
-        var response = await SdkClient.SourceFiles.BuildReviewedSourceFiles(intProjectId, new()
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => await SdkClient.SourceFiles.BuildReviewedSourceFiles(intProjectId, new()
         {
             BranchId = intBranchId
-        });
+        }));
 
         return new(response);
     }
@@ -55,7 +55,8 @@ public class ReviewedFileActions(InvocationContext invocationContext, IFileManag
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId))!.Value;
         var intBuildId = IntParser.Parse(buildId, nameof(buildId))!.Value;
-        var response = await SdkClient.SourceFiles.CheckReviewedSourceFilesBuildStatus(intProjectId, intBuildId);
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
+            await SdkClient.SourceFiles.CheckReviewedSourceFilesBuildStatus(intProjectId, intBuildId));
         return new(response);
     }
     
@@ -67,7 +68,8 @@ public class ReviewedFileActions(InvocationContext invocationContext, IFileManag
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId))!.Value;
         var intBuildId = IntParser.Parse(buildId, nameof(buildId))!.Value;
         
-        var response = await SdkClient.SourceFiles.DownloadReviewedSourceFiles(intProjectId, intBuildId);
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
+            await SdkClient.SourceFiles.DownloadReviewedSourceFiles(intProjectId, intBuildId));
         
         var file = await FileDownloader.DownloadFileBytes(response.Url);
         file.Name = $"{buildId}.zip";

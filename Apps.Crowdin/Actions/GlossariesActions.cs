@@ -25,8 +25,10 @@ public class GlossariesActions(InvocationContext invocationContext, IFileManagem
 
         var glossaryId = int.Parse(request.GlossaryId);
         
-        var exportGlossary = await client.ExportGlossaryAsync(glossaryId);
-        var downloadLink = await client.Glossaries.DownloadGlossary(glossaryId, exportGlossary.Identifier);
+        var exportGlossary = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
+            await client.ExportGlossaryAsync(glossaryId));
+        var downloadLink = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
+            await client.Glossaries.DownloadGlossary(glossaryId, exportGlossary.Identifier));
 
         var fileContent = await FileDownloader.DownloadFileBytes(downloadLink.Url);
 
@@ -77,8 +79,9 @@ public class GlossariesActions(InvocationContext invocationContext, IFileManagem
             FirstLineContainsHeader = false
         };
 
-        var response =
-            await SdkClient.Glossaries.ImportGlossary(glossaryResponse.Id, importGlossaryRequest);
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
+            await SdkClient.Glossaries.ImportGlossary(glossaryResponse.Id, importGlossaryRequest));
+        
         if (response.Status != OperationStatus.Created && response.Status != OperationStatus.Finished &&
             response.Status != OperationStatus.InProgress)
         {

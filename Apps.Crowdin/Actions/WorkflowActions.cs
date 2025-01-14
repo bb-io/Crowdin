@@ -2,6 +2,7 @@
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Response.Workflow;
+using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
@@ -21,7 +22,8 @@ public class WorkflowActions(InvocationContext invocationContext) : AppInvocable
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId))!.Value;
         var executor = new WorkflowsApiExecutor(SdkClient);
 
-        var response = await executor.ListWorkflowSteps(intProjectId);
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await executor.ListWorkflowSteps(intProjectId));
         var workflowSteps = response.Data.Select(x => new WorkflowStepEntity(x)).ToArray();
         
         return new(workflowSteps);

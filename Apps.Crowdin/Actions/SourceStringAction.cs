@@ -1,5 +1,4 @@
-﻿using Apps.Crowdin.Api;
-using Apps.Crowdin.Invocables;
+﻿using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.SourceString;
 using Apps.Crowdin.Models.Response.SourceString;
@@ -36,7 +35,7 @@ public class SourceStringAction(InvocationContext invocationContext) : AppInvoca
                 Scope = EnumParser.Parse<StringScope>(input.Scope, nameof(input.Scope)),
                 DenormalizePlaceholders = input.DenormalizePlaceholders is true ? 1 : 0,
             };
-            return SdkClient.SourceStrings.ListStrings(intProjectId!.Value, request);
+            return ExceptionWrapper.ExecuteWithErrorHandling(() => SdkClient.SourceStrings.ListStrings(intProjectId!.Value, request));
         });
 
         var strings = items.Select(x => new SourceStringEntity(x)).ToArray();
@@ -49,8 +48,8 @@ public class SourceStringAction(InvocationContext invocationContext) : AppInvoca
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intStringId = IntParser.Parse(input.StringId, nameof(input.StringId));
         
-        var response = await SdkClient.SourceStrings
-            .GetString(intProjectId!.Value, intStringId!.Value, input.DenormalizePlaceholders ?? false);
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => await SdkClient.SourceStrings
+            .GetString(intProjectId!.Value, intStringId!.Value, input.DenormalizePlaceholders ?? false));
         return new(response);
     }
 
@@ -68,18 +67,19 @@ public class SourceStringAction(InvocationContext invocationContext) : AppInvoca
             MaxLength = input.MaxLength,
             LabelIds = input.LabelIds?.Select(labelId => IntParser.Parse(labelId, nameof(labelId))!.Value).ToList()
         };
-        var response = await SdkClient.SourceStrings
-            .AddString(intProjectId!.Value, request);
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => await SdkClient.SourceStrings
+            .AddString(intProjectId!.Value, request));
         
         return new(response);
     }
 
     [Action("Delete source string", Description = "Delete specific source string")]
-    public Task DeleteString([ActionParameter] DeleteSourceStringRequest input)
+    public async Task DeleteString([ActionParameter] DeleteSourceStringRequest input)
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intStringId = IntParser.Parse(input.StringId, nameof(input.StringId));
         
-        return SdkClient.SourceStrings.DeleteString(intProjectId!.Value, intStringId!.Value);
+        await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
+            await SdkClient.SourceStrings.DeleteString(intProjectId!.Value, intStringId!.Value));
     }
 }

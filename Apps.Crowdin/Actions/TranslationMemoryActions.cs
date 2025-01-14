@@ -19,16 +19,16 @@ namespace Apps.Crowdin.Actions;
 public class TranslationMemoryActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : AppInvocable(invocationContext)
 {
-
     [Action("Search translation memories", Description = "List all translation memories")]
     public async Task<ListTranslationMemoriesResponse> ListTranslationMemories(
         [ActionParameter] ListTranslationMemoryRequest input)
     {
         var intUserId = IntParser.Parse(input.UserId, nameof(input.UserId));
         var intGroupId = IntParser.Parse(input.GroupId, nameof(input.GroupId));
-        
+
         var items = await Paginator.Paginate((lim, offset)
-            => SdkClient.TranslationMemory.ListTms(intUserId, intGroupId, lim, offset));
+            => ExceptionWrapper.ExecuteWithErrorHandling(() =>
+                SdkClient.TranslationMemory.ListTms(intUserId, intGroupId, lim, offset)));
 
         var tms = items.Select(x => new TranslationMemoryEntity(x)).ToArray();
         return new(tms);
@@ -39,7 +39,9 @@ public class TranslationMemoryActions(InvocationContext invocationContext, IFile
         [ActionParameter] TranslationMemoryRequest tm)
     {
         var intTmId = IntParser.Parse(tm.TranslationMemoryId, nameof(tm.TranslationMemoryId));
-        var response = await SdkClient.TranslationMemory.GetTm(intTmId!.Value);
+        var response =
+            await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+                await SdkClient.TranslationMemory.GetTm(intTmId!.Value));
         return new(response);
     }
 
@@ -48,23 +50,25 @@ public class TranslationMemoryActions(InvocationContext invocationContext, IFile
         [ActionParameter] AddTranslationMemoryRequest input)
     {
         var intGroupId = IntParser.Parse(input.GroupId, nameof(input.GroupId));
-
         var request = new AddTmRequest
         {
             Name = input.Name,
             LanguageId = input.LanguageId,
             GroupId = intGroupId
         };
-        var response = await SdkClient.TranslationMemory.AddTm(request);
 
+        var response =
+            await ExceptionWrapper.ExecuteWithErrorHandling(
+                async () => await SdkClient.TranslationMemory.AddTm(request));
         return new(response);
     }
 
     [Action("Delete translation memory", Description = "Delete specific translation memory")]
-    public Task DeleteTranslationMemory([ActionParameter] TranslationMemoryRequest tm)
+    public async Task DeleteTranslationMemory([ActionParameter] TranslationMemoryRequest tm)
     {
         var intTmId = IntParser.Parse(tm.TranslationMemoryId, nameof(tm.TranslationMemoryId));
-        return SdkClient.TranslationMemory.DeleteTm(intTmId!.Value);
+        await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await SdkClient.TranslationMemory.DeleteTm(intTmId!.Value));
     }
 
     [Action("Export translation memory", Description = "Export specific translation memory")]
@@ -76,15 +80,16 @@ public class TranslationMemoryActions(InvocationContext invocationContext, IFile
 
         var formatEnum =
             EnumParser.Parse<TmFileFormat>(input.Format, nameof(input.Format));
-        
+
         var request = new ExportTmRequest
         {
             SourceLanguageId = input.SourceLanguageId,
             TargetLanguageId = input.TargetLanguageId,
             Format = formatEnum
         };
-        
-        var response = await SdkClient.TranslationMemory.ExportTm(intTmId!.Value, request);
+
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await SdkClient.TranslationMemory.ExportTm(intTmId!.Value, request));
         return new(response);
     }
 
@@ -93,9 +98,12 @@ public class TranslationMemoryActions(InvocationContext invocationContext, IFile
         [ActionParameter] DownloadTranslationMemoryRequest input)
     {
         var intTmId = IntParser.Parse(input.TranslationMemoryId, nameof(input.TranslationMemoryId));
-        var response = await SdkClient.TranslationMemory.DownloadTm(intTmId!.Value, input.ExportId);
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await SdkClient.TranslationMemory.DownloadTm(intTmId!.Value, input.ExportId));
+
         var fileContent = await FileDownloader.DownloadFileBytes(response.Url);
-        var file = await fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType, fileContent.Name);
+        var file = await fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType,
+            fileContent.Name);
         return new(file);
     }
 
@@ -117,7 +125,9 @@ public class TranslationMemoryActions(InvocationContext invocationContext, IFile
             }
         };
 
-        var response = await SdkClient.TranslationMemory.CreateTmSegment(intTmId!.Value, request);
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await SdkClient.TranslationMemory.CreateTmSegment(intTmId!.Value, request));
+
         return new(response.Records.First());
     }
 }

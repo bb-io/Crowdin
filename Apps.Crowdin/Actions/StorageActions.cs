@@ -12,13 +12,14 @@ using Blackbird.Applications.Sdk.Utils.Parsers;
 namespace Apps.Crowdin.Actions;
 
 [ActionList]
-public class StorageActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : AppInvocable(invocationContext)
+public class StorageActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+    : AppInvocable(invocationContext)
 {
     [Action("Search storages", Description = "List all storages")]
     public async Task<ListStoragesResponse> ListStorages()
     {
         var responseItems = await Paginator.Paginate((lim, offset)
-            => SdkClient.Storage.ListStorages(lim, offset));
+            => ExceptionWrapper.ExecuteWithErrorHandling(() => SdkClient.Storage.ListStorages(lim, offset)));
 
         var storages = responseItems.Select(x => new StorageEntity(x)).ToArray();
         return new(storages);
@@ -28,10 +29,12 @@ public class StorageActions(InvocationContext invocationContext, IFileManagement
     public async Task<StorageEntity> GetStorage([ActionParameter] StorageRequest storage)
     {
         var intStorageId = IntParser.Parse(storage.StorageId, nameof(storage.StorageId));
-        var response = await SdkClient.Storage.GetStorage(intStorageId!.Value);
+        var response =
+            await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+                await SdkClient.Storage.GetStorage(intStorageId!.Value));
         return new(response);
     }
-    
+
     [Action("Add storage", Description = "Add new storage")]
     public async Task<StorageEntity> AddStorage([ActionParameter] AddStorageRequest input)
     {
@@ -41,15 +44,16 @@ public class StorageActions(InvocationContext invocationContext, IFileManagement
 
         memoryStream.Position = 0;
 
-        var response = await SdkClient.Storage
-            .AddStorage(memoryStream, input.FileName ?? input.File.Name);
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => await SdkClient.Storage
+            .AddStorage(memoryStream, input.FileName ?? input.File.Name));
         return new(response);
     }
-    
+
     [Action("Delete storage", Description = "Delete specific storage")]
-    public Task DeleteStorage([ActionParameter] StorageRequest storage)
+    public async Task DeleteStorage([ActionParameter] StorageRequest storage)
     {
         var intStorageId = IntParser.Parse(storage.StorageId, nameof(storage.StorageId));
-        return SdkClient.Storage.DeleteStorage(intStorageId!.Value);
+        await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await SdkClient.Storage.DeleteStorage(intStorageId!.Value));
     }
 }

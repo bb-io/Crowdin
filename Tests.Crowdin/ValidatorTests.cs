@@ -1,5 +1,4 @@
 using Apps.Crowdin.Connections;
-using Apps.Crowdin.Constants;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using FluentAssertions;
 using Tests.Crowdin.Base;
@@ -15,8 +14,8 @@ public class ValidatorTests : TestBase
         var validator = new ConnectionValidator();
 
         var result = await validator.ValidateConnection(Creds, CancellationToken.None);
-        result.IsValid.Should().Be(true);
         Console.WriteLine(result.Message);
+        result.IsValid.Should().Be(true);
     }
 
     [TestMethod]
