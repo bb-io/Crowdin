@@ -11,6 +11,8 @@ public class ProjectDataHandler(InvocationContext invocationContext)
 {
     public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken cancellationToken)
     {
+        throw new Exception("Test exception");
+        
         var items = await Paginator.Paginate((lim, offset)
             => SdkClient.ProjectsGroups.ListProjects<ProjectBase>(null, null, false, null, lim, offset));
         return items
