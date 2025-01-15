@@ -70,6 +70,11 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         [ActionParameter] ProjectRequest project,
         [ActionParameter] AddNewFileRequest input)
     {
+        if (string.IsNullOrEmpty(project.ProjectId))
+        {
+            throw new PluginMisconfigurationException("Project ID is null or empty. Please specify a valid ID");
+        }
+        
         if (input.StorageId is null && input.File is null)
         {
             throw new PluginMisconfigurationException("You need to specify one of the parameters: Storage ID or File");
@@ -81,6 +86,8 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         var intDirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId));
 
         var fileName = input.Name ?? input.File?.Name;
+        
+        
 
         if (intStorageId is null && input.File != null)
         {
@@ -122,6 +129,14 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             if (!ex.Message.Contains("Name must be unique"))
             {
                 throw new PluginMisconfigurationException(ex.Message);
+            }
+            
+            if (ex.Message.Contains("New-line characters are not allowed in header values"))
+            {
+                throw new PluginMisconfigurationException(
+                    "New-line characters are not allowed in header values. " +
+                    "Please remove any line breaks (\\n or \\r) from the file name and try again."
+                );
             }
 
             var allFiles = await ListFiles(project, new());
