@@ -5,6 +5,7 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
 using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Blackbird.Applications.Sdk.Utils.RestSharp;
+using HtmlAgilityPack;
 using Newtonsoft.Json;
 using RestSharp;
 
@@ -29,13 +30,41 @@ public class CrowdinEnterpriseRestClient(IEnumerable<AuthenticationCredentialsPr
         {
             if (string.IsNullOrEmpty(response.ErrorMessage))
             {
-                throw new Exception("Response and error message is empty.");
+                throw new Exception("Internal system error");
             }
 
             throw new PluginApplicationException(response.ErrorMessage);
         }
-        
-        var error = JsonConvert.DeserializeObject<ErrorResponse>(response.Content!)!;
-        throw new PluginMisconfigurationException($"Code: {error.Error.Code}; Message: {error.Error.Message}");
+
+        if (response.ContentType?.Contains("application/json") == true || (response.Content.TrimStart().StartsWith("{") || response.Content.TrimStart().StartsWith("[")))
+        {
+            var error = JsonConvert.DeserializeObject<ErrorResponse>(response.Content!)!;
+            throw new PluginApplicationException($"Code: {error.Error.Code}; Message: {error.Error.Message}");
+        }
+        else if (response.ContentType?.Contains("text/html", StringComparison.OrdinalIgnoreCase) == true || response.Content.StartsWith("<"))
+        {
+            var errorMessage = ExtractHtmlErrorMessage(response.Content);
+            throw new PluginApplicationException(errorMessage);
+        }
+        else
+        {
+            var errorMessage = $"Error: {response.ContentType}. Response Content: {response.Content}";
+            throw new PluginApplicationException(errorMessage);
+        }
+    }
+
+    private string ExtractHtmlErrorMessage(string html)
+    {
+        if (string.IsNullOrEmpty(html)) return "N/A";
+
+        var htmlDoc = new HtmlDocument();
+        htmlDoc.LoadHtml(html);
+
+        var titleNode = htmlDoc.DocumentNode.SelectSingleNode("//title");
+        var bodyNode = htmlDoc.DocumentNode.SelectSingleNode("//body");
+
+        var title = titleNode?.InnerText.Trim() ?? "No Title";
+        var body = bodyNode?.InnerText.Trim() ?? "No Description";
+        return $"{title}: \nError Description: {body}";
     }
 }
