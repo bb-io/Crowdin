@@ -86,8 +86,8 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         var intDirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId));
 
         var fileName = input.Name ?? input.File?.Name;
-        
-        
+
+        ValidateFileName(fileName);
 
         if (intStorageId is null && input.File != null)
         {
@@ -259,5 +259,23 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             return FileUpdateOption.ClearTranslationsAndApprovals;
 
         return null;
+    }
+
+    private void ValidateFileName(string fileName)
+    {
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            throw new PluginMisconfigurationException("File name cannot be null or empty.");
+        }
+
+        var invalidCharacters = new[] { '\\', '/', ':', '*', '?', '"', '<', '>', '|' };
+
+        if (fileName.IndexOfAny(invalidCharacters) != -1)
+        {
+            throw new PluginMisconfigurationException(
+                $"File name '{fileName}' contains invalid characters. " +
+                "It cannot include any of the following: \\ / : * ? \" < > |"
+            );
+        }
     }
 }
