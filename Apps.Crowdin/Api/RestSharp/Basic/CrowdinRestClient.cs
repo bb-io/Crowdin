@@ -15,13 +15,13 @@ public class CrowdinRestClient() : BlackBirdRestClient(new RestClientOptions { B
         {
             if (string.IsNullOrEmpty(response.ErrorMessage))
             {
-                throw new PluginApplicationException();
+                throw new Exception("Internal system error");
             }
 
             throw new PluginApplicationException(response.ErrorMessage);
         }
 
-        if (response.ContentType?.Contains("application/json") == true && (response.Content.TrimStart().StartsWith("{") || response.Content.TrimStart().StartsWith("[")))
+        if (response.ContentType?.Contains("application/json") == true || (response.Content.TrimStart().StartsWith("{") || response.Content.TrimStart().StartsWith("[")))
         {
             var error = JsonConvert.DeserializeObject<ErrorResponse>(response.Content!)!;
             throw new PluginApplicationException($"Code: {error.Error.Code}; Message: {error.Error.Message}");
@@ -29,12 +29,12 @@ public class CrowdinRestClient() : BlackBirdRestClient(new RestClientOptions { B
         else if (response.ContentType?.Contains("text/html", StringComparison.OrdinalIgnoreCase) == true || response.Content.StartsWith("<"))
         {
             var errorMessage = ExtractHtmlErrorMessage(response.Content);
-            return new PluginApplicationException(errorMessage);
+            throw new PluginApplicationException(errorMessage);
         }
         else
         {
-            var errorMessage = $"Unexpected Content-Type: {response.ContentType}. Response Content: {response.Content}";
-            return new PluginApplicationException(errorMessage);
+            var errorMessage = $"Error: {response.ContentType}. Response Content: {response.Content}";
+            throw new PluginApplicationException(errorMessage);
         }
     }
 
