@@ -304,7 +304,7 @@ public class ProjectWebhookList
         var result = HandleWehookRequest<TaskStatusChangedWrapper, TaskStatusChangedWebhookResponse>(webhookRequest);
 
         if ((taskOptionalRequest.TaskId != null && taskOptionalRequest.TaskId != result.Result.Result?.Id) ||
-               (!string.IsNullOrEmpty(taskOptionalRequest.Status) && taskOptionalRequest.Status != result.Result.Result?.NewStatus))
+               (!string.IsNullOrEmpty(taskOptionalRequest.Status) && taskOptionalRequest.Status != result.Result.Result?.Status))
         {
             return Task.FromResult(PreflightResponse<TaskStatusChangedWebhookResponse>());
         }
