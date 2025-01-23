@@ -44,8 +44,7 @@ public class StorageActions(InvocationContext invocationContext, IFileManagement
         if (!IsOnlyAscii(fileName))
             throw new PluginMisconfigurationException(
                 $"The file name '{fileName}' contains non-ASCII characters. " +
-                "Crowdin API requires ASCII-only headers. Please rename the file and try again.");
-
+                "Crowdin API requires ASCII-only characters. Please rename the file and try again.");
 
         var stream = await fileManagementClient.DownloadAsync(input.File);
         var memoryStream = new MemoryStream();
