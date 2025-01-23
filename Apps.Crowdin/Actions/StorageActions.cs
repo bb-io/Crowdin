@@ -8,6 +8,7 @@ using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Parsers;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Crowdin.Actions;
 
@@ -38,6 +39,13 @@ public class StorageActions(InvocationContext invocationContext, IFileManagement
     [Action("Add storage", Description = "Add new storage")]
     public async Task<StorageEntity> AddStorage([ActionParameter] AddStorageRequest input)
     {
+        var fileName = input.FileName ?? input.File.Name;
+
+        if (!IsOnlyAscii(fileName))
+            throw new PluginMisconfigurationException(
+                $"The file name '{fileName}' contains non-ASCII characters. " +
+                "Crowdin API requires ASCII-only characters. Please rename the file and try again.");
+
         var stream = await fileManagementClient.DownloadAsync(input.File);
         var memoryStream = new MemoryStream();
         await stream.CopyToAsync(memoryStream);
@@ -55,5 +63,11 @@ public class StorageActions(InvocationContext invocationContext, IFileManagement
         var intStorageId = IntParser.Parse(storage.StorageId, nameof(storage.StorageId));
         await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
             await SdkClient.Storage.DeleteStorage(intStorageId!.Value));
+    }
+
+
+    private bool IsOnlyAscii(string input)
+    {
+        return input.All(c => c <= 127);
     }
 }
