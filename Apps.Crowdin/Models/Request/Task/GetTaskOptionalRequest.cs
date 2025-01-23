@@ -11,6 +11,6 @@ public class GetTaskOptionalRequest
     public string? TaskId { get; set; }
 
     [Display("Status")]
-    [StaticDataSource(typeof(TaskStatusHandler))]
+    [StaticDataSource(typeof(TaskStatusTypeHandler))]
     public string? Status {  get; set; }
 }
