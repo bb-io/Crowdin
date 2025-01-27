@@ -13,7 +13,7 @@ namespace Apps.Crowdin.Models.Request.Task
     public class TaskAddedOptionalRequest
     {
         [Display("Task type")]
-        [StaticDataSource(typeof(TaskTypeHandler))]
+        [StaticDataSource(typeof(TaskTypeWebhookHandler))]
         public string? Type { get; set; }
     }
 }
