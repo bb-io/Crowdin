@@ -13,4 +13,8 @@ public class GetTaskOptionalRequest
     [Display("Status")]
     [StaticDataSource(typeof(TaskStatusTypeHandler))]
     public string? Status {  get; set; }
+
+    [Display("Task type")]
+    [StaticDataSource(typeof(TaskTypeWebhookHandler))]
+    public string? Type { get; set; }
 }
