@@ -304,8 +304,18 @@ public class ProjectWebhookList
     }
 
     [Webhook("On task deleted", typeof(TaskDeletedHandler), Description = "On task deleted")]
-    public Task<WebhookResponse<TaskWebhookResponse>> OnTaskDeleted(WebhookRequest webhookRequest)
-        => HandleWehookRequest<TaskWrapper, TaskWebhookResponse>(webhookRequest);
+    public Task<WebhookResponse<TaskWebhookResponse>> OnTaskDeleted(WebhookRequest webhookRequest,
+        [WebhookParameter] TaskAddedOptionalRequest request)
+    {
+        var result = HandleWehookRequest<TaskWrapper, TaskWebhookResponse>(webhookRequest);
+
+        if (!string.IsNullOrEmpty(request.Type)
+            && !string.Equals(result.Result.Result?.Type, request.Type, StringComparison.OrdinalIgnoreCase))
+        {
+            return Task.FromResult(PreflightResponse<TaskWebhookResponse>());
+        }
+        return result;
+    }
 
     [Webhook("On task status changed", typeof(TaskStatusChangedHandler), Description = "On task status changed")]
     public Task<WebhookResponse<TaskStatusChangedWebhookResponse>> OnTaskStatusChanged(WebhookRequest webhookRequest,
@@ -314,11 +324,11 @@ public class ProjectWebhookList
         var result = HandleWehookRequest<TaskStatusChangedWrapper, TaskStatusChangedWebhookResponse>(webhookRequest);
 
         if ((taskOptionalRequest.TaskId != null && taskOptionalRequest.TaskId != result.Result.Result?.Id) ||
-               (!string.IsNullOrEmpty(taskOptionalRequest.Status) && taskOptionalRequest.Status != result.Result.Result?.Status))
+               (!string.IsNullOrEmpty(taskOptionalRequest.Status) && taskOptionalRequest.Status != result.Result.Result?.Status) ||
+               (!string.IsNullOrEmpty(taskOptionalRequest.Type) && !string.Equals(result.Result.Result?.Type, taskOptionalRequest.Type, StringComparison.OrdinalIgnoreCase)))
         {
             return Task.FromResult(PreflightResponse<TaskStatusChangedWebhookResponse>());
-        }
-        
+        }       
         return result;
     }
 
