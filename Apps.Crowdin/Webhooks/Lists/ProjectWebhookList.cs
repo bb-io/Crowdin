@@ -27,6 +27,7 @@ using Apps.Crowdin.Webhooks.Models.Payload.Task.Response;
 using Apps.Crowdin.Webhooks.Models.Payload.Task.Wrapper;
 using Apps.Crowdin.Webhooks.Models.Payload.Translation.Response;
 using Apps.Crowdin.Webhooks.Models.Payload.Translation.Wrappers;
+using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Webhooks;
 using Newtonsoft.Json;
 
@@ -290,8 +291,17 @@ public class ProjectWebhookList
     #region Task
 
     [Webhook("On task added", typeof(TaskAddedHandler), Description = "On task added")]
-    public Task<WebhookResponse<TaskWebhookResponse>> OnTaskAdded(WebhookRequest webhookRequest)
-        => HandleWehookRequest<TaskWrapper, TaskWebhookResponse>(webhookRequest);
+    public Task<WebhookResponse<TaskWebhookResponse>> OnTaskAdded(WebhookRequest webhookRequest,
+        [ActionParameter] TaskAddedOptionalRequest request)
+    {
+        var result = HandleWehookRequest<TaskWrapper, TaskWebhookResponse>(webhookRequest);
+        if (!string.IsNullOrEmpty(request.Type)
+            && !string.Equals(result.Result.Result?.Type, request.Type, StringComparison.OrdinalIgnoreCase))
+        {
+            return Task.FromResult(PreflightResponse<TaskWebhookResponse>());
+        }
+        return result;
+    }
 
     [Webhook("On task deleted", typeof(TaskDeletedHandler), Description = "On task deleted")]
     public Task<WebhookResponse<TaskWebhookResponse>> OnTaskDeleted(WebhookRequest webhookRequest)
