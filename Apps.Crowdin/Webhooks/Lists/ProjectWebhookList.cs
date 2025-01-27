@@ -292,7 +292,7 @@ public class ProjectWebhookList
 
     [Webhook("On task added", typeof(TaskAddedHandler), Description = "On task added")]
     public Task<WebhookResponse<TaskWebhookResponse>> OnTaskAdded(WebhookRequest webhookRequest,
-        [ActionParameter] TaskAddedOptionalRequest request)
+        [WebhookParameter] TaskAddedOptionalRequest request)
     {
         var result = HandleWehookRequest<TaskWrapper, TaskWebhookResponse>(webhookRequest);
         if (!string.IsNullOrEmpty(request.Type)
