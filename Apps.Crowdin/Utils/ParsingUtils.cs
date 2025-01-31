@@ -10,16 +10,20 @@ namespace Apps.Crowdin.Utils
 {
     public class ParsingUtils
     {
-        public static int ParseOrThrow(string input, string fieldName)
+        public static T ParseOrThrow<T>(string input, string fieldName, Func<string, T?> parseFunc) where T : struct
         {
             try
             {
-                return IntParser.Parse(input, fieldName)
-                       ?? throw new PluginMisconfigurationException($"The value of {fieldName} is invalid: {input}");
+                var result = parseFunc(input);
+                if (!result.HasValue)
+                {
+                    throw new PluginMisconfigurationException($"The value for '{fieldName}' is invalid: {input}");
+                }
+                return result.Value;
             }
             catch (Exception ex)
             {
-                throw new PluginMisconfigurationException($"Failed to parse {fieldName}. Error: {ex.Message}", ex);
+                throw new PluginMisconfigurationException($"Failed to parse '{fieldName}'. Error: {ex.Message}", ex);
             }
         }
     }
