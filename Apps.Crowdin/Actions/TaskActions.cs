@@ -73,7 +73,8 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         {
             Title = input.Title,
             LanguageId = input.LanguageId,
-            FileIds = input.FileIds.Select(fileId => IntParser.Parse(fileId, nameof(fileId))!.Value).ToList(),
+            FileIds = input.FileIds.Select(fileId => IntParser.Parse(fileId, nameof(fileId))
+            ?? throw new PluginMisconfigurationException($"Invalid file ID: {fileId}")).ToList(),
             Type = EnumParser.Parse<TaskType>(input.Type, nameof(input.Type))!.Value,
             Status = EnumParser.Parse<TaskStatus>(input.Status, nameof(input.Status)),
             Description = input.Description,
