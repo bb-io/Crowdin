@@ -30,7 +30,7 @@ public class CrowdinEnterpriseRestClient(IEnumerable<AuthenticationCredentialsPr
         {
             if (string.IsNullOrEmpty(response.ErrorMessage))
             {
-                throw new PluginApplicationException("Internal system error");
+                throw new Exception("Internal system error");
             }
 
             throw new PluginApplicationException(response.ErrorMessage);
