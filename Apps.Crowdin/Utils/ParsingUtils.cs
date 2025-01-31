@@ -8,7 +8,7 @@ using Blackbird.Applications.Sdk.Utils.Parsers;
 
 namespace Apps.Crowdin.Utils
 {
-    public static class ParsingUtils
+    public class ParsingUtils
     {
         public static int ParseOrThrow(string input, string fieldName)
         {
