@@ -17,13 +17,13 @@ namespace Apps.Crowdin.Utils
                 var result = parseFunc(input);
                 if (!result.HasValue)
                 {
-                    throw new PluginMisconfigurationException($"The value for '{fieldName}' is invalid: {input}");
+                    throw new PluginApplicationException($"The value for '{fieldName}' is invalid: {input}");
                 }
                 return result.Value;
             }
             catch (Exception ex)
             {
-                throw new PluginMisconfigurationException($"Failed to parse '{fieldName}'. Error: {ex.Message}", ex);
+                throw new PluginApplicationException($"Failed to parse '{fieldName}'. Error: {ex.Message}", ex);
             }
         }
     }

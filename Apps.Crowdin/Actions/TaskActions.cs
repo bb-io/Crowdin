@@ -67,54 +67,28 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
                 "Task with the chosen type can't contain vendor. If you want to specify a vendor, please change type to 'Translate by vendor' or 'Proofread by vendor'");
         }
 
-        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
+        var intProjectId = ParsingUtils.ParseOrThrow(project.ProjectId,nameof(project.ProjectId),id => IntParser.Parse(id, nameof(project.ProjectId)));
 
         var request = new CrowdinTaskCreateForm()
         {
             Title = input.Title,
             LanguageId = input.LanguageId,
-            FileIds = input.FileIds
-           .Select(fileId =>
-               ParsingUtils.ParseOrThrow(
-                   fileId,
-                   nameof(fileId),
-                   id => IntParser.Parse(id, nameof(fileId))
-               )
-           )
-           .ToList(),
-            Type = ParsingUtils.ParseOrThrow(
-           input.Type,
-           nameof(input.Type),
-           type => EnumParser.Parse<TaskType>(type, nameof(input.Type))
-       ),
-            Status = ParsingUtils.ParseOrThrow(
-           input.Status,
-           nameof(input.Status),
-           status => EnumParser.Parse<TaskStatus>(status, nameof(input.Status))
-       ),
+            FileIds = input.FileIds.Select(fileId =>ParsingUtils.ParseOrThrow(fileId,nameof(fileId),id => 
+            IntParser.Parse(id, nameof(fileId)))).ToList(),
+            Type = ParsingUtils.ParseOrThrow(input.Type,nameof(input.Type),type => 
+            EnumParser.Parse<TaskType>(type, nameof(input.Type))),
+            Status = ParsingUtils.ParseOrThrow(input.Status,nameof(input.Status),status => 
+            EnumParser.Parse<TaskStatus>(status, nameof(input.Status))),
             Description = input.Description,
             SplitFiles = input.SplitFiles,
             SkipAssignedStrings = input.SkipAssignedStrings,
-            SkipUntranslatedStrings = input.SkipUntranslatedStrings,
-            LabelIds = input.LabelIds?
-           .Select(labelId =>
-               ParsingUtils.ParseOrThrow(
-                   labelId,
-                   nameof(labelId),
-                   id => IntParser.Parse(id, nameof(labelId))
-               )
-           )
-           .ToList(),
-            Assignees = project.Assignees?
-           .Select(assigneeId => new TaskAssigneeForm
+            SkipUntranslatedStrings = input.SkipUntranslatedStrings,LabelIds = input.LabelIds?.Select(labelId =>
+            ParsingUtils.ParseOrThrow(labelId,nameof(labelId),id => IntParser.Parse(id, nameof(labelId)))
+           ).ToList(),
+            Assignees = project.Assignees?.Select(assigneeId => new TaskAssigneeForm
            {
-               Id = ParsingUtils.ParseOrThrow(
-                   assigneeId,
-                   nameof(assigneeId),
-                   id => IntParser.Parse(id, nameof(assigneeId))
-               )
-           })
-           .ToList(),
+               Id = ParsingUtils.ParseOrThrow(assigneeId,nameof(assigneeId),id => IntParser.Parse(id, nameof(assigneeId)))
+           }).ToList(),
             DeadLine = input.Deadline,
             DateFrom = input.DateFrom,
             DateTo = input.DateTo,
@@ -122,8 +96,8 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
             Vendor = input.Vendor
         };
 
-        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-            await SdkClient.Tasks.AddTask(intProjectId!.Value, request));
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(
+         async () => await SdkClient.Tasks.AddTask(intProjectId, request));
         return new(response);
     }
 
