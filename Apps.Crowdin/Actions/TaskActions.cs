@@ -25,16 +25,20 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
     [Action("Search tasks", Description = "List all tasks")]
     public async Task<ListTasksResponse> ListTasks([ActionParameter] ListTasksRequest input)
     {
-        var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
-        var intAssigneeId = IntParser.Parse(input.AssigneeId, nameof(input.AssigneeId));
-        var status = EnumParser.Parse<TaskStatus>(input.Status, nameof(input.Status));
+        var intProjectId = ParsingUtils.ParseOrThrow(input.ProjectId,nameof(input.ProjectId),id => 
+        IntParser.Parse(id, nameof(input.ProjectId)));
 
-        var items = await Paginator.Paginate((lim, offset)
-            => ExceptionWrapper.ExecuteWithErrorHandling(() =>
-                SdkClient.Tasks.ListTasks(intProjectId!.Value, lim, offset, status, intAssigneeId)));
+        var intAssigneeId = ParsingUtils.ParseOrThrow(input.AssigneeId,nameof(input.AssigneeId),id => 
+        IntParser.Parse(id, nameof(input.AssigneeId)));
+
+        var status = ParsingUtils.ParseOrThrow(input.Status,nameof(input.Status),s => 
+        EnumParser.Parse<TaskStatus>(s, nameof(input.Status)));
+
+        var items = await Paginator.Paginate((lim, offset) =>
+            ExceptionWrapper.ExecuteWithErrorHandling(() =>SdkClient.Tasks.ListTasks(intProjectId, lim, offset, status, intAssigneeId)));
 
         var tasks = items.Select(x => new TaskEntity(x)).ToArray();
-        return new(tasks);
+        return new ListTasksResponse(tasks);
     }
 
     [Action("Get task", Description = "Get specific task")]
@@ -42,12 +46,15 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         [ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("Task ID")] string taskId)
     {
-        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
-        var intTaskId = IntParser.Parse(taskId, nameof(taskId));
+        var intProjectId = ParsingUtils.ParseOrThrow(project.ProjectId,nameof(project.ProjectId),id => 
+        IntParser.Parse(id, nameof(project.ProjectId)));
 
-        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-            await SdkClient.Tasks.GetTask(intProjectId!.Value, intTaskId!.Value));
-        return new(response);
+        var intTaskId = ParsingUtils.ParseOrThrow(taskId,nameof(taskId),id => 
+        IntParser.Parse(id, nameof(taskId)));
+
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(
+            async () => await SdkClient.Tasks.GetTask(intProjectId, intTaskId));
+        return new TaskEntity(response);
     }
 
     [Action("Add task", Description = "Add new task")]
@@ -106,11 +113,14 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         [ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("Task ID")] string taskId)
     {
-        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
-        var intTaskId = IntParser.Parse(taskId, nameof(taskId));
+        var intProjectId = ParsingUtils.ParseOrThrow(project.ProjectId,nameof(project.ProjectId),id => 
+        IntParser.Parse(id, nameof(project.ProjectId)) );
 
-        await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-            await SdkClient.Tasks.DeleteTask(intProjectId!.Value, intTaskId!.Value));
+        var intTaskId = ParsingUtils.ParseOrThrow(taskId,nameof(taskId),id => 
+        IntParser.Parse(id, nameof(taskId)));
+
+        await ExceptionWrapper.ExecuteWithErrorHandling( async () => 
+        await SdkClient.Tasks.DeleteTask(intProjectId, intTaskId) );
     }
 
     [Action("Download task strings as XLIFF", Description = "Download specific task strings as XLIFF")]
@@ -118,18 +128,20 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         [ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("Task ID")] string taskId)
     {
-        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
-        var intTaskId = IntParser.Parse(taskId, nameof(taskId));
+        var intProjectId = ParsingUtils.ParseOrThrow(project.ProjectId,nameof(project.ProjectId),id => 
+            IntParser.Parse(id, nameof(project.ProjectId)));
 
-        var downloadLink = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
-            await SdkClient.Tasks.ExportTaskStrings(intProjectId!.Value, intTaskId!.Value));
+        var intTaskId = ParsingUtils.ParseOrThrow(taskId,nameof(taskId),id => 
+        IntParser.Parse(id, nameof(taskId)));
+
+        var downloadLink = await ExceptionWrapper.ExecuteWithErrorHandling(
+            async () => await SdkClient.Tasks.ExportTaskStrings(intProjectId, intTaskId));
 
         if (downloadLink is null)
-            throw new("No string found for this task");
+            throw new PluginApplicationException("No string found for this task");
 
         var fileContent = await FileDownloader.DownloadFileBytes(downloadLink.Url);
-        var file = await fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType,
-            fileContent.Name);
-        return new(file);
+        var file = await fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType, fileContent.Name);
+        return new DownloadFileResponse(file);
     }
 }
