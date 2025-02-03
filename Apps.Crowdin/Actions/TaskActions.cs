@@ -42,11 +42,14 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         [ActionParameter] ProjectRequest project,
         [ActionParameter][Display("Task ID")] string taskId)
     {
-        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
-        var intTaskId = IntParser.Parse(taskId, nameof(taskId));
+        if (!int.TryParse(project.ProjectId, out var intProjectId))
+            throw new PluginMisconfigurationException($"Invalid Project ID: {project.ProjectId} must be a numeric value.");
+
+        if (!int.TryParse(taskId, out var intTaskId))
+            throw new PluginMisconfigurationException($"Invalid Task ID: {taskId} must be a numeric value.");
 
         var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-            await SdkClient.Tasks.GetTask(intProjectId!.Value, intTaskId!.Value));
+        await SdkClient.Tasks.GetTask(intProjectId, intTaskId));
         return new(response);
     }
 
