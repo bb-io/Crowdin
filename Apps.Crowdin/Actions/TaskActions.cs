@@ -15,6 +15,7 @@ using Crowdin.Api.Tasks;
 using TaskStatus = Crowdin.Api.Tasks.TaskStatus;
 using Apps.Crowdin.Models.Request.Users;
 using Blackbird.Applications.Sdk.Common.Exceptions;
+using Crowdin.Api.ProjectsGroups;
 
 namespace Apps.Crowdin.Actions;
 
@@ -40,7 +41,7 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
     [Action("Get task", Description = "Get specific task")]
     public async Task<TaskEntity> GetTask(
         [ActionParameter] ProjectRequest project,
-        [ActionParameter] [Display("Task ID")] string taskId)
+        [ActionParameter][Display("Task ID")] string taskId)
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intTaskId = IntParser.Parse(taskId, nameof(taskId));
@@ -67,22 +68,47 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
                 "Task with the chosen type can't contain vendor. If you want to specify a vendor, please change type to 'Translate by vendor' or 'Proofread by vendor'");
         }
 
-        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
+        if (!int.TryParse(project.ProjectId, out var intProjectId))
+            throw new PluginMisconfigurationException($"Invalid Project ID: {project.ProjectId} must be a numeric value. Please check the input project ID");
+
+        var projectInfo = await ExceptionWrapper.ExecuteWithErrorHandling(() =>
+        SdkClient.ProjectsGroups.GetProject<ProjectBase>(intProjectId));
+
+        if (projectInfo?.TargetLanguageIds == null
+        || !projectInfo.TargetLanguageIds.Contains(input.LanguageId))
+        {
+            throw new PluginMisconfigurationException(
+                $"The input language is not setted in the target project. Please check the supported target languages by your project" );
+        }
 
         var request = new CrowdinTaskCreateForm()
         {
             Title = input.Title,
             LanguageId = input.LanguageId,
-            FileIds = input.FileIds.Select(fileId => IntParser.Parse(fileId, nameof(fileId))!.Value).ToList(),
+            FileIds = input.FileIds.Select(fileId =>
+            {
+                if (!int.TryParse(fileId, out var parsedFileId))
+                    throw new PluginMisconfigurationException($"Invalid File ID: {fileId} must be a numeric value. Please check the input file ID");
+                return parsedFileId;
+            }).ToList(),
             Type = EnumParser.Parse<TaskType>(input.Type, nameof(input.Type))!.Value,
             Status = EnumParser.Parse<TaskStatus>(input.Status, nameof(input.Status)),
             Description = input.Description,
             SplitFiles = input.SplitFiles,
             SkipAssignedStrings = input.SkipAssignedStrings,
             SkipUntranslatedStrings = input.SkipUntranslatedStrings,
-            LabelIds = input.LabelIds?.Select(labelId => IntParser.Parse(labelId, nameof(labelId))!.Value).ToList(),
-            Assignees = project.Assignees?.Select(assigneeId => new TaskAssigneeForm
-                { Id = IntParser.Parse(assigneeId, nameof(assigneeId))!.Value }).ToList(),
+            LabelIds = input.LabelIds?.Select(labelId =>
+            {
+                if (!int.TryParse(labelId, out var parsedLabelId))
+                    throw new PluginMisconfigurationException($"Invalid Label ID: {labelId} must be a numeric value. Please check the input label ID");
+                return parsedLabelId;
+            }).ToList(),
+            Assignees = project.Assignees?.Select(assigneeId =>
+            {
+                if (!int.TryParse(assigneeId, out var parsedAssigneeId))
+                    throw new PluginMisconfigurationException($"Invalid Assignee ID: {assigneeId} must be a numeric value. Please check the input assignee ID");
+                return new TaskAssigneeForm { Id = parsedAssigneeId };
+            }).ToList(),
             DeadLine = input.Deadline,
             DateFrom = input.DateFrom,
             DateTo = input.DateTo,
@@ -91,14 +117,14 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         };
 
         var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-            await SdkClient.Tasks.AddTask(intProjectId!.Value, request));
+        await SdkClient.Tasks.AddTask(intProjectId, request));
         return new(response);
     }
 
     [Action("Delete task", Description = "Delete specific task")]
     public async Task DeleteTask(
         [ActionParameter] ProjectRequest project,
-        [ActionParameter] [Display("Task ID")] string taskId)
+        [ActionParameter][Display("Task ID")] string taskId)
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intTaskId = IntParser.Parse(taskId, nameof(taskId));
@@ -110,12 +136,12 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
     [Action("Download task strings as XLIFF", Description = "Download specific task strings as XLIFF")]
     public async Task<DownloadFileResponse> DownloadTaskStrings(
         [ActionParameter] ProjectRequest project,
-        [ActionParameter] [Display("Task ID")] string taskId)
+        [ActionParameter][Display("Task ID")] string taskId)
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intTaskId = IntParser.Parse(taskId, nameof(taskId));
 
-        var downloadLink = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
+        var downloadLink = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
             await SdkClient.Tasks.ExportTaskStrings(intProjectId!.Value, intTaskId!.Value));
 
         if (downloadLink is null)
