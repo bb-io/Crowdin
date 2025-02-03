@@ -25,36 +25,29 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
     [Action("Search tasks", Description = "List all tasks")]
     public async Task<ListTasksResponse> ListTasks([ActionParameter] ListTasksRequest input)
     {
-        var intProjectId = ParsingUtils.ParseOrThrow(input.ProjectId,nameof(input.ProjectId),id => 
-        IntParser.Parse(id, nameof(input.ProjectId)));
+        var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
+        var intAssigneeId = IntParser.Parse(input.AssigneeId, nameof(input.AssigneeId));
+        var status = EnumParser.Parse<TaskStatus>(input.Status, nameof(input.Status));
 
-        var intAssigneeId = ParsingUtils.ParseOrThrow(input.AssigneeId,nameof(input.AssigneeId),id => 
-        IntParser.Parse(id, nameof(input.AssigneeId)));
-
-        var status = ParsingUtils.ParseOrThrow(input.Status,nameof(input.Status),s => 
-        EnumParser.Parse<TaskStatus>(s, nameof(input.Status)));
-
-        var items = await Paginator.Paginate((lim, offset) =>
-            ExceptionWrapper.ExecuteWithErrorHandling(() =>SdkClient.Tasks.ListTasks(intProjectId, lim, offset, status, intAssigneeId)));
+        var items = await Paginator.Paginate((lim, offset)
+            => ExceptionWrapper.ExecuteWithErrorHandling(() =>
+                SdkClient.Tasks.ListTasks(intProjectId!.Value, lim, offset, status, intAssigneeId)));
 
         var tasks = items.Select(x => new TaskEntity(x)).ToArray();
-        return new ListTasksResponse(tasks);
+        return new(tasks);
     }
 
     [Action("Get task", Description = "Get specific task")]
     public async Task<TaskEntity> GetTask(
         [ActionParameter] ProjectRequest project,
-        [ActionParameter] [Display("Task ID")] string taskId)
+        [ActionParameter][Display("Task ID")] string taskId)
     {
-        var intProjectId = ParsingUtils.ParseOrThrow(project.ProjectId,nameof(project.ProjectId),id => 
-        IntParser.Parse(id, nameof(project.ProjectId)));
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
+        var intTaskId = IntParser.Parse(taskId, nameof(taskId));
 
-        var intTaskId = ParsingUtils.ParseOrThrow(taskId,nameof(taskId),id => 
-        IntParser.Parse(id, nameof(taskId)));
-
-        var response = await ExceptionWrapper.ExecuteWithErrorHandling(
-            async () => await SdkClient.Tasks.GetTask(intProjectId, intTaskId));
-        return new TaskEntity(response);
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await SdkClient.Tasks.GetTask(intProjectId!.Value, intTaskId!.Value));
+        return new(response);
     }
 
     [Action("Add task", Description = "Add new task")]
@@ -74,28 +67,22 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
                 "Task with the chosen type can't contain vendor. If you want to specify a vendor, please change type to 'Translate by vendor' or 'Proofread by vendor'");
         }
 
-        var intProjectId = ParsingUtils.ParseOrThrow(project.ProjectId,nameof(project.ProjectId),id => IntParser.Parse(id, nameof(project.ProjectId)));
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
 
         var request = new CrowdinTaskCreateForm()
         {
             Title = input.Title,
             LanguageId = input.LanguageId,
-            FileIds = input.FileIds.Select(fileId =>ParsingUtils.ParseOrThrow(fileId,nameof(fileId),id => 
-            IntParser.Parse(id, nameof(fileId)))).ToList(),
-            Type = ParsingUtils.ParseOrThrow(input.Type,nameof(input.Type),type => 
-            EnumParser.Parse<TaskType>(type, nameof(input.Type))),
-            Status = ParsingUtils.ParseOrThrow(input.Status,nameof(input.Status),status => 
-            EnumParser.Parse<TaskStatus>(status, nameof(input.Status))),
+            FileIds = input.FileIds.Select(fileId => IntParser.Parse(fileId, nameof(fileId))!.Value).ToList(),
+            Type = EnumParser.Parse<TaskType>(input.Type, nameof(input.Type))!.Value,
+            Status = EnumParser.Parse<TaskStatus>(input.Status, nameof(input.Status)),
             Description = input.Description,
             SplitFiles = input.SplitFiles,
             SkipAssignedStrings = input.SkipAssignedStrings,
-            SkipUntranslatedStrings = input.SkipUntranslatedStrings,LabelIds = input.LabelIds?.Select(labelId =>
-            ParsingUtils.ParseOrThrow(labelId,nameof(labelId),id => IntParser.Parse(id, nameof(labelId)))
-           ).ToList(),
+            SkipUntranslatedStrings = input.SkipUntranslatedStrings,
+            LabelIds = input.LabelIds?.Select(labelId => IntParser.Parse(labelId, nameof(labelId))!.Value).ToList(),
             Assignees = project.Assignees?.Select(assigneeId => new TaskAssigneeForm
-           {
-               Id = ParsingUtils.ParseOrThrow(assigneeId,nameof(assigneeId),id => IntParser.Parse(id, nameof(assigneeId)))
-           }).ToList(),
+            { Id = IntParser.Parse(assigneeId, nameof(assigneeId))!.Value }).ToList(),
             DeadLine = input.Deadline,
             DateFrom = input.DateFrom,
             DateTo = input.DateTo,
@@ -103,45 +90,40 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
             Vendor = input.Vendor
         };
 
-        var response = await ExceptionWrapper.ExecuteWithErrorHandling(
-         async () => await SdkClient.Tasks.AddTask(intProjectId, request));
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await SdkClient.Tasks.AddTask(intProjectId!.Value, request));
         return new(response);
     }
 
     [Action("Delete task", Description = "Delete specific task")]
     public async Task DeleteTask(
         [ActionParameter] ProjectRequest project,
-        [ActionParameter] [Display("Task ID")] string taskId)
+        [ActionParameter][Display("Task ID")] string taskId)
     {
-        var intProjectId = ParsingUtils.ParseOrThrow(project.ProjectId,nameof(project.ProjectId),id => 
-        IntParser.Parse(id, nameof(project.ProjectId)) );
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
+        var intTaskId = IntParser.Parse(taskId, nameof(taskId));
 
-        var intTaskId = ParsingUtils.ParseOrThrow(taskId,nameof(taskId),id => 
-        IntParser.Parse(id, nameof(taskId)));
-
-        await ExceptionWrapper.ExecuteWithErrorHandling( async () => 
-        await SdkClient.Tasks.DeleteTask(intProjectId, intTaskId) );
+        await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await SdkClient.Tasks.DeleteTask(intProjectId!.Value, intTaskId!.Value));
     }
 
     [Action("Download task strings as XLIFF", Description = "Download specific task strings as XLIFF")]
     public async Task<DownloadFileResponse> DownloadTaskStrings(
         [ActionParameter] ProjectRequest project,
-        [ActionParameter] [Display("Task ID")] string taskId)
+        [ActionParameter][Display("Task ID")] string taskId)
     {
-        var intProjectId = ParsingUtils.ParseOrThrow(project.ProjectId,nameof(project.ProjectId),id => 
-            IntParser.Parse(id, nameof(project.ProjectId)));
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
+        var intTaskId = IntParser.Parse(taskId, nameof(taskId));
 
-        var intTaskId = ParsingUtils.ParseOrThrow(taskId,nameof(taskId),id => 
-        IntParser.Parse(id, nameof(taskId)));
-
-        var downloadLink = await ExceptionWrapper.ExecuteWithErrorHandling(
-            async () => await SdkClient.Tasks.ExportTaskStrings(intProjectId, intTaskId));
+        var downloadLink = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await SdkClient.Tasks.ExportTaskStrings(intProjectId!.Value, intTaskId!.Value));
 
         if (downloadLink is null)
-            throw new PluginApplicationException("No string found for this task");
+            throw new("No string found for this task");
 
         var fileContent = await FileDownloader.DownloadFileBytes(downloadLink.Url);
-        var file = await fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType, fileContent.Name);
-        return new DownloadFileResponse(file);
+        var file = await fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType,
+            fileContent.Name);
+        return new(file);
     }
 }
