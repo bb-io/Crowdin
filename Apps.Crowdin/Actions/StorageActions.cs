@@ -65,7 +65,6 @@ public class StorageActions(InvocationContext invocationContext, IFileManagement
             await SdkClient.Storage.DeleteStorage(intStorageId!.Value));
     }
 
-
     private bool IsOnlyAscii(string input)
     {
         return input.All(c => c <= 127);

@@ -70,6 +70,13 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         [ActionParameter] ProjectRequest project,
         [ActionParameter] AddNewFileRequest input)
     {
+        var fileNameCheck = input.Name ?? input.File.Name;
+
+        if (!IsOnlyAscii(fileNameCheck))
+            throw new PluginMisconfigurationException(
+                $"The file name '{fileNameCheck}' contains non-ASCII characters. " +
+                "Crowdin API requires ASCII-only characters. Please rename the file and try again.");
+
         if (string.IsNullOrEmpty(project.ProjectId))
         {
             throw new PluginMisconfigurationException("Project ID is null or empty. Please specify a valid ID");
@@ -277,5 +284,10 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
                 "It cannot include any of the following: \\ / : * ? \" < > |"
             );
         }
+    }
+
+    private bool IsOnlyAscii(string input)
+    {
+        return input.All(c => c <= 127);
     }
 }
