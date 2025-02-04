@@ -66,7 +66,7 @@ public class StorageActions(InvocationContext invocationContext, IFileManagement
     }
 
 
-    private bool IsOnlyAscii(string input)
+    public bool IsOnlyAscii(string input)
     {
         return input.All(c => c <= 127);
     }

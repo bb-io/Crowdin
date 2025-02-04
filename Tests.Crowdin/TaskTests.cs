@@ -20,7 +20,7 @@ namespace Tests.Crowdin
             var action = new TaskActions(InvocationContext,FileManager);
 
             var input1 = new AssigneesRequest { ProjectId = "750225" };
-            var input2 = new AddNewTaskRequest { Type = "Translate", Title="Hello", LanguageId = "en", FileIds = ["16"]};
+            var input2 = new AddNewTaskRequest { Type = "Translate", Title="Hello", LanguageId = "nl", FileIds = ["16"], Status = "todo" };
 
             var result = await action.AddTask(input1,input2);
 
