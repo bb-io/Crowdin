@@ -275,6 +275,11 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             throw new PluginMisconfigurationException("File name cannot be null or empty.");
         }
 
+        if (fileName.Contains("\n") || fileName.Contains("\r"))
+        {
+            throw new PluginMisconfigurationException("File name must not contain new-line characters. Please check the input");
+        }
+
         var invalidCharacters = new[] { '\\', '/', ':', '*', '?', '"', '<', '>', '|' };
 
         if (fileName.IndexOfAny(invalidCharacters) != -1)

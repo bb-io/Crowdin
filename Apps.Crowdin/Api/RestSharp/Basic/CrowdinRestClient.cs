@@ -21,6 +21,14 @@ public class CrowdinRestClient() : BlackBirdRestClient(new RestClientOptions { B
             throw new PluginApplicationException(response.ErrorMessage);
         }
 
+        if (response.Content.Contains("New-line characters are not allowed in header values"))
+        {
+            throw new PluginApplicationException(
+                "New-line characters are not allowed in header values. " +
+                "Please remove any line breaks from the file name and try again."
+            );
+        }
+
         if (response.ContentType?.Contains("application/json") == true || (response.Content.TrimStart().StartsWith("{") || response.Content.TrimStart().StartsWith("[")))
         {
             var error = JsonConvert.DeserializeObject<ErrorResponse>(response.Content!)!;
