@@ -148,7 +148,7 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
 
         var taskEntity = await GetTask(project, taskId);
         if (taskEntity == null)
-            throw new PluginApplicationException($"Task with ID {taskId} does not exist.");
+            throw new PluginApplicationException($"Task with ID {taskId} does not exist. Please check the input");
 
         var downloadLink = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
         await SdkClient.Tasks.ExportTaskStrings(intProjectId, intTaskId));
