@@ -5,7 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Apps.Crowdin.Actions;
 using Apps.Crowdin.Connections;
+using Apps.Crowdin.DataSourceHandlers;
 using Apps.Crowdin.Models.Request.Project;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 using Tests.Crowdin.Base;
 
 namespace Tests.Crowdin
@@ -42,6 +44,21 @@ namespace Tests.Crowdin
             var result = await client.GetProject(input);
 
             Assert.IsNotNull(result);
+        }
+
+
+        [TestMethod]
+        public async Task GetProjects_ShoudBeSuccess()
+        {
+            var handler = new ProjectDataHandler(InvocationContext);  
+
+            var result = await handler.GetDataAsync(new DataSourceContext { SearchString =""}, CancellationToken.None);
+
+            foreach (var item in result)
+            {
+                Console.WriteLine($"{item.DisplayName} - {item.Value}");
+                Assert.IsNotNull(result);
+            }
         }
     }
 }
