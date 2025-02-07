@@ -126,6 +126,10 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         [ActionParameter] ProjectRequest project,
         [ActionParameter][Display("Task ID")] string taskId)
     {
+        var taskEntity = await GetTask(project, taskId);
+        if (taskEntity == null)
+            throw new PluginApplicationException($"Task with ID {taskId} does not exist. Please check the input");
+
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intTaskId = IntParser.Parse(taskId, nameof(taskId));
 
