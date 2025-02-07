@@ -126,6 +126,10 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         [ActionParameter] ProjectRequest project,
         [ActionParameter][Display("Task ID")] string taskId)
     {
+        var taskEntity = await GetTask(project, taskId);
+        if (taskEntity == null)
+            throw new PluginApplicationException($"Task with ID {taskId} does not exist. Please check the input");
+
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intTaskId = IntParser.Parse(taskId, nameof(taskId));
 
@@ -138,14 +142,23 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         [ActionParameter] ProjectRequest project,
         [ActionParameter][Display("Task ID")] string taskId)
     {
-        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
-        var intTaskId = IntParser.Parse(taskId, nameof(taskId));
+        if (!int.TryParse(project.ProjectId, out var intProjectId))
+            throw new PluginMisconfigurationException(
+                $"Invalid Project ID: {project.ProjectId} must be a numeric value. Please check the input project ID");
+
+        if (!int.TryParse(taskId, out var intTaskId))
+            throw new PluginMisconfigurationException(
+                $"Invalid Task ID: {taskId} must be a numeric value. Please check the input task ID");
+
+        var taskEntity = await GetTask(project, taskId);
+        if (taskEntity == null)
+            throw new PluginApplicationException($"Task with ID {taskId} does not exist. Please check the input");
 
         var downloadLink = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-            await SdkClient.Tasks.ExportTaskStrings(intProjectId!.Value, intTaskId!.Value));
+        await SdkClient.Tasks.ExportTaskStrings(intProjectId, intTaskId));
 
         if (downloadLink is null)
-            throw new("No string found for this task");
+            throw new PluginApplicationException("No string found for this task");
 
         var fileContent = await FileDownloader.DownloadFileBytes(downloadLink.Url);
         var file = await fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType,
