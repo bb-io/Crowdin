@@ -61,8 +61,15 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         var intFileId = IntParser.Parse(fileRequest.FileId, nameof(fileRequest.FileId));
 
         var file = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-            await SdkClient.SourceFiles.GetFile<FileResource>(intProjectId!.Value, intFileId!.Value));
-        return new(file);
+            await SdkClient.SourceFiles.GetFile<FileInfoResource>(intProjectId!.Value, intFileId!.Value));
+        if (file is FileResource fileRes)
+        {
+            return new FileEntity(fileRes);
+        }
+        else
+        {
+            return new FileEntity(file);
+        }
     }
 
     [Action("Add file", Description = "Add new file")]

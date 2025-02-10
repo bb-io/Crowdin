@@ -78,7 +78,7 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         || !projectInfo.TargetLanguageIds.Contains(input.LanguageId))
         {
             throw new PluginMisconfigurationException(
-                $"The input language is not setted in the target project. Please check the supported target languages by your project" );
+                $"The input language is not set in the target project. Please check the supported target languages of your project" );
         }
 
         var request = new CrowdinTaskCreateForm()
