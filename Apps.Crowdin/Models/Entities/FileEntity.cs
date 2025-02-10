@@ -79,4 +79,18 @@ public class FileEntity
         Path = file.Path;
         Status = file.Status.ToString();
     }
+
+    public FileEntity(FileInfoResource file)
+    {
+        Id = file.Id.ToString();
+        ProjectId = file.ProjectId.ToString();
+        BranchId = file.BranchId?.ToString();
+        DirectoryId = file.DirectoryId?.ToString();
+        Name = file.Name;
+        Title = file.Title;
+        Type = file.Type;
+        Path = file.Path;
+        Status = file.Status.ToString();
+        IsModified = false;
+    }
 }
