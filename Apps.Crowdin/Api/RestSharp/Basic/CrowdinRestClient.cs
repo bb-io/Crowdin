@@ -7,7 +7,7 @@ using RestSharp;
 
 namespace Apps.Crowdin.Api.RestSharp.Basic;
 
-public class CrowdinRestClient() : BlackBirdRestClient(new RestClientOptions { BaseUrl = new("https://api.crowdin.com/api/v2") })
+public class CrowdinRestClient() : BlackBirdRestClient(new RestClientOptions { BaseUrl = new("https://api.crowdin.com/api/v2"), MaxTimeout= 200000})
 {
     protected override Exception ConfigureErrorException(RestResponse response)
     {
