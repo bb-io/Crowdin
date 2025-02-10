@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Apps.Crowdin.Actions;
+using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.Task;
 using Apps.Crowdin.Models.Request.Users;
 using Blackbird.Applications.Sdk.Common.Invocation;
@@ -25,6 +26,17 @@ namespace Tests.Crowdin
             var result = await action.AddTask(input1,input2);
 
             Assert.IsNotNull(result);
+        }
+
+        [TestMethod]
+        public async Task DownloadTranslationAsZip_IsSuccess()
+        {
+            var action = new ProjectActions(InvocationContext, FileManager);
+
+            var input1 = new ProjectRequest { ProjectId = "" };
+            var input2 = new BuildRequest { BuildId = ""};
+
+            var response = await action.DownloadTranslationsAsZip(input1, input2);
         }
     }
 }
