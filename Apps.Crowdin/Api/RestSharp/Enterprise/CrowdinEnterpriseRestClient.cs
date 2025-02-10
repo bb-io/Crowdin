@@ -20,7 +20,8 @@ public class CrowdinEnterpriseRestClient(IEnumerable<AuthenticationCredentialsPr
         
         return new()
         {
-            BaseUrl = $"https://{domain}.api.crowdin.com/api/v2".ToUri()
+            BaseUrl = $"https://{domain}.api.crowdin.com/api/v2".ToUri(),
+            MaxTimeout = 200000
         };
     }
 
