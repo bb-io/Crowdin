@@ -253,10 +253,14 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         [ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("File ID")] string fileId)
     {
-        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
-        var intFileId = IntParser.Parse(fileId, nameof(fileId));
-        await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
-            await SdkClient.SourceFiles.DeleteFile(intProjectId!.Value, intFileId!.Value));
+        if (!int.TryParse(project.ProjectId, out var intProjectId))
+            throw new PluginMisconfigurationException($"Invalid Project ID: {project.ProjectId} must be a numeric value. Please check the input project ID");
+
+        if (!int.TryParse(fileId, out var intFileId))
+            throw new PluginMisconfigurationException($"Invalid File ID: {fileId} must be a numeric value. Please check the input file ID");
+
+        await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+        await SdkClient.SourceFiles.DeleteFile(intProjectId, intFileId));
     }
 
     [Action("Add spreadsheet file", Description = "Add a new spreadsheet (.csv or .xlsx) to Crowdin with optional spreadsheet settings")]

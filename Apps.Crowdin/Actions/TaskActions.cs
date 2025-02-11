@@ -137,6 +137,66 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
             await SdkClient.Tasks.DeleteTask(intProjectId!.Value, intTaskId!.Value));
     }
 
+
+    [Action("Update task", Description = "Partially update specific task via JSON Patch (RFC 6902)")]
+    public async Task<TaskEntity> UpdateTask(
+           [ActionParameter] ProjectRequest project,
+           [ActionParameter][Display("Task ID")] string taskId,
+           [ActionParameter] UpdateTaskRequest input)
+    {
+        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
+        var intTaskId = IntParser.Parse(taskId, nameof(taskId));
+
+        object? patchValue = null;
+        var providedValues = 0;
+
+        if (!string.IsNullOrEmpty(input.StringValue))
+        {
+            patchValue = input.StringValue;
+            providedValues++;
+        }
+
+        if (input.BooleanValue.HasValue)
+        {
+            patchValue = input.BooleanValue.Value;
+            providedValues++;
+        }
+
+        if (input.IntegerArrayValue is not null)
+        {
+            patchValue = input.IntegerArrayValue.ToArray();
+            providedValues++;
+        }
+
+        if (input.ObjectArrayValue is not null)
+        {
+            patchValue = input.ObjectArrayValue.ToArray();
+            providedValues++;
+        }
+
+        if (providedValues == 0)
+        {
+            throw new PluginMisconfigurationException("No value specified to update. Please specify one of the value fields.");
+        }
+        else if (providedValues > 1)
+        {
+            throw new PluginMisconfigurationException("Multiple values ​​specified for update. Please specify only one value (string, boolean, integer array, or object array).");
+        }
+
+
+        input.Value = patchValue;
+        var patchOperations = new List<TaskPatchBase> { input };
+
+
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+        await SdkClient.Tasks.EditTask(intProjectId!.Value, intTaskId!.Value, patchOperations));
+
+        return new TaskEntity(response);
+    }
+
+
+
+
     [Action("Download task strings as XLIFF", Description = "Download specific task strings as XLIFF")]
     public async Task<DownloadFileResponse> DownloadTaskStrings(
         [ActionParameter] ProjectRequest project,

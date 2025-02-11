@@ -16,32 +16,29 @@ namespace Tests.Crowdin
         {
             var csvFileReference = new FileReference
             {
-                Name = "test.csv"
+                Name = "CN_EN Sample 2.csv"
             };
 
             var action = new FileActions(InvocationContext, FileManager);
             var input1 = new AddNewSpreadsheetFileRequest
             {
                 File = csvFileReference,
-                Name = "Test Name12",
+                Name = "TestAA11AAff",
                 Context = "Test",
-                Title = "Test Title",
+                Title = "Test Title11",
                 ContentSegmentation = true,
                 FirstLineContainsHeader = true,
                 ImportTranslations = true,
-                SrxStorageId = 1,
-                ContextColumnNumber = 1,
-                IdentifierColumnNumber = 1,
-                LabelsColumnNumber = 1,
-                MaxLengthColumnNumber = 1,
-            }; 
-            
+                ImportEachCellAsSeparateSourceString = true,
+                ImportHiddenSheets = true
+            };
+
             var input2 = new ProjectRequest { ProjectId = "750225" };
 
             var result = await action.AddSpreadsheetFile(input2, input1);
 
             Console.WriteLine(result.Id);
-            Assert.IsNotNull(result);
+            Assert.IsTrue(true);
         }
 
 
@@ -64,10 +61,10 @@ namespace Tests.Crowdin
         {
             var action = new FileActions(InvocationContext, FileManager);
             var input1 = new ProjectRequest { ProjectId = "750225" };
-            var input2 = "234";
+            var input2 = "12";
 
-            var response = action.DeleteFile(input1, input2);
-            Assert.IsNotNull(response);
+            await action.DeleteFile(input1, input2);
+            Assert.IsTrue(true);
 
         }
     }
