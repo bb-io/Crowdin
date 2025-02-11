@@ -74,5 +74,9 @@ namespace Apps.Crowdin.Models.Request.File
         [Description("For XLSX files, if set to true, the request 'type' will be 'docx'")]
         public bool? ImportEachCellAsSeparateSourceString { get; set; }
 
+        [Display("Import hidden sheets")]
+        [Description("If true, hidden sheets will be imported")]
+        public bool? ImportHiddenSheets { get; set; }
+
     }
 }

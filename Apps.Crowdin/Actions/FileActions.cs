@@ -276,7 +276,6 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         if (input.StorageId is null && input.File is null)
             throw new PluginMisconfigurationException("You must specify either Storage ID or File");
 
-
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intStorageId = LongParser.Parse(input.StorageId, nameof(input.StorageId));
         var intBranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId));
@@ -287,8 +286,13 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
 
         if (intStorageId is null && input.File != null)
         {
-            var fileStream = await FileOperationWrapper.ExecuteFileDownloadOperation(() => fileManagementClient.DownloadAsync(input.File), input.File.Name);
-            var storage = await FileOperationWrapper.ExecuteFileOperation(() => SdkClient.Storage.AddStorage(fileStream, fileName!), fileStream, fileName);
+            var fileStream = await FileOperationWrapper.ExecuteFileDownloadOperation(
+                () => fileManagementClient.DownloadAsync(input.File),
+                input.File.Name);
+            var storage = await FileOperationWrapper.ExecuteFileOperation(
+                () => SdkClient.Storage.AddStorage(fileStream, fileName!),
+                fileStream,
+                fileName);
             intStorageId = storage.Id;
         }
         else if (input.File is null)
@@ -298,9 +302,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             fileName = storage.FileName;
         }
 
-
         string extension = string.Empty;
-
         if (input.File != null)
         {
             extension = Path.GetExtension(input.File.Name).ToLowerInvariant();
@@ -323,7 +325,6 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             extension = Path.GetExtension(fileName).ToLowerInvariant();
         }
 
-
         if (extension != ".csv" && extension != ".xlsx")
             throw new PluginMisconfigurationException("Only .csv and .xlsx files are supported by this action.");
 
@@ -338,12 +339,12 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
                 ? ProjectFileType.DocX
                 : ProjectFileType.Auto;
         }
-
         var options = new Dictionary<string, object?>
         {
-            ["contentSegmentation"] = input.ContentSegmentation,
             ["firstLineContainsHeader"] = input.FirstLineContainsHeader,
             ["importTranslations"] = input.ImportTranslations,
+            ["importHiddenSheets"] = input.ImportHiddenSheets,
+            ["contentSegmentation"] = input.ContentSegmentation,
             ["srxStorageId"] = input.SrxStorageId,
             ["scheme"] = new Dictionary<string, object?>()
             {
@@ -362,7 +363,6 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         {
             Options = options
         };
-
 
         try
         {
@@ -400,6 +400,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
 
     }
 
+
     private FileUpdateOption? ToOptionEnum(string? option)
     {
         if (option == "keep_translations")
@@ -412,5 +413,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             return FileUpdateOption.ClearTranslationsAndApprovals;
 
         return null;
-    }    
+    }
+
+    
 }
