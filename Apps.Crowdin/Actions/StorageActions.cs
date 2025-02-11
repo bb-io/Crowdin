@@ -46,7 +46,8 @@ public class StorageActions(InvocationContext invocationContext, IFileManagement
                 $"The file name '{fileName}' contains non-ASCII characters. " +
                 "Crowdin API requires ASCII-only characters. Please rename the file and try again.");
 
-        var stream = await fileManagementClient.DownloadAsync(input.File);
+        var stream = await FileOperationWrapper.ExecuteFileDownloadOperation(
+    () => fileManagementClient.DownloadAsync(input.File), input.File.Name);
         var memoryStream = new MemoryStream();
         await stream.CopyToAsync(memoryStream);
 

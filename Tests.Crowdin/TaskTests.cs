@@ -35,7 +35,7 @@ namespace Tests.Crowdin
             var action = new FileActions(InvocationContext, FileManager);
 
             var input1 = new ProjectRequest { ProjectId = "750225" };
-            var input2 = new FileRequest { FileId = "22" };
+            var input2 = new FileRequest { FileId = "2" };
 
             var response = await action.GetFile(input1, input2);
 

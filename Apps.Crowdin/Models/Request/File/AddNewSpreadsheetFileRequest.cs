@@ -70,7 +70,7 @@ namespace Apps.Crowdin.Models.Request.File
         [Display("Translation column number")]
         public int? TranslationColumnNumber { get; set; }
 
-        [Display("Import each cell as a separate source string?")]
+        [Display("Import each cell as a separate source string")]
         [Description("For XLSX files, if set to true, the request 'type' will be 'docx'")]
         public bool? ImportEachCellAsSeparateSourceString { get; set; }
 

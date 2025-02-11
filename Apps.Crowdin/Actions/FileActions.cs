@@ -79,7 +79,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
     {
         var fileNameCheck = input.Name ?? input.File.Name;
 
-        if (!IsOnlyAscii(fileNameCheck))
+        if (!FileOperationWrapper.IsOnlyAscii(fileNameCheck))
             throw new PluginMisconfigurationException(
                 $"The file name '{fileNameCheck}' contains non-ASCII characters. " +
                 "Crowdin API requires ASCII-only characters. Please rename the file and try again.");
@@ -101,13 +101,12 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
 
         var fileName = input.Name ?? input.File?.Name;
 
-        ValidateFileName(fileName);
+        FileOperationWrapper.ValidateFileName(fileName);
 
         if (intStorageId is null && input.File != null)
         {
-            var fileStream = await fileManagementClient.DownloadAsync(input.File);
-            var storage = await SdkClient.Storage
-                .AddStorage(fileStream, fileName!);
+            var fileStream = await FileOperationWrapper.ExecuteFileDownloadOperation(() => fileManagementClient.DownloadAsync(input.File), input.File.Name);
+            var storage = await FileOperationWrapper.ExecuteFileOperation(() => SdkClient.Storage.AddStorage(fileStream, fileName!), fileStream, fileName);
             intStorageId = storage.Id;
         }
 
@@ -186,10 +185,8 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
 
         if (intStorageId is null)
         {
-            var fileStream = await fileManagementClient.DownloadAsync(input.File);
-            var storage = await ExceptionWrapper.ExecuteWithErrorHandling(async () => await client.Storage
-                .AddStorage(fileStream, input.File.Name));
-
+            var fileStream = await FileOperationWrapper.ExecuteFileDownloadOperation(() => fileManagementClient.DownloadAsync(input.File), input.File.Name);
+            var storage = await FileOperationWrapper.ExecuteFileOperation(() => client.Storage.AddStorage(fileStream, input.File.Name), fileStream, input.File.Name);
             intStorageId = storage.Id;
         }
 
@@ -222,16 +219,17 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
 
         var fileInfo = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
             await client.SourceFiles.GetFile<FileResource>(intProjectId!.Value, intFileId!.Value));
-        var fileContent = await FileDownloader.DownloadFileBytes(downloadLink.Url);
+        var fileContent = await ExceptionWrapper.ExecuteWithErrorHandling(() => FileDownloader.DownloadFileBytes(downloadLink.Url));
+
 
         fileContent.Name = fileInfo.Name;
         fileContent.ContentType = fileContent.ContentType == MediaTypeNames.Text.Plain
             ? MediaTypeNames.Application.Octet
             : fileContent.ContentType;
 
-        var fileReference =
-            await fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType, fileContent.Name);
-        return new(fileReference);
+        var fileReference = await ExceptionWrapper.ExecuteWithErrorHandling(() =>
+            fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType, fileContent.Name));
+        return new DownloadFileResponse(fileReference);
     }
 
     [Action("Add or update file", Description = "Add or update file")]
@@ -267,7 +265,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
     [ActionParameter] AddNewSpreadsheetFileRequest input)
     {
         var fileNameCheck = input.Name ?? input.File?.Name;
-        if (!IsOnlyAscii(fileNameCheck))
+        if (!FileOperationWrapper.IsOnlyAscii(fileNameCheck))
             throw new PluginMisconfigurationException(
                 $"The file name '{fileNameCheck}' contains non-ASCII characters. " +
                 "Crowdin API requires ASCII-only characters. Please rename the file and try again.");
@@ -285,12 +283,12 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         var intDirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId));
 
         var fileName = input.Name;
-        ValidateFileName(fileName);
+        FileOperationWrapper.ValidateFileName(fileName);
 
         if (intStorageId is null && input.File != null)
         {
-            var fileStream = await fileManagementClient.DownloadAsync(input.File);
-            var storage = await SdkClient.Storage.AddStorage(fileStream, fileName!);
+            var fileStream = await FileOperationWrapper.ExecuteFileDownloadOperation(() => fileManagementClient.DownloadAsync(input.File), input.File.Name);
+            var storage = await FileOperationWrapper.ExecuteFileOperation(() => SdkClient.Storage.AddStorage(fileStream, fileName!), fileStream, fileName);
             intStorageId = storage.Id;
         }
         else if (input.File is null)
@@ -402,7 +400,6 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
 
     }
 
-
     private FileUpdateOption? ToOptionEnum(string? option)
     {
         if (option == "keep_translations")
@@ -415,33 +412,5 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             return FileUpdateOption.ClearTranslationsAndApprovals;
 
         return null;
-    }
-
-    private void ValidateFileName(string fileName)
-    {
-        if (string.IsNullOrWhiteSpace(fileName))
-        {
-            throw new PluginMisconfigurationException("File name cannot be null or empty.");
-        }
-
-        if (fileName.Contains("\n") || fileName.Contains("\r"))
-        {
-            throw new PluginMisconfigurationException("File name must not contain new-line characters. Please check the input");
-        }
-
-        var invalidCharacters = new[] { '\\', '/', ':', '*', '?', '"', '<', '>', '|' };
-
-        if (fileName.IndexOfAny(invalidCharacters) != -1)
-        {
-            throw new PluginMisconfigurationException(
-                $"File name '{fileName}' contains invalid characters. " +
-                "It cannot include any of the following: \\ / : * ? \" < > |"
-            );
-        }
-    }
-
-    private bool IsOnlyAscii(string input)
-    {
-        return input.All(c => c <= 127);
-    }
+    }    
 }

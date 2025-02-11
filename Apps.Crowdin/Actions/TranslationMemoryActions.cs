@@ -102,6 +102,7 @@ public class TranslationMemoryActions(InvocationContext invocationContext, IFile
             await SdkClient.TranslationMemory.DownloadTm(intTmId!.Value, input.ExportId));
 
         var fileContent = await FileDownloader.DownloadFileBytes(response.Url);
+        await FileOperationWrapper.ExecuteFileOperation(() => Task.CompletedTask, fileContent.FileStream, fileContent.Name);
         var file = await fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType,
             fileContent.Name);
         return new(file);

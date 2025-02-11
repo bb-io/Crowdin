@@ -14,10 +14,6 @@ namespace Tests.Crowdin
         [TestMethod]
         public async Task AddSpreadsheetFile_ReturnsSuccess()
         {
-            var csvContent = "header1,header2\nvalue1,value2";
-            var csvBytes = Encoding.UTF8.GetBytes(csvContent);
-            var csvStream = new MemoryStream(csvBytes);
-
             var csvFileReference = new FileReference
             {
                 Name = "test.csv"
@@ -27,7 +23,7 @@ namespace Tests.Crowdin
             var input1 = new AddNewSpreadsheetFileRequest
             {
                 File = csvFileReference,
-                Name = "Test Name",
+                Name = "Test Name1",
                 Context = "Test",
                 Title = "Test Title",
                 ContentSegmentation = true,
@@ -46,6 +42,32 @@ namespace Tests.Crowdin
 
             Console.WriteLine(result.Id);
             Assert.IsNotNull(result);
+        }
+
+
+        [TestMethod]
+        public async Task AddFile_ReturnsSuccess()
+        {
+           var action = new FileActions(InvocationContext, FileManager);
+           var input1 = new ProjectRequest { ProjectId = "750225" };
+           var input2 = new AddNewFileRequest {File=new FileReference { Name = "test.csv" }, Name="~New test file" };
+
+           var response = await action.AddFile(input1, input2);
+            Console.WriteLine(response.Id);
+            Assert.IsNotNull(response);
+
+        }
+
+
+        [TestMethod]
+        public async Task DeleteFile_ReturnsSuccess()
+        {
+            var action = new FileActions(InvocationContext, FileManager);
+            var input1 = new ProjectRequest { ProjectId = "750225" };
+            var input2 = "234";
+
+            var response = action.DeleteFile(input1, input2);
+            Assert.IsNotNull(response);
 
         }
     }

@@ -185,7 +185,8 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var client = SdkClient;
 
-        var fileStream = await fileManagementClient.DownloadAsync(input.File);
+        var fileStream = await FileOperationWrapper.ExecuteFileDownloadOperation(
+            () => fileManagementClient.DownloadAsync(input.File), input.File.Name);
         var storageResult = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
             await client.Storage.AddStorage(fileStream, input.File.Name));
 
