@@ -161,6 +161,7 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
             throw new PluginApplicationException("No string found for this task");
 
         var fileContent = await FileDownloader.DownloadFileBytes(downloadLink.Url);
+        await FileOperationWrapper.ExecuteFileOperation(() => Task.CompletedTask, fileContent.FileStream, fileContent.Name);
         var file = await fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType,
             fileContent.Name);
         return new(file);

@@ -124,7 +124,9 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
             throw new PluginMisconfigurationException("Project build is in progress, you can't download the data now");
         }
 
-        var file = await FileDownloader.DownloadFileBytes(response.Link.Url);
+        var file = await ExceptionWrapper.ExecuteWithErrorHandling(() => FileDownloader.DownloadFileBytes(response.Link.Url));
+        await FileOperationWrapper.ExecuteFileOperation(() => Task.CompletedTask, file.FileStream, file.Name);
+
         file.Name = $"{project.ProjectId}.zip";
 
         var memoryStream = new MemoryStream();
@@ -142,7 +144,7 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
     {
         var filesArchive = await DownloadTranslationsAsZip(project, build);
 
-        var zipFile = await fileManagementClient.DownloadAsync(filesArchive.File);
+        var zipFile = await FileOperationWrapper.ExecuteFileDownloadOperation(() => fileManagementClient.DownloadAsync(filesArchive.File), filesArchive.File.Name);
         var zipBytes = await zipFile.GetByteData();
         var files = await zipFile.GetFilesFromZip();
 

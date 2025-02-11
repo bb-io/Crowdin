@@ -71,10 +71,14 @@ public class ReviewedFileActions(InvocationContext invocationContext, IFileManag
         var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
             await SdkClient.SourceFiles.DownloadReviewedSourceFiles(intProjectId, intBuildId));
         
-        var file = await FileDownloader.DownloadFileBytes(response.Url);
-        file.Name = $"{buildId}.zip";
-        
-        var fileReference = await fileManagementClient.UploadAsync(file.FileStream, file.ContentType, file.Name);
+        var fileContent = await FileDownloader.DownloadFileBytes(response.Url);
+        await FileOperationWrapper.ExecuteFileOperation(() => Task.CompletedTask, fileContent.FileStream, fileContent.Name);
+
+        fileContent.Name = $"{buildId}.zip";
+
+        var fileReference = await FileOperationWrapper.ExecuteFileOperation(() =>
+                fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType, fileContent.Name),
+                fileContent.FileStream, fileContent.Name);
         return new(fileReference);
     }
     
@@ -85,7 +89,8 @@ public class ReviewedFileActions(InvocationContext invocationContext, IFileManag
     {
         var zip = await DownloadReviewedSourceFilesAsZip(project, buildId);
 
-        var zipFile = await fileManagementClient.DownloadAsync(zip.File);
+        var zipFile = await FileOperationWrapper.ExecuteFileDownloadOperation(() =>
+                fileManagementClient.DownloadAsync(zip.File), zip.File.Name);
         var zipBytes = await zipFile.GetByteData();
         var files = await zipFile.GetFilesFromZip();
 

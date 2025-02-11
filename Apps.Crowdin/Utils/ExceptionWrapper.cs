@@ -26,6 +26,10 @@ public static class ExceptionWrapper
 
             throw new PluginApplicationException(e.Message);
         }
+        catch (Exception e)
+        {
+            throw new PluginApplicationException(e.Message);
+        }
     }
     
     public static async Task ExecuteWithErrorHandling(Func<Task> func)
@@ -41,6 +45,10 @@ public static class ExceptionWrapper
                 throw new PluginMisconfigurationException(e.Message);
             }
 
+            throw new PluginApplicationException(e.Message);
+        }
+        catch (Exception e)
+        {
             throw new PluginApplicationException(e.Message);
         }
     }

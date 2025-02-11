@@ -30,7 +30,8 @@ public class GlossariesActions(InvocationContext invocationContext, IFileManagem
         var downloadLink = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
             await client.Glossaries.DownloadGlossary(glossaryId, exportGlossary.Identifier));
 
-        var fileContent = await FileDownloader.DownloadFileBytes(downloadLink.Url);
+        var fileContent = await ExceptionWrapper.ExecuteWithErrorHandling(() => FileDownloader.DownloadFileBytes(downloadLink.Url));
+        await FileOperationWrapper.ExecuteFileOperation(() => Task.CompletedTask, fileContent.FileStream, fileContent.Name);
 
         string glossaryTitle = fileContent.Name ?? "Glossary.tbx";
         var glossaryExporter = new GlossaryExporter(fileContent.FileStream);
@@ -51,8 +52,8 @@ public class GlossariesActions(InvocationContext invocationContext, IFileManagem
         var client = SdkClient;
         using var memoryStream = new MemoryStream();
 
-        await using var file = await fileManagementClient.DownloadAsync(request.File);
-            
+        await using var file = await FileOperationWrapper.ExecuteFileDownloadOperation(() => fileManagementClient.DownloadAsync(request.File), request.File.Name);
+
         var fileMemoryStream = new MemoryStream();
         await file.CopyToAsync(fileMemoryStream);
 
