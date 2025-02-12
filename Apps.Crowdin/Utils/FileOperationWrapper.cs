@@ -37,7 +37,6 @@ namespace Apps.Crowdin.Utils
             return input.All(c => c <= 127);
         }
 
-
         public static async Task<T> ExecuteFileOperation<T>(Func<Task<T>> operation, Stream fileStream, string fileName = "File")
         {
             if (fileStream == null)
@@ -91,14 +90,7 @@ namespace Apps.Crowdin.Utils
             {
                 throw new PluginApplicationException($"Error downloading {fileName}: {ex.Message}", ex);
             }
-            if (fileStream == null)
-            {
-                throw new PluginMisconfigurationException($"{fileName} is null. Please check the input file");
-            }
-            if (fileStream.Length == 0)
-            {
-                throw new PluginMisconfigurationException($"{fileName} is empty. Please check the input file");
-            }
+            
             return fileStream;
         }
     }
