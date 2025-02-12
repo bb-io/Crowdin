@@ -75,7 +75,7 @@ namespace Tests.Crowdin
             var input_1 = "New testing Title";
             var input_2 = "New testing Description";
             DateTime input_3 = DateTime.Now;
-            var input_4 = new[] { 2, 6 };
+            var input_4 = new[] { "2", "6" };
 
             var input1 = new ProjectRequest { ProjectId = "750225" };
             var input2 = new UpdateTaskRequest { Title = input_1, Description = input_2, Deadline=input_3, FileIds= input_4 };
