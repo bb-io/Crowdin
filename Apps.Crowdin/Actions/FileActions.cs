@@ -1,4 +1,5 @@
-﻿using System.Net.Mime;
+﻿using System.IO.Pipelines;
+using System.Net.Mime;
 using Apps.Crowdin.Api;
 using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
@@ -77,12 +78,13 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         [ActionParameter] ProjectRequest project,
         [ActionParameter] AddNewFileRequest input)
     {
-        var fileNameCheck = input.Name ?? input.File.Name;
-
-        if (!FileOperationWrapper.IsOnlyAscii(fileNameCheck))
+        var fileName = input.Name ?? input.File.Name;
+        if (!FileOperationWrapper.IsOnlyAscii(fileName))
+        {
             throw new PluginMisconfigurationException(
-                $"The file name '{fileNameCheck}' contains non-ASCII characters. " +
+                $"The file name '{fileName}' contains non-ASCII characters. " +
                 "Crowdin API requires ASCII-only characters. Please rename the file and try again.");
+        }
 
         if (string.IsNullOrEmpty(project.ProjectId))
         {
@@ -98,15 +100,16 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         var intStorageId = LongParser.Parse(input.StorageId, nameof(input.StorageId));
         var intBranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId));
         var intDirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId));
-
-        var fileName = input.Name ?? input.File?.Name;
-
+        
         FileOperationWrapper.ValidateFileName(fileName);
-
         if (intStorageId is null && input.File != null)
         {
             var fileStream = await FileOperationWrapper.ExecuteFileDownloadOperation(() => fileManagementClient.DownloadAsync(input.File), input.File.Name);
-            var storage = await FileOperationWrapper.ExecuteFileOperation(() => SdkClient.Storage.AddStorage(fileStream, fileName!), fileStream, fileName);
+            var memoryStream = new MemoryStream();
+            await fileStream.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+            
+            var storage = await FileOperationWrapper.ExecuteFileOperation(() => SdkClient.Storage.AddStorage(memoryStream, fileName), memoryStream, fileName);
             intStorageId = storage.Id;
         }
 
@@ -186,7 +189,11 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         if (intStorageId is null)
         {
             var fileStream = await FileOperationWrapper.ExecuteFileDownloadOperation(() => fileManagementClient.DownloadAsync(input.File), input.File.Name);
-            var storage = await FileOperationWrapper.ExecuteFileOperation(() => client.Storage.AddStorage(fileStream, input.File.Name), fileStream, input.File.Name);
+            var memoryStream = new MemoryStream();
+            await fileStream.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+            
+            var storage = await FileOperationWrapper.ExecuteFileOperation(() => client.Storage.AddStorage(memoryStream, input.File.Name), memoryStream, input.File.Name);
             intStorageId = storage.Id;
         }
 
@@ -253,10 +260,14 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         [ActionParameter] ProjectRequest project,
         [ActionParameter] [Display("File ID")] string fileId)
     {
-        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
-        var intFileId = IntParser.Parse(fileId, nameof(fileId));
-        await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
-            await SdkClient.SourceFiles.DeleteFile(intProjectId!.Value, intFileId!.Value));
+        if (!int.TryParse(project.ProjectId, out var intProjectId))
+            throw new PluginMisconfigurationException($"Invalid Project ID: {project.ProjectId} must be a numeric value. Please check the input project ID");
+
+        if (!int.TryParse(fileId, out var intFileId))
+            throw new PluginMisconfigurationException($"Invalid File ID: {fileId} must be a numeric value. Please check the input file ID");
+
+        await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+        await SdkClient.SourceFiles.DeleteFile(intProjectId, intFileId));
     }
 
     [Action("Add spreadsheet file", Description = "Add a new spreadsheet (.csv or .xlsx) to Crowdin with optional spreadsheet settings")]
@@ -264,11 +275,13 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
     [ActionParameter] ProjectRequest project,
     [ActionParameter] AddNewSpreadsheetFileRequest input)
     {
-        var fileNameCheck = input.Name ?? input.File?.Name;
-        if (!FileOperationWrapper.IsOnlyAscii(fileNameCheck))
+        var fileName = input.Name ?? input.File?.Name;
+        if (!FileOperationWrapper.IsOnlyAscii(fileName))
+        {
             throw new PluginMisconfigurationException(
-                $"The file name '{fileNameCheck}' contains non-ASCII characters. " +
+                $"The file name '{fileName}' contains non-ASCII characters. " +
                 "Crowdin API requires ASCII-only characters. Please rename the file and try again.");
+        }
 
         if (string.IsNullOrEmpty(project.ProjectId))
             throw new PluginMisconfigurationException("Project ID is null or empty. Please specify a valid ID");
@@ -281,18 +294,17 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         var intBranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId));
         var intDirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId));
 
-        var fileName = input.Name;
         FileOperationWrapper.ValidateFileName(fileName);
-
         if (intStorageId is null && input.File != null)
         {
             var fileStream = await FileOperationWrapper.ExecuteFileDownloadOperation(
                 () => fileManagementClient.DownloadAsync(input.File),
                 input.File.Name);
-            var storage = await FileOperationWrapper.ExecuteFileOperation(
-                () => SdkClient.Storage.AddStorage(fileStream, fileName!),
-                fileStream,
-                fileName);
+            var memoryStream = new MemoryStream();
+            await fileStream.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+            
+            var storage = await FileOperationWrapper.ExecuteFileOperation(() => SdkClient.Storage.AddStorage(memoryStream, fileName!), memoryStream, fileName);
             intStorageId = storage.Id;
         }
         else if (input.File is null)
@@ -302,7 +314,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             fileName = storage.FileName;
         }
 
-        string extension = string.Empty;
+        string extension;
         if (input.File != null)
         {
             extension = Path.GetExtension(input.File.Name).ToLowerInvariant();
@@ -326,7 +338,9 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         }
 
         if (extension != ".csv" && extension != ".xlsx")
+        {
             throw new PluginMisconfigurationException("Only .csv and .xlsx files are supported by this action.");
+        }
 
         ProjectFileType fileType;
         if (extension == ".csv")
@@ -339,6 +353,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
                 ? ProjectFileType.DocX
                 : ProjectFileType.Auto;
         }
+        
         var options = new Dictionary<string, object?>
         {
             ["firstLineContainsHeader"] = input.FirstLineContainsHeader,

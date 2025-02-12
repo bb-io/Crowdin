@@ -145,7 +145,6 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
         var filesArchive = await DownloadTranslationsAsZip(project, build);
 
         var zipFile = await FileOperationWrapper.ExecuteFileDownloadOperation(() => fileManagementClient.DownloadAsync(filesArchive.File), filesArchive.File.Name);
-        var zipBytes = await zipFile.GetByteData();
         var files = await zipFile.GetFilesFromZip();
 
         var result = files.Where(x => x.FileStream.Length > 0).ToArray();
