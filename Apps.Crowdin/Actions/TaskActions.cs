@@ -209,7 +209,7 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
             {
                 Op = "replace",
                 Path = "/fileIds",
-                Value = input.FileIds.ToArray()
+                Value = input.FileIds.Select(id => IntParser.Parse(id, nameof(input.FileIds))).ToArray()
             });
         }
         if (input.StringIds is not null)
@@ -218,7 +218,7 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
             {
                 Op = "replace",
                 Path = "/stringIds",
-                Value = input.StringIds.ToArray()
+                Value = input.StringIds.Select(id => IntParser.Parse(id, nameof(input.StringIds))).ToArray()
             });
         }
         if (input.DateFrom.HasValue)
@@ -245,7 +245,7 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
             {
                 Op = "replace",
                 Path = "/labelIds",
-                Value = input.LabelIds.ToArray()
+                Value = input.LabelIds.Select(id => IntParser.Parse(id, nameof(input.LabelIds))).ToArray()
             });
         }
         if (input.ExcludeLabelIds is not null)
@@ -254,7 +254,7 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
             {
                 Op = "replace",
                 Path = "/excludeLabelIds",
-                Value = input.ExcludeLabelIds.ToArray()
+                Value = input.ExcludeLabelIds.Select(id => IntParser.Parse(id, nameof(input.ExcludeLabelIds))).ToArray()
             });
         }
 
