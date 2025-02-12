@@ -187,8 +187,12 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
 
         var fileStream = await FileOperationWrapper.ExecuteFileDownloadOperation(
             () => fileManagementClient.DownloadAsync(input.File), input.File.Name);
+        var memoryStream = new MemoryStream();
+        await fileStream.CopyToAsync(memoryStream);
+        memoryStream.Position = 0;
+        
         var storageResult = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
-            await client.Storage.AddStorage(fileStream, input.File.Name));
+            await client.Storage.AddStorage(memoryStream, input.File.Name));
 
         var request = new UploadTranslationsRequest
         {

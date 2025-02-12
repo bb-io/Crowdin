@@ -91,7 +91,6 @@ public class ReviewedFileActions(InvocationContext invocationContext, IFileManag
 
         var zipFile = await FileOperationWrapper.ExecuteFileDownloadOperation(() =>
                 fileManagementClient.DownloadAsync(zip.File), zip.File.Name);
-        var zipBytes = await zipFile.GetByteData();
         var files = await zipFile.GetFilesFromZip();
 
         var tasks = files.Select(x =>

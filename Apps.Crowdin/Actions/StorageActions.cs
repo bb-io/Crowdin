@@ -40,14 +40,14 @@ public class StorageActions(InvocationContext invocationContext, IFileManagement
     public async Task<StorageEntity> AddStorage([ActionParameter] AddStorageRequest input)
     {
         var fileName = input.FileName ?? input.File.Name;
-
         if (!IsOnlyAscii(fileName))
+        {
             throw new PluginMisconfigurationException(
                 $"The file name '{fileName}' contains non-ASCII characters. " +
                 "Crowdin API requires ASCII-only characters. Please rename the file and try again.");
+        }
 
-        var stream = await FileOperationWrapper.ExecuteFileDownloadOperation(
-    () => fileManagementClient.DownloadAsync(input.File), input.File.Name);
+        var stream = await FileOperationWrapper.ExecuteFileDownloadOperation(() => fileManagementClient.DownloadAsync(input.File), input.File.Name);
         var memoryStream = new MemoryStream();
         await stream.CopyToAsync(memoryStream);
 
