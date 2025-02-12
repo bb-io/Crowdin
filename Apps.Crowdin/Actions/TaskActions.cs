@@ -140,9 +140,9 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
 
     [Action("Update task", Description = "Partially update specific task via JSON Patch (RFC 6902)")]
     public async Task<TaskEntity> UpdateTask(
-           [ActionParameter] ProjectRequest project,
-           [ActionParameter][Display("Task ID")] string taskId,
-           [ActionParameter] UpdateTaskRequest input)
+         [ActionParameter] ProjectRequest project,
+         [ActionParameter][Display("Task ID")] string taskId,
+         [ActionParameter] UpdateTaskRequest input)
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intTaskId = IntParser.Parse(taskId, nameof(taskId));
@@ -180,19 +180,25 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         }
         else if (providedValues > 1)
         {
-            throw new PluginMisconfigurationException("Multiple values ​​specified for update. Please specify only one value (string, boolean, integer array, or object array).");
+            throw new PluginMisconfigurationException("Multiple values specified for update. Please specify only one value (string, boolean, integer array, or object array).");
         }
 
 
-        input.Value = patchValue;
-        var patchOperations = new List<TaskPatchBase> { input };
+        var patchOperation = new TaskPatchOperation
+        {
+            Op = input.Op,
+            Path = input.Path,
+            Value = patchValue
+        };
 
+        var patchOperations = new List<TaskPatchBase> { patchOperation };
 
         var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-        await SdkClient.Tasks.EditTask(intProjectId!.Value, intTaskId!.Value, patchOperations));
+         await SdkClient.Tasks.EditTask(intProjectId!.Value, intTaskId!.Value, patchOperations));
 
         return new TaskEntity(response);
     }
+
 
 
 

@@ -9,54 +9,76 @@ using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.Task;
 using Apps.Crowdin.Models.Request.Users;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Crowdin.Api.ProjectsGroups;
 using Tests.Crowdin.Base;
 
 namespace Tests.Crowdin
 {
     [TestClass]
-    public class TaskTests :TestBase
+    public class TaskTests : TestBase
     {
         [TestMethod]
         public async Task CreateTask_ReturnSucces()
         {
-            var action = new TaskActions(InvocationContext,FileManager);
+            var action = new TaskActions(InvocationContext, FileManager);
 
             var input1 = new AssigneesRequest { ProjectId = "750225" };
-            var input2 = new AddNewTaskRequest { Type = "Translate", Title="Hello", LanguageId = "nl", FileIds = ["16"], Status = "todo" };
+            var input2 = new AddNewTaskRequest { Type = "Translate", Title = "Hello", LanguageId = "nl", FileIds = ["16"], Status = "todo" };
 
-            var result = await action.AddTask(input1,input2);
+            var result = await action.AddTask(input1, input2);
 
             Assert.IsNotNull(result);
         }
 
-        [TestMethod]
-        public async Task GetFile_IsSuccess()
-        {
-            var action = new FileActions(InvocationContext, FileManager);
-
-            var input1 = new ProjectRequest { ProjectId = "750225" };
-            var input2 = new FileRequest { FileId = "2" };
-
-            var response = await action.GetFile(input1, input2);
-
-            Assert.IsNotNull(response);
-        }
-
 
         [TestMethod]
-        public async Task ListFiles_IsSuccess()
+        public async Task ListTask_ReturnSucces()
         {
-            var action = new FileActions(InvocationContext, FileManager);
+            var action = new TaskActions(InvocationContext, FileManager);
 
-            var input1 = new ProjectRequest { ProjectId = "750225" };
-            var input2 = new ListFilesRequest {};
+            var input1 = new ListTasksRequest { ProjectId = "750225" };
 
-            var response = await action.ListFiles(input1, input2);
+            var result = await action.ListTasks(input1);
 
-            foreach (var file in response.Files)
+            foreach (var task in result.Tasks)
             {
-                Console.WriteLine(file.Id);
+                Console.WriteLine(task.Id);
+                Assert.IsNotNull(result);
             }
         }
+
+
+        [TestMethod]
+        public async Task GetTask_ReturnSucces()
+        {
+            var action = new TaskActions(InvocationContext, FileManager);
+
+            var input1 = new ProjectRequest { ProjectId = "750225" };
+            string input2 = "4";
+            var result = await action.GetTask(input1, input2);
+
+            Console.WriteLine($"{result.Id} - {result.Title} - {result.ProjectId} - {result.Description}");
+            Assert.IsNotNull(result);
+        }
+
+
+        [TestMethod]
+        public async Task UpdateTask_ReturnSucces()
+        {
+            var action = new TaskActions(InvocationContext, FileManager);
+
+            var input1 = new ProjectRequest { ProjectId = "750225" };
+            var input2 = new UpdateTaskRequest { Op = "replace", Path = "/description", StringValue = "New description12122" };
+            string input3 = "4";
+
+            var result = await action.UpdateTask(input1, input3, input2);
+
+            var check = await action.GetTask(input1, input3);
+
+            Assert.AreEqual("New description12122", check.Description);
+            Assert.IsNotNull(result);
+        }
+
+
     }
 }
