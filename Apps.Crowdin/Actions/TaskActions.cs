@@ -147,54 +147,124 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
         var intTaskId = IntParser.Parse(taskId, nameof(taskId));
 
-        object? patchValue = null;
-        var providedValues = 0;
+        var patchOperations = new List<TaskPatchOperation>();
 
-        if (!string.IsNullOrEmpty(input.StringValue))
+        if (input.Status is not null)
         {
-            patchValue = input.StringValue;
-            providedValues++;
+            patchOperations.Add(new TaskPatchOperation
+            {
+                Op = "replace",
+                Path = "/status",
+                Value = input.Status
+            });
+        }
+        if (input.Title is not null)
+        {
+            patchOperations.Add(new TaskPatchOperation
+            {
+                Op = "replace",
+                Path = "/title",
+                Value = input.Title
+            });
+        }
+        if (input.Description is not null)
+        {
+            patchOperations.Add(new TaskPatchOperation
+            {
+                Op = "replace",
+                Path = "/description",
+                Value = input.Description
+            });
+        }
+        if (input.Deadline.HasValue)
+        {
+            patchOperations.Add(new TaskPatchOperation
+            {
+                Op = "replace",
+                Path = "/deadline",
+                Value = input.Deadline.Value.ToString("O")
+            });
+        }
+        if (input.StartedAt.HasValue)
+        {
+            patchOperations.Add(new TaskPatchOperation
+            {
+                Op = "replace",
+                Path = "/startedAt",
+                Value = input.StartedAt.Value.ToString("O")
+            });
+        }
+        if (input.ResolvedAt.HasValue)
+        {
+            patchOperations.Add(new TaskPatchOperation
+            {
+                Op = "replace",
+                Path = "/resolvedAt",
+                Value = input.ResolvedAt.Value.ToString("O")
+            });
+        }
+        if (input.FileIds is not null)
+        {
+            patchOperations.Add(new TaskPatchOperation
+            {
+                Op = "replace",
+                Path = "/fileIds",
+                Value = input.FileIds.ToArray()
+            });
+        }
+        if (input.StringIds is not null)
+        {
+            patchOperations.Add(new TaskPatchOperation
+            {
+                Op = "replace",
+                Path = "/stringIds",
+                Value = input.StringIds.ToArray()
+            });
+        }
+        if (input.DateFrom.HasValue)
+        {
+            patchOperations.Add(new TaskPatchOperation
+            {
+                Op = "replace",
+                Path = "/dateFrom",
+                Value = input.DateFrom.Value.ToString("O")
+            });
+        }
+        if (input.DateTo.HasValue)
+        {
+            patchOperations.Add(new TaskPatchOperation
+            {
+                Op = "replace",
+                Path = "/dateTo",
+                Value = input.DateTo.Value.ToString("O")
+            });
+        }
+        if (input.LabelIds is not null)
+        {
+            patchOperations.Add(new TaskPatchOperation
+            {
+                Op = "replace",
+                Path = "/labelIds",
+                Value = input.LabelIds.ToArray()
+            });
+        }
+        if (input.ExcludeLabelIds is not null)
+        {
+            patchOperations.Add(new TaskPatchOperation
+            {
+                Op = "replace",
+                Path = "/excludeLabelIds",
+                Value = input.ExcludeLabelIds.ToArray()
+            });
         }
 
-        if (input.BooleanValue.HasValue)
+        if (patchOperations.Count == 0)
         {
-            patchValue = input.BooleanValue.Value;
-            providedValues++;
+            throw new PluginMisconfigurationException("No update fields provided. Please specify at least one field to update.");
         }
-
-        if (input.IntegerArrayValue is not null)
-        {
-            patchValue = input.IntegerArrayValue.ToArray();
-            providedValues++;
-        }
-
-        if (input.ObjectArrayValue is not null)
-        {
-            patchValue = input.ObjectArrayValue.ToArray();
-            providedValues++;
-        }
-
-        if (providedValues == 0)
-        {
-            throw new PluginMisconfigurationException("No value specified to update. Please specify one of the value fields.");
-        }
-        else if (providedValues > 1)
-        {
-            throw new PluginMisconfigurationException("Multiple values specified for update. Please specify only one value (string, boolean, integer array, or object array).");
-        }
-
-
-        var patchOperation = new TaskPatchOperation
-        {
-            Op = input.Op,
-            Path = input.Path,
-            Value = patchValue
-        };
-
-        var patchOperations = new List<TaskPatchBase> { patchOperation };
 
         var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-         await SdkClient.Tasks.EditTask(intProjectId!.Value, intTaskId!.Value, patchOperations));
+            await SdkClient.Tasks.EditTask(intProjectId!.Value, intTaskId!.Value, patchOperations.Cast<TaskPatchBase>().ToList()));
 
         return new TaskEntity(response);
     }

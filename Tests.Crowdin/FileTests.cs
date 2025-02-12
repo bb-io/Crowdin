@@ -23,7 +23,7 @@ namespace Tests.Crowdin
             var input1 = new AddNewSpreadsheetFileRequest
             {
                 File = csvFileReference,
-                Name = "TestAA11AAff",
+                Name = "TestAA11AAfffx",
                 Context = "Test",
                 Title = "Test Title11",
                 ContentSegmentation = true,
@@ -53,6 +53,21 @@ namespace Tests.Crowdin
             Console.WriteLine(response.Id);
             Assert.IsNotNull(response);
 
+        }
+
+        [TestMethod]
+        public async Task ListFile_ReturnsSuccess()
+        {
+            var action = new FileActions(InvocationContext, FileManager);
+            var input1 = new ProjectRequest { ProjectId = "750225" };
+            var input2 = new ListFilesRequest { };
+
+            var response = await action.ListFiles(input1, input2);
+            foreach (var file in response.Files)
+            {
+                Console.WriteLine(file.Id);
+                Assert.IsNotNull(response);
+            }
         }
 
 
