@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Blackbird.Applications.Sdk.Common.Dictionaries;
+﻿using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Crowdin.DataSourceHandlers.EnumHandlers
@@ -12,19 +7,19 @@ namespace Apps.Crowdin.DataSourceHandlers.EnumHandlers
     {
         private static Dictionary<string, string> Data => new()
         {
-            { "Status",         "/status" },
-            { "Title",          "/title" },
-            { "Description",    "/description" },
-            { "Deadline",       "/deadline" },
-            { "Started at",     "/startedAt" },
-            { "Resolved at",    "/resolvedAt" },
-            { "File IDs",       "/fileIds" },
-            { "String IDs",     "/stringIds" },
-            { "Assignees",      "/assignees" },
-            { "Date from",      "/dateFrom" },
-            { "Date to",        "/dateTo" },
-            { "Label IDs",      "/labelIds" },
-            { "Exclude label IDs", "/excludeLabelIds" }
+            {"/status" , "Status"},
+            {"/title" ,"Title"},
+            {"/description","Description"},
+            {"/deadline" , "Deadline"},
+            {"/startedAt" ,"Started at"},
+            {"/resolvedAt" ,"Resolved at"},
+            {"/fileIds","File IDs"},
+            {"/stringIds" ,"String IDs"},
+            {"/assignees", "Assignees"},
+            {"/dateFrom" , "Date from"},
+            {"/dateTo" ,"Date to"},
+            {"/labelIds" ,"Label IDs"},
+            {"/excludeLabelIds" , "Exclude label IDs"}
         };
 
         public IEnumerable<DataSourceItem> GetData()

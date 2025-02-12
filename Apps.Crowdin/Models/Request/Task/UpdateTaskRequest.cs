@@ -10,7 +10,7 @@ using Crowdin.Api.Tasks;
 
 namespace Apps.Crowdin.Models.Request.Task
 {
-    public class UpdateTaskRequest : TaskPatchBase
+    public class UpdateTaskRequest
     {
         [Display("Patch operation to perform")]
         [StaticDataSource(typeof(PatchOpTypeHandler))]
