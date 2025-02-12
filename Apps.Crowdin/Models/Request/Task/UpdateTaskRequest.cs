@@ -1,36 +1,43 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Apps.Crowdin.DataSourceHandlers.EnumHandlers;
-using Blackbird.Applications.Sdk.Common;
-using Blackbird.Applications.Sdk.Common.Dictionaries;
-using Crowdin.Api.Tasks;
+﻿using Blackbird.Applications.Sdk.Common;
 
 namespace Apps.Crowdin.Models.Request.Task
 {
     public class UpdateTaskRequest
     {
-        [Display("Patch operation to perform")]
-        [StaticDataSource(typeof(PatchOpTypeHandler))]
-        public string Op { get; set; }
+        [Display("Status")]
+        public string? Status { get; set; }
 
-        [Display("Path")]
-        [StaticDataSource(typeof(TaskPatchPathHandler))]
-        public string Path { get; set; }
+        [Display("Title")]
+        public string? Title { get; set; }
 
-        [Display("String value")]
-        public string? StringValue { get; set; }
+        [Display("Description")]
+        public string? Description { get; set; }
 
-        [Display("Boolean value")]
-        public bool? BooleanValue { get; set; }
+        [Display("Deadline")]
+        public DateTime? Deadline { get; set; }
 
-        [Display("Integer array value")]
-        public IEnumerable<int>? IntegerArrayValue { get; set; }
+        [Display("Started at")]
+        public DateTime? StartedAt { get; set; }
 
-        [Display("Object array value")]
-        public IEnumerable<object>? ObjectArrayValue { get; set; }
+        [Display("Resolved at")]
+        public DateTime? ResolvedAt { get; set; }
 
+        [Display("File IDs")]
+        public IEnumerable<int>? FileIds { get; set; }
+
+        [Display("String IDs")]
+        public IEnumerable<int>? StringIds { get; set; }
+
+        [Display("Date from")]
+        public DateTime? DateFrom { get; set; }
+
+        [Display("Date to")]
+        public DateTime? DateTo { get; set; }
+
+        [Display("Label IDs")]
+        public IEnumerable<int>? LabelIds { get; set; }
+
+        [Display("Exclude label IDs")]
+        public IEnumerable<int>? ExcludeLabelIds { get; set; }
     }
 }

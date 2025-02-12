@@ -57,7 +57,12 @@ namespace Tests.Crowdin
             string input2 = "4";
             var result = await action.GetTask(input1, input2);
 
-            Console.WriteLine($"{result.Id} - {result.Title} - {result.ProjectId} - {result.Description}");
+            Console.WriteLine($"{result.Id} - {result.Title} - {result.ProjectId} - {result.Description} - {result.Deadline}");
+
+            foreach (var id in result.FileIds)
+            {
+                Console.WriteLine(id);
+            }
             Assert.IsNotNull(result);
         }
 
@@ -67,15 +72,20 @@ namespace Tests.Crowdin
         {
             var action = new TaskActions(InvocationContext, FileManager);
 
+            var input_1 = "New testing Title";
+            var input_2 = "New testing Description";
+            DateTime input_3 = DateTime.Now;
+            var input_4 = new[] { 2, 6 };
+
             var input1 = new ProjectRequest { ProjectId = "750225" };
-            var input2 = new UpdateTaskRequest { Op = "replace", Path = "/description", StringValue = "New description12122" };
+            var input2 = new UpdateTaskRequest { Title = input_1, Description = input_2, Deadline=input_3, FileIds= input_4 };
             string input3 = "4";
 
             var result = await action.UpdateTask(input1, input3, input2);
 
             var check = await action.GetTask(input1, input3);
 
-            Assert.AreEqual("New description12122", check.Description);
+            Assert.AreEqual(input_1, check.Title);
             Assert.IsNotNull(result);
         }
 
