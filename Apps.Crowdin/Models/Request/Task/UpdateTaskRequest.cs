@@ -23,10 +23,10 @@ namespace Apps.Crowdin.Models.Request.Task
         public DateTime? ResolvedAt { get; set; }
 
         [Display("File IDs")]
-        public IEnumerable<int>? FileIds { get; set; }
+        public IEnumerable<string>? FileIds { get; set; }
 
         [Display("String IDs")]
-        public IEnumerable<int>? StringIds { get; set; }
+        public IEnumerable<string>? StringIds { get; set; }
 
         [Display("Date from")]
         public DateTime? DateFrom { get; set; }
@@ -35,9 +35,9 @@ namespace Apps.Crowdin.Models.Request.Task
         public DateTime? DateTo { get; set; }
 
         [Display("Label IDs")]
-        public IEnumerable<int>? LabelIds { get; set; }
+        public IEnumerable<string>? LabelIds { get; set; }
 
         [Display("Exclude label IDs")]
-        public IEnumerable<int>? ExcludeLabelIds { get; set; }
+        public IEnumerable<string>? ExcludeLabelIds { get; set; }
     }
 }
