@@ -282,10 +282,8 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
                 $"The file name '{fileName}' contains non-ASCII characters. " +
                 "Crowdin API requires ASCII-only characters. Please rename the file and try again.");
         }
-
         if (string.IsNullOrEmpty(project.ProjectId))
             throw new PluginMisconfigurationException("Project ID is null or empty. Please specify a valid ID");
-
         if (input.StorageId is null && input.File is null)
             throw new PluginMisconfigurationException("You must specify either Storage ID or File");
 
@@ -294,17 +292,23 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         var intBranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId));
         var intDirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId));
 
+        input.LanguageCodes ??= new[] { "en" };
         FileOperationWrapper.ValidateFileName(fileName);
+
         if (intStorageId is null && input.File != null)
         {
             var fileStream = await FileOperationWrapper.ExecuteFileDownloadOperation(
                 () => fileManagementClient.DownloadAsync(input.File),
                 input.File.Name);
-            var memoryStream = new MemoryStream();
+
+            using var memoryStream = new MemoryStream();
             await fileStream.CopyToAsync(memoryStream);
             memoryStream.Position = 0;
-            
-            var storage = await FileOperationWrapper.ExecuteFileOperation(() => SdkClient.Storage.AddStorage(memoryStream, fileName!), memoryStream, fileName);
+
+            var storage = await FileOperationWrapper.ExecuteFileOperation(
+                () => SdkClient.Storage.AddStorage(memoryStream, fileName!),
+                memoryStream, fileName);
+
             intStorageId = storage.Id;
         }
         else if (input.File is null)
@@ -314,33 +318,20 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             fileName = storage.FileName;
         }
 
-        string extension;
-        if (input.File != null)
-        {
-            extension = Path.GetExtension(input.File.Name).ToLowerInvariant();
 
-            if (string.IsNullOrWhiteSpace(extension) && !string.IsNullOrWhiteSpace(input.File.ContentType))
-            {
-                var contentType = input.File.ContentType.ToLowerInvariant();
-                if (contentType.Contains("csv"))
-                {
-                    extension = ".csv";
-                }
-                else if (contentType.Contains("excel") || contentType.Contains("spreadsheet") || contentType.Contains("xlsx"))
-                {
-                    extension = ".xlsx";
-                }
-            }
-        }
-        else
+        string extension = Path.GetExtension(fileName).ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(extension) && input.File?.ContentType is { } cType)
         {
-            extension = Path.GetExtension(fileName).ToLowerInvariant();
+            cType = cType.ToLowerInvariant();
+            if (cType.Contains("csv"))
+                extension = ".csv";
+            else if (cType.Contains("excel") || cType.Contains("spreadsheet") || cType.Contains("xlsx"))
+                extension = ".xlsx";
         }
-
         if (extension != ".csv" && extension != ".xlsx")
-        {
             throw new PluginMisconfigurationException("Only .csv and .xlsx files are supported by this action.");
-        }
+        if (!fileName.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
+            fileName += extension;
 
         ProjectFileType fileType;
         if (extension == ".csv")
@@ -349,52 +340,74 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         }
         else
         {
-            fileType = (input.ImportEachCellAsSeparateSourceString == true)
-                ? ProjectFileType.DocX
-                : ProjectFileType.Auto;
+            fileType = input.ImportEachCellAsSeparateSourceString == true ? ProjectFileType.DocX : ProjectFileType.Auto;
         }
-        
-        var options = new Dictionary<string, object?>
+
+
+
+        var scheme = new Dictionary<string, int?>();
+        if (input.ContextColumnNumber.HasValue)
+            scheme["context"] = input.ContextColumnNumber.Value;
+        if (input.LanguageColumnNumbers == null || !input.LanguageColumnNumbers.Any())
         {
-            ["firstLineContainsHeader"] = input.FirstLineContainsHeader,
-            ["importTranslations"] = input.ImportTranslations,
-            ["importHiddenSheets"] = input.ImportHiddenSheets,
-            ["contentSegmentation"] = input.ContentSegmentation,
-            ["srxStorageId"] = input.SrxStorageId,
-            ["scheme"] = new Dictionary<string, object?>()
+            if (input.SourcePhraseColumnNumber.HasValue)
+                scheme["sourcePhrase"] = input.SourcePhraseColumnNumber.Value;
+            if (input.TranslationColumnNumber.HasValue)
+                scheme["translation"] = input.TranslationColumnNumber.Value;
+        }
+        else
+        {
+            var codes = input.LanguageCodes.ToArray();
+            var cols = input.LanguageColumnNumbers.ToArray();
+            if (codes.Length == 0 || cols.Length == 0 || codes.Length != cols.Length)
+                throw new PluginMisconfigurationException("LanguageCodes and LanguageColumnNumbers must be provided with equal non-zero lengths.");
+
+            scheme["sourcePhrase"] = cols[0];
+            for (int i = 1; i < codes.Length; i++)
             {
-                ["context"] = input.ContextColumnNumber,
-                ["identifier"] = input.IdentifierColumnNumber,
-                ["labels"] = input.LabelsColumnNumber,
-                ["maxLength"] = input.MaxLengthColumnNumber,
-                ["none"] = input.NoneColumnNumber,
-                ["sourceOrTranslation"] = input.SourceOrTranslationColumnNumber,
-                ["sourcePhrase"] = input.SourcePhraseColumnNumber,
-                ["translation"] = input.TranslationColumnNumber
+                scheme[codes[i]] = cols[i];
             }
+        }
+
+        if (!(input.LanguageCodes?.Any() ?? false))
+        {
+            if (!scheme.ContainsKey("sourcePhrase") || !scheme["sourcePhrase"].HasValue)
+                throw new PluginMisconfigurationException("The file schema must include the Source String element (sourcePhrase). Please check your input file");
+            if (!scheme.ContainsKey("translation") || !scheme["translation"].HasValue)
+                throw new PluginMisconfigurationException("The file schema must include the Translation element (translation). Please check your input file");
+        }
+        else
+        {
+            if (!scheme.ContainsKey("sourcePhrase") || !scheme["sourcePhrase"].HasValue)
+                throw new PluginMisconfigurationException("The file schema must include the Source String element (sourcePhrase). Please check your input file");
+        }
+
+        var importOptions = new Apps.Crowdin.Models.Request.File.CustomFileImportOptions
+        {
+            FirstLineContainsHeader = input.FirstLineContainsHeader,
+            ImportTranslations = input.ImportTranslations,
+            ImportHiddenSheets = input.ImportHiddenSheets,
+            ContentSegmentation = input.ContentSegmentation,
+            SrxStorageId = input.SrxStorageId,
+            Scheme = scheme.ToDictionary(k => k.Key, k => k.Value)
         };
 
-        var importOptions = new CustomFileImportOptions
+        var addFileRequest = new AddFileRequest
         {
-            Options = options
+            StorageId = intStorageId!.Value,
+            Name = fileName!,
+            BranchId = intBranchId,
+            DirectoryId = intDirectoryId,
+            Title = input.Title,
+            ExcludedTargetLanguages = input.ExcludedTargetLanguages?.ToList(),
+            AttachLabelIds = input.AttachLabelIds?.ToList(),
+            Context = input.Context,
+            Type = fileType,
+            ImportOptions = importOptions
         };
 
         try
         {
-            var addFileRequest = new AddFileRequest
-            {
-                StorageId = intStorageId!.Value,
-                Name = fileName!,
-                BranchId = intBranchId,
-                DirectoryId = intDirectoryId,
-                Title = input.Title,
-                ExcludedTargetLanguages = input.ExcludedTargetLanguages?.ToList(),
-                AttachLabelIds = input.AttachLabelIds?.ToList(),
-                Context = input.Context,
-                Type = fileType,
-                ImportOptions = importOptions
-            };
-
             var newFile = await SdkClient.SourceFiles.AddFile(intProjectId!.Value, addFileRequest);
             return new FileEntity(newFile);
         }
@@ -405,7 +418,6 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
 
             var allFiles = await ListFiles(project, new());
             var fileToUpdate = allFiles.Files.First(x => x.Name == fileName);
-
             return await UpdateFile(
                 project,
                 new() { FileId = fileToUpdate.Id },

@@ -56,7 +56,16 @@ public class TeamActions(InvocationContext invocationContext) : AppInvocable(inv
         await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
             await SdkClient.Teams.DeleteTeam(IntParser.Parse(team.TeamId, nameof(team.TeamId))!.Value));
     }
-    
+
+    [Action("[Enterprise] Search team members", Description = "Search team members in a specified team")]
+    public async Task<ResponseList<TeamMember>>ListTeamMembers(
+        [ActionParameter] TeamRequest team)
+    {
+        CheckAccessToEnterpriseAction();
+        return await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            await SdkClient.Teams.ListTeamMembers(IntParser.Parse(team.TeamId, nameof(team.TeamId))!.Value));
+    }
+
     private Task<ResponseList<Team>> ListTeamsAsync(int limit = 25, int offset = 0)
     {
         return ExceptionWrapper.ExecuteWithErrorHandling(() => SdkClient.Teams.ListTeams(limit, offset));

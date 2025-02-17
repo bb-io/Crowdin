@@ -30,22 +30,22 @@ namespace Apps.Crowdin.Models.Request.File
         [Display("Attach label IDs")]
         public IEnumerable<int>? AttachLabelIds { get; set; }
 
-        [Display("Content segmentation?")]
+        [Display("Content segmentation")]
         [Description("If enabled, Crowdin will split content into segments")]
         public bool? ContentSegmentation { get; set; }
 
-        [Display("First line contains header?")]
+        [Display("First line contains header")]
         [Description("If true, the first row in your spreadsheet file is treated as a header")]
         public bool? FirstLineContainsHeader { get; set; }
 
-        [Display("Import translations?")]
+        [Display("Import translations")]
         [Description("If true, existing translations will be imported")]
         public bool? ImportTranslations { get; set; }
 
         [Display("SRX storage ID")]
         [Description("Storage ID for the custom SRX segmentation file")]
         public long? SrxStorageId { get; set; }
-
+ 
         [Display("Context column number")]
         public int? ContextColumnNumber { get; set; }
 
@@ -77,6 +77,14 @@ namespace Apps.Crowdin.Models.Request.File
         [Display("Import hidden sheets")]
         [Description("If true, hidden sheets will be imported")]
         public bool? ImportHiddenSheets { get; set; }
+
+        [Display("Language codes")]
+        [Description("For multilingual spreadsheets, list language codes (e.g. en-US, de-DE)")]
+        public IEnumerable<string>? LanguageCodes { get; set; }
+
+        [Display("Language column numbers")]
+        [Description("For multilingual spreadsheets, list the corresponding column indexes (e.g. 2, 3, 4)")]
+        public IEnumerable<int>? LanguageColumnNumbers { get; set; }
 
     }
 }
