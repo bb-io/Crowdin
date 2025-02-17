@@ -12,33 +12,66 @@ namespace Tests.Crowdin
     public class FileTests : TestBase
     {
         [TestMethod]
-        public async Task AddSpreadsheetFile_ReturnsSuccess()
+        public async Task AddSpreadsheetFileOneLanguage_ReturnsSuccess()
         {
-            var csvFileReference = new FileReference
+            var fileRef = new FileReference
             {
-                Name = "CN_EN Sample 2.csv"
+                Name = "test1.xlsx"
             };
 
-            var action = new FileActions(InvocationContext, FileManager);
-            var input1 = new AddNewSpreadsheetFileRequest
+            var inputRequest = new AddNewSpreadsheetFileRequest
             {
-                File = csvFileReference,
-                Name = "TestAA11AAfffx",
-                Context = "Test",
-                Title = "Test Title11",
-                ContentSegmentation = true,
+                File = fileRef,
+                Name = "TestLang.xlsx",
+                Title = "File one lang XLSX",
                 FirstLineContainsHeader = true,
                 ImportTranslations = true,
-                ImportEachCellAsSeparateSourceString = true,
-                ImportHiddenSheets = true
+                ImportHiddenSheets = true,
+                ContentSegmentation = false,
+                SourcePhraseColumnNumber= 1,
+                TranslationColumnNumber = 2,
+                ContextColumnNumber = 0,
+                ImportEachCellAsSeparateSourceString = false
             };
 
-            var input2 = new ProjectRequest { ProjectId = "750225" };
+            var projectRequest = new ProjectRequest { ProjectId = "19" };
+            var action = new FileActions(InvocationContext, FileManager);
+            var result = await action.AddSpreadsheetFile(projectRequest, inputRequest);
 
-            var result = await action.AddSpreadsheetFile(input2, input1);
+            Console.WriteLine($"New file ID in Crowdin: {result.Id}");
+            Assert.IsNotNull(result);
+        }
 
-            Console.WriteLine(result.Id);
-            Assert.IsTrue(true);
+
+        [TestMethod]
+        public async Task AddSpreadsheetFileMultilanguage_ReturnsSuccess()
+        {
+            var fileRef = new FileReference
+            {
+                Name = "test2.xlsx"
+            };
+
+            var inputRequest = new AddNewSpreadsheetFileRequest
+            {
+                File = fileRef,
+                Name = "TestLangMulti.xlsx",
+                Title = "Multilingual XLSX",
+                FirstLineContainsHeader = true,
+                ImportTranslations = true,
+                ImportHiddenSheets = true,
+                ContentSegmentation = false,
+                ContextColumnNumber = 0,
+                LanguageCodes = new[] { "en-US", "es-ES", "de-DE", "zh-CN" },
+                LanguageColumnNumbers = new[] { 1, 2, 3, 4 },
+                ImportEachCellAsSeparateSourceString = false
+            };
+
+            var projectRequest = new ProjectRequest { ProjectId = "19" };
+            var action = new FileActions(InvocationContext, FileManager);
+            var result = await action.AddSpreadsheetFile(projectRequest, inputRequest);
+
+            Console.WriteLine($"New file ID in Crowdin: {result.Id}");
+            Assert.IsNotNull(result);
         }
 
 
@@ -47,7 +80,7 @@ namespace Tests.Crowdin
         {
            var action = new FileActions(InvocationContext, FileManager);
            var input1 = new ProjectRequest { ProjectId = "750225" };
-           var input2 = new AddNewFileRequest {File=new FileReference { Name = "test.csv" }, Name="~New test file" };
+           var input2 = new AddNewFileRequest {File=new FileReference { Name = "test.csv" }, Name="New test file1" };
 
            var response = await action.AddFile(input1, input2);
             Console.WriteLine(response.Id);

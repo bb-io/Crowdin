@@ -52,6 +52,7 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 - **Get file** Get specific file info
 - **List files** List project files
 - **Update file** Update an existing file with new content
+- **Add spreadsheet file** Add a new spreadsheet (.csv or .xlsx) to Crowdin with optional spreadsheet settings. Note that the file with one target language should use source phrase column and translation column number. If it multilanguage file, it should use language code and column.
 
 ### Glossary
 
@@ -115,6 +116,7 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 - **[Enterprise] Delete team** Delete specific team
 - **[Enterprise] Get team** Get specific team
 - **[Enterprise] Search teams** List all teams
+- **[Enterprise] Search team members** Search specific team members
 
 ### Translation 
 

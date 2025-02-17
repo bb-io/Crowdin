@@ -1,15 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Crowdin.Api.SourceFiles;
+﻿using Crowdin.Api.SourceFiles;
+using Newtonsoft.Json;
 
 namespace Apps.Crowdin.Models.Request.File
 {
     public class CustomFileImportOptions : FileImportOptions
     {
-        [System.Text.Json.Serialization.JsonPropertyName("options")]
-        public IDictionary<string, object> Options { get; set; } = new Dictionary<string, object>();
+        [JsonProperty("firstLineContainsHeader")]
+        public bool? FirstLineContainsHeader { get; set; }
+
+        [JsonProperty("importTranslations")]
+        public bool? ImportTranslations { get; set; }
+
+        [JsonProperty("importHiddenSheets")]
+        public bool? ImportHiddenSheets { get; set; }
+
+        [JsonProperty("contentSegmentation")]
+        public bool? ContentSegmentation { get; set; }
+
+        [JsonProperty("srxStorageId")]
+        public long? SrxStorageId { get; set; }
+
+        [JsonProperty("scheme")]
+        public Dictionary<string, int?> Scheme { get; set; } = new();
     }
 }
