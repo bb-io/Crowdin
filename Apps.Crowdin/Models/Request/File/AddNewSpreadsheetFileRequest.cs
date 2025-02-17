@@ -4,7 +4,9 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Apps.Crowdin.DataSourceHandlers;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Crowdin.Models.Request.File
 {
@@ -25,6 +27,7 @@ namespace Apps.Crowdin.Models.Request.File
         public string? Title { get; set; }
 
         [Display("Excluded target languages")]
+        [DataSource(typeof(LanguagesDataHandler))]
         public IEnumerable<string>? ExcludedTargetLanguages { get; set; }
 
         [Display("Attach label IDs")]
@@ -79,11 +82,12 @@ namespace Apps.Crowdin.Models.Request.File
         public bool? ImportHiddenSheets { get; set; }
 
         [Display("Language codes")]
-        [Description("For multilingual spreadsheets, list language codes (e.g. en-US, de-DE)")]
+        [Description("For multilingual spreadsheets, list language codes")]
+        [DataSource(typeof(LanguagesDataHandler))]
         public IEnumerable<string>? LanguageCodes { get; set; }
 
         [Display("Language column numbers")]
-        [Description("For multilingual spreadsheets, list the corresponding column indexes (e.g. 2, 3, 4)")]
+        [Description("For multilingual spreadsheets, list the corresponding column indexes")]
         public IEnumerable<int>? LanguageColumnNumbers { get; set; }
 
     }
