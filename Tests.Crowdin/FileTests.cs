@@ -54,7 +54,7 @@ namespace Tests.Crowdin
             var inputRequest = new AddNewSpreadsheetFileRequest
             {
                 File = fileRef,
-                Name = "TestLangMulti2.xlsx",
+                Name = "TestLangMulti3.xlsx",
                 Title = "Multilingual XLSX",
                 FirstLineContainsHeader = true,
                 ImportTranslations = true,
