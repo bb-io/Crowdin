@@ -54,15 +54,16 @@ namespace Tests.Crowdin
             var inputRequest = new AddNewSpreadsheetFileRequest
             {
                 File = fileRef,
-                Name = "TestLangMulti.xlsx",
+                Name = "TestLangMulti3.xlsx",
                 Title = "Multilingual XLSX",
                 FirstLineContainsHeader = true,
                 ImportTranslations = true,
                 ImportHiddenSheets = true,
                 ContentSegmentation = false,
                 ContextColumnNumber = 0,
-                LanguageCodes = new[] { "en-US", "es-ES", "de-DE", "zh-CN" },
-                LanguageColumnNumbers = new[] { 1, 2, 3, 4 },
+                SourcePhraseColumnNumber = 1,
+                LanguageCodes = new[] { "es-ES", "de-DE", "zh-CN" },
+                LanguageColumnNumbers = new[] {  2, 3, 4 },
                 ImportEachCellAsSeparateSourceString = false
             };
 

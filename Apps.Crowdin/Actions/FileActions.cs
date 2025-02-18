@@ -292,7 +292,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         var intBranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId));
         var intDirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId));
 
-        input.LanguageCodes ??= new[] { "en" };
+       
         FileOperationWrapper.ValidateFileName(fileName);
 
         if (intStorageId is null && input.File != null)
@@ -343,17 +343,18 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             fileType = input.ImportEachCellAsSeparateSourceString == true ? ProjectFileType.DocX : ProjectFileType.Auto;
         }
 
-
-
         var scheme = new Dictionary<string, int?>();
+
         if (input.ContextColumnNumber.HasValue)
             scheme["context"] = input.ContextColumnNumber.Value;
+
         if (input.LanguageColumnNumbers == null || !input.LanguageColumnNumbers.Any())
         {
-            if (input.SourcePhraseColumnNumber.HasValue)
-                scheme["sourcePhrase"] = input.SourcePhraseColumnNumber.Value;
-            if (input.TranslationColumnNumber.HasValue)
-                scheme["translation"] = input.TranslationColumnNumber.Value;
+            if (!input.SourcePhraseColumnNumber.HasValue || !input.TranslationColumnNumber.HasValue)
+                throw new PluginMisconfigurationException("For single language file, both Source phrase columnr and Translation column must be provided.");
+
+            scheme["sourcePhrase"] = input.SourcePhraseColumnNumber.Value;
+            scheme["translation"] = input.TranslationColumnNumber.Value;
         }
         else
         {
@@ -362,24 +363,11 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             if (codes.Length == 0 || cols.Length == 0 || codes.Length != cols.Length)
                 throw new PluginMisconfigurationException("LanguageCodes and LanguageColumnNumbers must be provided with equal non-zero lengths.");
 
-            scheme["sourcePhrase"] = cols[0];
+            scheme["sourcePhrase"] = input.SourcePhraseColumnNumber.Value;
             for (int i = 1; i < codes.Length; i++)
             {
                 scheme[codes[i]] = cols[i];
             }
-        }
-
-        if (!(input.LanguageCodes?.Any() ?? false))
-        {
-            if (!scheme.ContainsKey("sourcePhrase") || !scheme["sourcePhrase"].HasValue)
-                throw new PluginMisconfigurationException("The file schema must include the Source String element (sourcePhrase). Please check your input file");
-            if (!scheme.ContainsKey("translation") || !scheme["translation"].HasValue)
-                throw new PluginMisconfigurationException("The file schema must include the Translation element (translation). Please check your input file");
-        }
-        else
-        {
-            if (!scheme.ContainsKey("sourcePhrase") || !scheme["sourcePhrase"].HasValue)
-                throw new PluginMisconfigurationException("The file schema must include the Source String element (sourcePhrase). Please check your input file");
         }
 
         var importOptions = new Apps.Crowdin.Models.Request.File.CustomFileImportOptions
