@@ -292,7 +292,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         var intBranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId));
         var intDirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId));
 
-       
+        input.LanguageCodes ??= new[] { "en-US" };
         FileOperationWrapper.ValidateFileName(fileName);
 
         if (intStorageId is null && input.File != null)
