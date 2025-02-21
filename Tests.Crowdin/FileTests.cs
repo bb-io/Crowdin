@@ -48,13 +48,13 @@ namespace Tests.Crowdin
         {
             var fileRef = new FileReference
             {
-                Name = "test2.xlsx"
+                Name = "EN_ML_Sample2.xlsx"
             };
 
             var inputRequest = new AddNewSpreadsheetFileRequest
             {
                 File = fileRef,
-                Name = "TestLangMulti3.xlsx",
+                Name = "TestLangMulti4.xlsx",
                 Title = "Multilingual XLSX",
                 FirstLineContainsHeader = true,
                 ImportTranslations = true,
@@ -62,8 +62,8 @@ namespace Tests.Crowdin
                 ContentSegmentation = false,
                 ContextColumnNumber = 0,
                 SourcePhraseColumnNumber = 1,
-                LanguageCodes = new[] { "es-ES", "de-DE", "zh-CN" },
-                LanguageColumnNumbers = new[] {  2, 3, 4 },
+                LanguageCodes = new[] { "zh-CN", "ko" },
+                LanguageColumnNumbers = new[] {  2, 4 },
                 ImportEachCellAsSeparateSourceString = false
             };
 

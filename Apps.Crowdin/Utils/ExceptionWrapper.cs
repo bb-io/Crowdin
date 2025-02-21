@@ -19,12 +19,7 @@ public static class ExceptionWrapper
         }
         catch (CrowdinApiException e)
         {
-            if (MisconfigurationErrorMessages.Any(x => e.Message.Contains(x)))
-            {
-                throw new PluginMisconfigurationException(e.Message);
-            }
-
-            throw new PluginApplicationException(e.Message);
+            throw new PluginApplicationException($"Crowdin answer: {e.Message}");
         }
         catch (Exception e)
         {
@@ -40,12 +35,7 @@ public static class ExceptionWrapper
         }
         catch (CrowdinApiException e)
         {
-            if (MisconfigurationErrorMessages.Any(x => e.Message.Contains(x)))
-            {
-                throw new PluginMisconfigurationException(e.Message);
-            }
-
-            throw new PluginApplicationException(e.Message);
+            throw new PluginApplicationException($"Crowdin answer: {e.Message}");
         }
         catch (Exception e)
         {
