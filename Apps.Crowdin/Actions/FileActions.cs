@@ -350,11 +350,14 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
 
         if (input.LanguageColumnNumbers == null || !input.LanguageColumnNumbers.Any())
         {
-            if (!input.SourcePhraseColumnNumber.HasValue || !input.TranslationColumnNumber.HasValue)
-                throw new PluginMisconfigurationException("For single language file, both Source phrase columnr and Translation column must be provided.");
+            if (input.ImportEachCellAsSeparateSourceString != true)
+            {
+                if (!input.SourcePhraseColumnNumber.HasValue || !input.TranslationColumnNumber.HasValue)
+                    throw new PluginMisconfigurationException("For single language file, both Source phrase column and Translation column must be provided.");
 
-            scheme["sourcePhrase"] = input.SourcePhraseColumnNumber.Value;
-            scheme["translation"] = input.TranslationColumnNumber.Value;
+                scheme["sourcePhrase"] = input.SourcePhraseColumnNumber.Value;
+                scheme["translation"] = input.TranslationColumnNumber.Value;
+            }
         }
         else
         {
