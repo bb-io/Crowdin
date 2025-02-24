@@ -21,6 +21,7 @@ using Crowdin.Api;
 using Apps.Crowdin.Api.RestSharp.Enterprise;
 using Apps.Crowdin.Api.RestSharp;
 using Newtonsoft.Json;
+using Apps.Crowdin.Models.Request.File;
 
 namespace Apps.Crowdin.Actions;
 
@@ -314,5 +315,41 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         }).ToList();
 
         return new SimplifiedLanguageProgressResponseDto { Data = simplifiedList };
+    }
+
+
+
+    [Action("Export project translation", Description = "Generate a download link for a project's translation in a specified language for the given files")]
+    public async Task<ExportProjectTranslationResponse> ExportProjectTranslation(
+            [ActionParameter] ProjectRequest project,
+            [ActionParameter] LanguageRequest input,
+            [ActionParameter] FileIdsRequest files)
+    {
+        if (!int.TryParse(project.ProjectId, out var intProjectId))
+            throw new PluginMisconfigurationException($"Invalid Project ID: {project.ProjectId} must be numeric.");
+
+        var fileIdsAsInts = new List<int>();
+        foreach (var fileIdStr in files.Ids)
+        {
+            if (!int.TryParse(fileIdStr, out var fileIdInt))
+                throw new PluginMisconfigurationException($"Invalid file ID: '{fileIdStr}' must be numeric. Please check the input and try again");
+
+            fileIdsAsInts.Add(fileIdInt);
+        }
+
+        var endpoint = $"/projects/{intProjectId}/translations/exports";
+
+        var enterpriseRestClient = new CrowdinEnterpriseRestClient(invocationContext.AuthenticationCredentialsProviders);
+
+        var request = new CrowdinRestRequest(endpoint, Method.Post, invocationContext.AuthenticationCredentialsProviders);
+        request.AddJsonBody(new
+        {
+            targetLanguageId = input.LanguageId,
+            fileIds = fileIdsAsInts
+        });
+     
+        var response = await enterpriseRestClient.ExecuteWithErrorHandling(request);
+        var dto = JsonConvert.DeserializeObject<ExportProjectTranslationResponse>(response.Content);
+        return dto;
     }
 }

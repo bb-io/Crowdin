@@ -5,6 +5,7 @@ using Apps.Crowdin.Models.Request.File;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.Translation;
 using Blackbird.Applications.Sdk.Common.Files;
+using Crowdin.Api.Translations;
 using Tests.Crowdin.Base;
 
 namespace Tests.Crowdin
@@ -150,6 +151,20 @@ namespace Tests.Crowdin
                 Assert.IsTrue(true);
             }
 
+        }
+
+
+        [TestMethod]
+        public async Task ExportProjectTranslation_ReturnsSuccess()
+        {
+            var action = new TranslationActions(InvocationContext, FileManager);
+            var input1 = new ProjectRequest { ProjectId = "19" };
+            var input2 = new FileIdsRequest { Ids = new[] { "581"} };
+            var input3 = new LanguageRequest {LanguageId= "zh-CN" };
+
+            var response = await action.ExportProjectTranslation(input1, input3, input2);
+            Console.WriteLine(response.Data.Url);
+            Assert.IsNotNull(response);
         }
     }
 }
