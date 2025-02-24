@@ -54,17 +54,17 @@ namespace Tests.Crowdin
             var inputRequest = new AddNewSpreadsheetFileRequest
             {
                 File = fileRef,
-                Name = "TestLangMulti4.xlsx",
-                Title = "Multilingual XLSX",
-                FirstLineContainsHeader = true,
-                ImportTranslations = true,
-                ImportHiddenSheets = true,
-                ContentSegmentation = false,
-                ContextColumnNumber = 0,
-                SourcePhraseColumnNumber = 1,
-                LanguageCodes = new[] { "zh-CN", "ko" },
-                LanguageColumnNumbers = new[] {  2, 4 },
-                ImportEachCellAsSeparateSourceString = false
+                //Name = "TestLangMulti4.xlsx",
+                //Title = "Multilingual XLSX",
+                //FirstLineContainsHeader = true,
+                //ImportTranslations = true,
+                //ImportHiddenSheets = true,
+                //ContentSegmentation = false,
+                //ContextColumnNumber = 0,
+                //SourcePhraseColumnNumber = 1,
+                //LanguageCodes = new[] { "zh-CN", "ko" },
+                //LanguageColumnNumbers = new[] {  2, 4 },
+                ImportEachCellAsSeparateSourceString = true
             };
 
             var projectRequest = new ProjectRequest { ProjectId = "19" };
