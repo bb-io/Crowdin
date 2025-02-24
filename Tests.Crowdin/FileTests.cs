@@ -22,7 +22,7 @@ namespace Tests.Crowdin
             var inputRequest = new AddNewSpreadsheetFileRequest
             {
                 File = fileRef,
-                Name = "TestLang.xlsx",
+                Name = "TestLang6.xlsx",
                 Title = "File one lang XLSX",
                 FirstLineContainsHeader = true,
                 ImportTranslations = true,
@@ -31,7 +31,7 @@ namespace Tests.Crowdin
                 SourcePhraseColumnNumber= 1,
                 TranslationColumnNumber = 2,
                 ContextColumnNumber = 0,
-                ImportEachCellAsSeparateSourceString = false
+                ImportEachCellAsSeparateSourceString = true
             };
 
             var projectRequest = new ProjectRequest { ProjectId = "19" };
@@ -93,13 +93,13 @@ namespace Tests.Crowdin
         public async Task ListFile_ReturnsSuccess()
         {
             var action = new FileActions(InvocationContext, FileManager);
-            var input1 = new ProjectRequest { ProjectId = "750225" };
+            var input1 = new ProjectRequest { ProjectId = "19" };
             var input2 = new ListFilesRequest { };
 
             var response = await action.ListFiles(input1, input2);
             foreach (var file in response.Files)
             {
-                Console.WriteLine(file.Id);
+                Console.WriteLine($"{file.Id} - {file.Name}");
                 Assert.IsNotNull(response);
             }
         }
@@ -114,6 +114,23 @@ namespace Tests.Crowdin
 
             await action.DeleteFile(input1, input2);
             Assert.IsTrue(true);
+
+        }
+
+
+        [TestMethod]
+        public async Task GetFileProgress_ReturnsSuccess()
+        {
+            var action = new FileActions(InvocationContext, FileManager);
+            var input1 = new ProjectRequest { ProjectId = "19" };
+            var input2 = new FileRequest { FileId= "581" };
+
+            var progress=await action.GetFileProgress(input1, input2);
+
+            foreach(var item in progress.Progress){
+                Console.WriteLine($"{item.LanguageId} - {item.LanguageName} - {item.TranslationProgress}");
+                Assert.IsTrue(true);
+            }
 
         }
     }

@@ -18,6 +18,9 @@ using Blackbird.Applications.Sdk.Utils.Utilities;
 using Crowdin.Api;
 using Crowdin.Api.SourceFiles;
 using RestSharp;
+using Newtonsoft.Json;
+using Apps.Crowdin.Api.RestSharp.Enterprise;
+using Apps.Crowdin.Api.RestSharp;
 
 namespace Apps.Crowdin.Actions;
 
@@ -45,7 +48,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
                 Offset = offset
             };
 
-            return ExceptionWrapper.ExecuteWithErrorHandling(() => 
+            return ExceptionWrapper.ExecuteWithErrorHandling(() =>
                 SdkClient.SourceFiles.ListFiles<FileCollectionResource>(intProjectId!.Value, request));
         });
 
@@ -90,7 +93,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         {
             throw new PluginMisconfigurationException("Project ID is null or empty. Please specify a valid ID");
         }
-        
+
         if (input.StorageId is null && input.File is null)
         {
             throw new PluginMisconfigurationException("You need to specify one of the parameters: Storage ID or File");
@@ -100,7 +103,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         var intStorageId = LongParser.Parse(input.StorageId, nameof(input.StorageId));
         var intBranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId));
         var intDirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId));
-        
+
         FileOperationWrapper.ValidateFileName(fileName);
         if (intStorageId is null && input.File != null)
         {
@@ -108,7 +111,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             var memoryStream = new MemoryStream();
             await fileStream.CopyToAsync(memoryStream);
             memoryStream.Position = 0;
-            
+
             var storage = await FileOperationWrapper.ExecuteFileOperation(() => SdkClient.Storage.AddStorage(memoryStream, fileName), memoryStream, fileName);
             intStorageId = storage.Id;
         }
@@ -146,7 +149,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             {
                 throw new PluginMisconfigurationException(ex.Message);
             }
-            
+
             if (ex.Message.Contains("New-line characters are not allowed in header values"))
             {
                 throw new PluginMisconfigurationException(
@@ -192,7 +195,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             var memoryStream = new MemoryStream();
             await fileStream.CopyToAsync(memoryStream);
             memoryStream.Position = 0;
-            
+
             var storage = await FileOperationWrapper.ExecuteFileOperation(() => client.Storage.AddStorage(memoryStream, input.File.Name), memoryStream, input.File.Name);
             intStorageId = storage.Id;
         }
@@ -258,7 +261,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
     [Action("Delete file", Description = "Delete specific file")]
     public async Task DeleteFile(
         [ActionParameter] ProjectRequest project,
-        [ActionParameter] [Display("File ID")] string fileId)
+        [ActionParameter][Display("File ID")] string fileId)
     {
         if (!int.TryParse(project.ProjectId, out var intProjectId))
             throw new PluginMisconfigurationException($"Invalid Project ID: {project.ProjectId} must be a numeric value. Please check the input project ID");
@@ -268,6 +271,51 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
 
         await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
         await SdkClient.SourceFiles.DeleteFile(intProjectId, intFileId));
+    }
+
+    [Action("Get file progress")]
+    public async Task<GetFileProgressResponse> GetFileProgress(
+        [ActionParameter] ProjectRequest project,
+        [ActionParameter] FileRequest file)
+    {
+        if (!int.TryParse(project.ProjectId, out var intProjectId))
+            throw new PluginMisconfigurationException($"Invalid Project ID: {project.ProjectId} must be a numeric value. Please check the input project ID");
+
+        if (!int.TryParse(file.FileId, out var intFileId))
+            throw new PluginMisconfigurationException($"Invalid File ID: {file.FileId} must be a numeric value. Please check the input file ID");
+
+        var enterpriseRestClient = new CrowdinEnterpriseRestClient(invocationContext.AuthenticationCredentialsProviders);
+
+        var request = new CrowdinRestRequest(
+        $"/projects/{intProjectId}/files/{intFileId}/languages/progress",
+        Method.Get,
+        invocationContext.AuthenticationCredentialsProviders);
+
+        var response = await enterpriseRestClient.ExecuteWithErrorHandling(request);
+
+        var progressDto = JsonConvert.DeserializeObject<LanguageProgressResponseDto>(response.Content);
+
+        var progressEntities = progressDto.Data.Select(wrapper =>
+        {
+            var item = wrapper.Data;
+            return new FileLanguageProgressEntity
+            {
+                LanguageId = item.LanguageId,
+                LanguageName = item.Language?.Name,
+                TranslationProgress = item.TranslationProgress,
+                ApprovalProgress = item.ApprovalProgress,
+
+                TotalWords = item.Words?.Total ?? 0,
+                TranslatedWords = item.Words?.Translated ?? 0,
+                ApprovedWords = item.Words?.Approved ?? 0,
+
+                TotalPhrases = item.Phrases?.Total ?? 0,
+                TranslatedPhrases = item.Phrases?.Translated ?? 0,
+                ApprovedPhrases = item.Phrases?.Approved ?? 0
+            };
+        });
+
+        return new GetFileProgressResponse(progressEntities);
     }
 
     [Action("Add spreadsheet file", Description = "Add a new spreadsheet (.csv or .xlsx) to Crowdin with optional spreadsheet settings")]
@@ -405,7 +453,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         catch (CrowdinApiException ex)
         {
             if (!ex.Message.Contains("Name must be unique"))
-                throw new PluginApplicationException(ex.Message);
+                throw new PluginMisconfigurationException(ex.Message);
 
             var allFiles = await ListFiles(project, new());
             var fileToUpdate = allFiles.Files.First(x => x.Name == fileName);
@@ -433,5 +481,5 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         return null;
     }
 
-    
+
 }

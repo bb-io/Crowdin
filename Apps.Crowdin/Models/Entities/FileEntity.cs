@@ -7,7 +7,7 @@ namespace Apps.Crowdin.Models.Entities;
 
 public class FileEntity
 {
-    [Display("ID")] public string Id { get; set; }
+    [Display("File ID")] public string Id { get; set; }
     [Display("Project ID")] public string ProjectId { get; set; }
     [Display("Branch ID")] public string? BranchId { get; set; }
     [Display("Directory ID")] public string? DirectoryId { get; set; }
