@@ -196,11 +196,11 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         }
         else
         {
-            if (!input.File.Name.EndsWith(".xliff") || !input.File.Name.EndsWith(".xlf"))
+            if (input.File.Name.ToLower().EndsWith(".xliff") || input.File.Name.ToLower().EndsWith(".xlf"))
             {
-                throw new PluginMisconfigurationException("File ID is required for all formats except XLIFF");
-            }
-            fileID = null;
+                fileID = null;
+            } else
+            throw new PluginMisconfigurationException("File ID is required for all formats except XLIFF");
         }
 
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
