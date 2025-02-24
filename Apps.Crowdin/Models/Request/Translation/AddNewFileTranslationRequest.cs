@@ -16,7 +16,7 @@ public class AddNewFileTranslationRequest : ProjectRequest
     public FileReference File { get; set; }
 
     [Display("Source file ID")]
-    public string SourceFileId { get; set; }
+    public string? SourceFileId { get; set; }
 
     [Display("Import equal suggestions")]
     public bool? ImportEqSuggestions { get; set; }
