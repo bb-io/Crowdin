@@ -182,18 +182,6 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
                 "Project ID cannot be null or empty. Please provide a valid project ID.");
         }
 
-        var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
-        var client = SdkClient;
-
-        var fileStream = await FileOperationWrapper.ExecuteFileDownloadOperation(
-            () => fileManagementClient.DownloadAsync(input.File), input.File.Name);
-        var memoryStream = new MemoryStream();
-        await fileStream.CopyToAsync(memoryStream);
-        memoryStream.Position = 0;
-        
-        var storageResult = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
-            await client.Storage.AddStorage(memoryStream, input.File.Name));
-
         int? fileID;
         if (!String.IsNullOrEmpty(input.SourceFileId))
         {
@@ -201,13 +189,34 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
             {
                 fileID = int.Parse(input.SourceFileId);
             }
-            catch 
+            catch
             {
                 throw new PluginMisconfigurationException("File ID is incorrect. Please check the input values.");
             }
         }
-        else { fileID = null; }
+        else
+        {
+            if (!input.File.Name.EndsWith(".xliff") || !input.File.Name.EndsWith(".xlf"))
+            {
+                throw new PluginMisconfigurationException("File ID is required for all formats except XLIFF");
+            }
+            fileID = null;
+        }
+
+        var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
+        var client = SdkClient;
+
+        var fileStream = await FileOperationWrapper.ExecuteFileDownloadOperation(
+            () => fileManagementClient.DownloadAsync(input.File), input.File.Name);
+
+        var memoryStream = new MemoryStream();
+        await fileStream.CopyToAsync(memoryStream);
+        memoryStream.Position = 0;
         
+        var storageResult = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
+            await client.Storage.AddStorage(memoryStream, input.File.Name));
+
+             
         var request = new UploadTranslationsRequest
         {
             StorageId = storageResult.Id,
