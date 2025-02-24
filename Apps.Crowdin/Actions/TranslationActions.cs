@@ -194,10 +194,24 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         var storageResult = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
             await client.Storage.AddStorage(memoryStream, input.File.Name));
 
+        int? fileID;
+        if (!String.IsNullOrEmpty(input.SourceFileId))
+        {
+            try
+            {
+                fileID = int.Parse(input.SourceFileId);
+            }
+            catch 
+            {
+                throw new PluginMisconfigurationException("File ID is incorrect. Please check the input values.");
+            }
+        }
+        else { fileID = null; }
+        
         var request = new UploadTranslationsRequest
         {
             StorageId = storageResult.Id,
-            FileId = int.Parse(input.SourceFileId),
+            FileId = fileID,
             ImportEqSuggestions = input.ImportEqSuggestions,
             AutoApproveImported = input.AutoApproveImported,
             TranslateHidden = input.TranslateHidden
