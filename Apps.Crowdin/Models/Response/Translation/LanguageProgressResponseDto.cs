@@ -70,4 +70,38 @@ namespace Apps.Crowdin.Models.Response.Translation
         public int Approved { get; set; }
     }
 
+    public class SimplifiedLanguageProgressResponseDto
+    {
+        [JsonProperty("data")]
+        [Display("Data")]
+        public IEnumerable<SimplifiedLanguageProgressDto> Data { get; set; }
+    }
+
+    public class SimplifiedLanguageProgressDto
+    {
+        [JsonProperty("words")]
+        [Display("Words")]
+        public StatsDto Words { get; set; }
+
+        [JsonProperty("phrases")]
+        [Display("Phrases")]
+        public StatsDto Phrases { get; set; }
+
+        [JsonProperty("translationProgress")]
+        [Display("Translation progress")]
+        public int TranslationProgress { get; set; }
+
+        [JsonProperty("approvalProgress")]
+        [Display("Approval progress")]
+        public int ApprovalProgress { get; set; }
+
+        [JsonProperty("fileId")]
+        [Display("File ID")]
+        public int FileId { get; set; }
+
+        [JsonProperty("eTag")]
+        [Display("ETag")]
+        public string ETag { get; set; }
+    }
+
 }

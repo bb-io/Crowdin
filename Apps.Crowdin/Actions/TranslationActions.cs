@@ -280,7 +280,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
 
 
     [Action("Get language progress", Description = "Get translation progress for a specific language in the project")]
-    public async Task<Apps.Crowdin.Models.Response.Translation.LanguageProgressResponseDto> GetLanguageProgress(
+    public async Task<SimplifiedLanguageProgressResponseDto> GetLanguageProgress(
     [ActionParameter] ProjectRequest project,
     [ActionParameter] LanguageRequest input)
     {
@@ -299,11 +299,20 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
             endpoint,
             Method.Get,
             invocationContext.AuthenticationCredentialsProviders);
-
         var response = await enterpriseRestClient.ExecuteWithErrorHandling(request);
 
-        var dto = JsonConvert.DeserializeObject<Apps.Crowdin.Models.Response.Translation.LanguageProgressResponseDto>(response.Content);
+        var nestedDto = JsonConvert.DeserializeObject<Models.Response.Translation.LanguageProgressResponseDto>(response.Content);
 
-        return dto;
+        var simplifiedList = nestedDto.Data.Select(wrapper => new SimplifiedLanguageProgressDto
+        {
+            Words = wrapper.Data.Words,
+            Phrases = wrapper.Data.Phrases,
+            TranslationProgress = wrapper.Data.TranslationProgress,
+            ApprovalProgress = wrapper.Data.ApprovalProgress,
+            FileId = wrapper.Data.FileId,
+            ETag = wrapper.Data.ETag
+        }).ToList();
+
+        return new SimplifiedLanguageProgressResponseDto { Data = simplifiedList };
     }
 }

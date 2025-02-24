@@ -146,7 +146,7 @@ namespace Tests.Crowdin
 
             foreach (var item in progress.Data)
             {
-                Console.WriteLine($"{item.Data.FileId} - {item.Data.TranslationProgress} - {item.Data.ApprovalProgress} ");
+                Console.WriteLine($"{item.FileId} - {item.TranslationProgress} - {item.ApprovalProgress}");
                 Assert.IsTrue(true);
             }
 
