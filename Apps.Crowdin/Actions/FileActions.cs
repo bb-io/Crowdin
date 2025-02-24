@@ -297,18 +297,16 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
 
         var progressEntities = progressDto.Data.Select(wrapper =>
         {
-            var item = wrapper.Data;
+            var item = wrapper.Data; 
             return new FileLanguageProgressEntity
             {
                 LanguageId = item.LanguageId,
                 LanguageName = item.Language?.Name,
                 TranslationProgress = item.TranslationProgress,
                 ApprovalProgress = item.ApprovalProgress,
-
                 TotalWords = item.Words?.Total ?? 0,
                 TranslatedWords = item.Words?.Translated ?? 0,
                 ApprovedWords = item.Words?.Approved ?? 0,
-
                 TotalPhrases = item.Phrases?.Total ?? 0,
                 TranslatedPhrases = item.Phrases?.Translated ?? 0,
                 ApprovedPhrases = item.Phrases?.Approved ?? 0
