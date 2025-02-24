@@ -18,6 +18,9 @@ using RestSharp;
 using Apps.Crowdin.Models.Request.Users;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Crowdin.Api;
+using Apps.Crowdin.Api.RestSharp.Enterprise;
+using Apps.Crowdin.Api.RestSharp;
+using Newtonsoft.Json;
 
 namespace Apps.Crowdin.Actions;
 
@@ -272,5 +275,35 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
 
         var file = await fileManagementClient.UploadAsync(new MemoryStream(bytes), contentType, fileInfo.Name);
         return new(file);
+    }
+
+
+
+    [Action("Get language progress", Description = "Get translation progress for a specific language in the project")]
+    public async Task<Apps.Crowdin.Models.Response.Translation.LanguageProgressResponseDto> GetLanguageProgress(
+    [ActionParameter] ProjectRequest project,
+    [ActionParameter] LanguageRequest input)
+    {
+        if (!int.TryParse(project.ProjectId, out var intProjectId))
+            throw new PluginMisconfigurationException($"Invalid Project ID: {project.ProjectId} must be numeric.");
+
+        var languageId = input.LanguageId;
+        if (string.IsNullOrWhiteSpace(languageId))
+            throw new PluginMisconfigurationException("Language ID cannot be empty.");
+
+        var endpoint = $"/projects/{intProjectId}/languages/{input.LanguageId}/progress";
+
+        var enterpriseRestClient = new CrowdinEnterpriseRestClient(invocationContext.AuthenticationCredentialsProviders);
+
+        var request = new CrowdinRestRequest(
+            endpoint,
+            Method.Get,
+            invocationContext.AuthenticationCredentialsProviders);
+
+        var response = await enterpriseRestClient.ExecuteWithErrorHandling(request);
+
+        var dto = JsonConvert.DeserializeObject<Apps.Crowdin.Models.Response.Translation.LanguageProgressResponseDto>(response.Content);
+
+        return dto;
     }
 }

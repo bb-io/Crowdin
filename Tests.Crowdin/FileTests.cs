@@ -3,6 +3,7 @@ using System.Text;
 using Apps.Crowdin.Actions;
 using Apps.Crowdin.Models.Request.File;
 using Apps.Crowdin.Models.Request.Project;
+using Apps.Crowdin.Models.Request.Translation;
 using Blackbird.Applications.Sdk.Common.Files;
 using Tests.Crowdin.Base;
 
@@ -129,6 +130,23 @@ namespace Tests.Crowdin
 
             foreach(var item in progress.Progress){
                 Console.WriteLine($"{item.LanguageId} - {item.LanguageName} - {item.TranslationProgress} - {item.ApprovalProgress}");
+                Assert.IsTrue(true);
+            }
+
+        }
+
+        [TestMethod]
+        public async Task GetLanguageProgress_ReturnsSuccess()
+        {
+            var action = new TranslationActions(InvocationContext, FileManager);
+            var input1 = new ProjectRequest { ProjectId = "19" };
+            var input2 = new LanguageRequest { LanguageId = "zh-CN" };
+
+            var progress = await action.GetLanguageProgress(input1, input2);
+
+            foreach (var item in progress.Data)
+            {
+                Console.WriteLine($"{item.Data.FileId} - {item.Data.TranslationProgress} - {item.Data.ApprovalProgress} ");
                 Assert.IsTrue(true);
             }
 
