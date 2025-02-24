@@ -128,7 +128,7 @@ namespace Tests.Crowdin
             var progress=await action.GetFileProgress(input1, input2);
 
             foreach(var item in progress.Progress){
-                Console.WriteLine($"{item.LanguageId} - {item.LanguageName} - {item.TranslationProgress}");
+                Console.WriteLine($"{item.LanguageId} - {item.LanguageName} - {item.TranslationProgress} - {item.ApprovalProgress}");
                 Assert.IsTrue(true);
             }
 

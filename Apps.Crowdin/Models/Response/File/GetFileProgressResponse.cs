@@ -31,15 +31,34 @@ namespace Apps.Crowdin.Models.Response.File
     }
     public class FileLanguageProgressEntity
     {
+        [Display("Language ID")]
         public string LanguageId { get; set; }
+
+        [Display("Language name")]
         public string LanguageName { get; set; }
+
+        [Display("Translation progress")]
         public int TranslationProgress { get; set; }
+
+        [Display("Approval progress")]
         public int ApprovalProgress { get; set; }
+
+        [Display("Total words")]
         public int TotalWords { get; set; }
+
+        [Display("Translated words")]
         public int TranslatedWords { get; set; }
+
+        [Display("Approved words")]
         public int ApprovedWords { get; set; }
+
+        [Display("Total phares")]
         public int TotalPhrases { get; set; }
+
+        [Display("Translated phares")]
         public int TranslatedPhrases { get; set; }
+
+        [Display("Approved phares")]
         public int ApprovedPhrases { get; set; }
     }
 
