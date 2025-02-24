@@ -405,7 +405,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         catch (CrowdinApiException ex)
         {
             if (!ex.Message.Contains("Name must be unique"))
-                throw new PluginMisconfigurationException(ex.Message);
+                throw new PluginApplicationException(ex.Message);
 
             var allFiles = await ListFiles(project, new());
             var fileToUpdate = allFiles.Files.First(x => x.Name == fileName);
