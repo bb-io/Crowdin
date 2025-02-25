@@ -39,6 +39,7 @@ namespace Apps.Crowdin.Webhooks.Lists;
 [WebhookList]
 public class ProjectWebhookList(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
+
     #region File
 
     [Webhook("On file added or updated", typeof(FileAddedOrUpdatedHandler),
@@ -428,4 +429,8 @@ public class ProjectWebhookList(InvocationContext invocationContext) : AppInvoca
             Result = null
         };
     }
+}
+public static class CrowdinContextHolder
+{
+    public static InvocationContext? Current { get; set; }
 }
