@@ -1,4 +1,5 @@
-﻿using Apps.Crowdin.Models.Request.File;
+﻿using Apps.Crowdin.Invocables;
+using Apps.Crowdin.Models.Request.File;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.SourceString;
 using Apps.Crowdin.Models.Request.Suggestions;
@@ -29,13 +30,14 @@ using Apps.Crowdin.Webhooks.Models.Payload.Task.Wrapper;
 using Apps.Crowdin.Webhooks.Models.Payload.Translation.Response;
 using Apps.Crowdin.Webhooks.Models.Payload.Translation.Wrappers;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Webhooks;
 using Newtonsoft.Json;
 
 namespace Apps.Crowdin.Webhooks.Lists;
 
 [WebhookList]
-public class ProjectWebhookList
+public class ProjectWebhookList(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
     #region File
 
