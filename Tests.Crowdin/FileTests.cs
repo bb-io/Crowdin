@@ -24,7 +24,7 @@ namespace Tests.Crowdin
             var inputRequest = new AddNewSpreadsheetFileRequest
             {
                 File = fileRef,
-                Name = "TestLang6.xlsx",
+                Name = "TestLang7.xlsx",
                 Title = "File one lang XLSX",
                 FirstLineContainsHeader = true,
                 ImportTranslations = true,

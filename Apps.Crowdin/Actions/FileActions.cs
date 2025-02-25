@@ -21,6 +21,7 @@ using RestSharp;
 using Newtonsoft.Json;
 using Apps.Crowdin.Api.RestSharp.Enterprise;
 using Apps.Crowdin.Api.RestSharp;
+using OfficeOpenXml;
 
 namespace Apps.Crowdin.Actions;
 
@@ -347,14 +348,42 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
                 () => fileManagementClient.DownloadAsync(input.File),
                 input.File.Name);
 
-            using var memoryStream = new MemoryStream();
-            await fileStream.CopyToAsync(memoryStream);
-            memoryStream.Position = 0;
+            using var tempMemoryStream = new MemoryStream();
+            await fileStream.CopyToAsync(tempMemoryStream);
+            tempMemoryStream.Position = 0;
+
+
+            MemoryStream finalStream;
+            string ext = Path.GetExtension(fileName).ToLowerInvariant();
+            if (ext == ".xlsx" &&
+                input.ImportEachCellAsSeparateSourceString == true &&
+                (input.FirstLineContainsHeader ?? true) == true)
+            {
+
+                tempMemoryStream.Position = 0;
+                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                using (var package = new ExcelPackage(tempMemoryStream))
+                {
+                    foreach (var worksheet in package.Workbook.Worksheets)
+                    {
+                        worksheet.DeleteRow(1);
+                    }
+                    finalStream = new MemoryStream();
+                    package.SaveAs(finalStream);
+                    finalStream.Position = 0;
+                }
+            }
+            else
+            {
+                finalStream = new MemoryStream();
+                tempMemoryStream.Position = 0;
+                await tempMemoryStream.CopyToAsync(finalStream);
+                finalStream.Position = 0;
+            }
 
             var storage = await FileOperationWrapper.ExecuteFileOperation(
-                () => SdkClient.Storage.AddStorage(memoryStream, fileName!),
-                memoryStream, fileName);
-
+                () => SdkClient.Storage.AddStorage(finalStream, fileName!),
+                finalStream, fileName);
             intStorageId = storage.Id;
         }
         else if (input.File is null)
