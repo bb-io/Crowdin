@@ -24,7 +24,7 @@ namespace Tests.Crowdin
             var inputRequest = new AddNewSpreadsheetFileRequest
             {
                 File = fileRef,
-                Name = "TestLang6.xlsx",
+                Name = "TestLang7.xlsx",
                 Title = "File one lang XLSX",
                 FirstLineContainsHeader = true,
                 ImportTranslations = true,
@@ -159,7 +159,7 @@ namespace Tests.Crowdin
         {
             var action = new TranslationActions(InvocationContext, FileManager);
             var input1 = new ProjectRequest { ProjectId = "19" };
-            var input2 = new FileIdsRequest { Ids = new[] { "581"} };
+            var input2 = new FileIdsRequest { Ids = new[] { "581", "583"}, Format = "android" };
             var input3 = new LanguageRequest {LanguageId= "zh-CN" };
 
             var response = await action.ExportProjectTranslation(input1, input3, input2);

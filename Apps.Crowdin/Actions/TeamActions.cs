@@ -58,12 +58,17 @@ public class TeamActions(InvocationContext invocationContext) : AppInvocable(inv
     }
 
     [Action("[Enterprise] Search team members", Description = "Search team members in a specified team")]
-    public async Task<ResponseList<TeamMember>>ListTeamMembers(
+    public async Task<IEnumerable<TeamMember>> ListTeamMembers(
         [ActionParameter] TeamRequest team)
     {
         CheckAccessToEnterpriseAction();
-        return await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-            await SdkClient.Teams.ListTeamMembers(IntParser.Parse(team.TeamId, nameof(team.TeamId))!.Value));
+        var responseList = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+       await SdkClient.Teams.ListTeamMembers(IntParser.Parse(team.TeamId, nameof(team.TeamId))!.Value));
+
+
+        var result = responseList.Data.Select(wrapper => wrapper).ToList();
+
+        return result;
     }
 
     private Task<ResponseList<Team>> ListTeamsAsync(int limit = 25, int offset = 0)

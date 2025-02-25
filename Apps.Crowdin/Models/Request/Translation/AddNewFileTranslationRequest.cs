@@ -8,7 +8,7 @@ namespace Apps.Crowdin.Models.Request.Translation;
 
 public class AddNewFileTranslationRequest : ProjectRequest
 {
-    [Display("Language")]
+    [Display("Language ID")]
     [DataSource(typeof(LanguagesDataHandler))]
     public string LanguageId { get; set; }
 

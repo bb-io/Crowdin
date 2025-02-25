@@ -345,7 +345,8 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         request.AddJsonBody(new
         {
             targetLanguageId = input.LanguageId,
-            fileIds = fileIdsAsInts
+            fileIds = fileIdsAsInts,
+            format = files.Format
         });
      
         var response = await enterpriseRestClient.ExecuteWithErrorHandling(request);
