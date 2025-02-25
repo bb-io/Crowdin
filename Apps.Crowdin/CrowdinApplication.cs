@@ -1,4 +1,5 @@
 ﻿using Apps.Crowdin.Connections.OAuth;
+using Apps.Crowdin.Webhooks.Lists;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Authentication.OAuth2;
 using Blackbird.Applications.Sdk.Common.Invocation;
@@ -25,6 +26,7 @@ public class CrowdinApplication : BaseInvocable, IApplication, ICategoryProvider
     public CrowdinApplication(InvocationContext invocationContext) : base(invocationContext)
     {
         _typesInstances = CreateTypesInstances();
+        CrowdinContextHolder.Current = invocationContext;
     }
 
     public T GetInstance<T>()
