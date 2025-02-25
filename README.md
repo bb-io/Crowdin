@@ -128,6 +128,7 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 - **Get translation** Get specific translation
 - **List language translations** List project language translations
 - **List string translations** List project string translations
+- **Get language progress** Get translation progress for a specific language in the project
 
 ### Translation Memory 
 
@@ -202,7 +203,7 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 ### Translation
 
 - **On translation updated** On translation updated
-- **Get language progress** Get translation progress for a specific language in the project
+
 
 ### Pre-translations
 
