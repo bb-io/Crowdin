@@ -3,6 +3,7 @@ using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.SourceString;
 using Apps.Crowdin.Models.Request.Suggestions;
 using Apps.Crowdin.Models.Request.Task;
+using Apps.Crowdin.Webhooks.Handlers.Base;
 using Apps.Crowdin.Webhooks.Handlers.Project.File;
 using Apps.Crowdin.Webhooks.Handlers.Project.Project;
 using Apps.Crowdin.Webhooks.Handlers.Project.String;
@@ -318,17 +319,46 @@ public class ProjectWebhookList
     }
 
     [Webhook("On task status changed", typeof(TaskStatusChangedHandler), Description = "On task status changed")]
-    public Task<WebhookResponse<TaskStatusChangedWebhookResponse>> OnTaskStatusChanged(WebhookRequest webhookRequest,
+    public async Task<WebhookResponse<TaskStatusChangedWebhookResponse>> OnTaskStatusChanged(WebhookRequest webhookRequest,
         [WebhookParameter] GetTaskOptionalRequest taskOptionalRequest)
     {
-        var result = HandleWehookRequest<TaskStatusChangedWrapper, TaskStatusChangedWebhookResponse>(webhookRequest);
-
-        if ((taskOptionalRequest.TaskId != null && taskOptionalRequest.TaskId != result.Result.Result?.Id) ||
-               (!string.IsNullOrEmpty(taskOptionalRequest.Status) && taskOptionalRequest.Status != result.Result.Result?.Status) ||
-               (!string.IsNullOrEmpty(taskOptionalRequest.Type) && !string.Equals(result.Result.Result?.Type, taskOptionalRequest.Type, StringComparison.OrdinalIgnoreCase)))
+        await WebhookLogger.LogAsync(new
         {
-            return Task.FromResult(PreflightResponse<TaskStatusChangedWebhookResponse>());
-        }       
+            Message = "OnTaskStatusChanged invoked",
+            TaskId = taskOptionalRequest.TaskId,
+            DesiredStatus = taskOptionalRequest.Status,
+            DesiredType = taskOptionalRequest.Type
+        });
+
+        var result = await HandleWehookRequest<TaskStatusChangedWrapper, TaskStatusChangedWebhookResponse>(webhookRequest);
+
+        await WebhookLogger.LogAsync(new
+        {
+            Message = "HandleWehookRequest done",
+            ReturnedTaskId = result.Result?.Id,
+            ReturnedStatus = result.Result?.Status,
+            ReturnedType = result.Result?.Type
+        });
+
+        if ((taskOptionalRequest.TaskId != null && taskOptionalRequest.TaskId != result.Result?.Id) ||
+        (!string.IsNullOrEmpty(taskOptionalRequest.Status) && taskOptionalRequest.Status != result.Result?.Status) ||
+        (!string.IsNullOrEmpty(taskOptionalRequest.Type)
+         && !string.Equals(result.Result?.Type, taskOptionalRequest.Type, StringComparison.OrdinalIgnoreCase)))
+        {
+            await WebhookLogger.LogAsync(new
+            {
+                Message = "Preflight triggered: mismatch found",
+                ActualTaskId = result.Result?.Id,
+                ActualStatus = result.Result?.Status,
+                ActualType = result.Result?.Type
+            });
+            return PreflightResponse<TaskStatusChangedWebhookResponse>();
+        }
+        await WebhookLogger.LogAsync(new
+        {
+            Message = "Returning final result from OnTaskStatusChanged"
+        });
+
         return result;
     }
 
