@@ -18,7 +18,7 @@ using Blackbird.Applications.Sdk.Utils.Extensions.Http;
 namespace Apps.Crowdin.Webhooks.Handlers.Project.Task;
 
 public class TaskStatusChangedHandler(InvocationContext invocationContext,
-    [WebhookParameter(true)] ProjectWebhookInput input,
+    [WebhookParameter] ProjectWebhookInput input,
     [WebhookParameter] GetTaskOptionalRequest taskOptionalRequest) : ProjectWebhookHandler(input), IAfterSubscriptionWebhookEventHandler<TaskStatusChangedWebhookResponse>
 {
     protected override List<EventType> SubscriptionEvents => new() { EventType.TaskStatusChanged };
