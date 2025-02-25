@@ -273,7 +273,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         await SdkClient.SourceFiles.DeleteFile(intProjectId, intFileId));
     }
 
-    [Action("[Enterprise] Get file progress")]
+    [Action("[Enterprise] Get file progress", Description = "Gets file progress")]
     public async Task<GetFileProgressResponse> GetFileProgress(
         [ActionParameter] ProjectRequest project,
         [ActionParameter] FileRequest file)
