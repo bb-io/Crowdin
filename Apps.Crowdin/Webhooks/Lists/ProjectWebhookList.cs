@@ -320,6 +320,7 @@ public class ProjectWebhookList
 
     [Webhook("On task status changed", typeof(TaskStatusChangedHandler), Description = "On task status changed")]
     public async Task<WebhookResponse<TaskStatusChangedWebhookResponse>> OnTaskStatusChanged(WebhookRequest webhookRequest,
+        [WebhookParameter] ProjectWebhookInput input,
         [WebhookParameter] GetTaskOptionalRequest taskOptionalRequest)
     {
         await WebhookLogger.LogAsync(new
