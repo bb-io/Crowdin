@@ -36,7 +36,7 @@ using Newtonsoft.Json;
 namespace Apps.Crowdin.Webhooks.Lists;
 
 [WebhookList]
-public class ProjectWebhookList(InvocationContext invocationContext):AppInvocable(invocationContext)
+public class ProjectWebhookList(InvocationContext invocationContext) : BaseInvocable(invocationContext)
 {
     #region File
 

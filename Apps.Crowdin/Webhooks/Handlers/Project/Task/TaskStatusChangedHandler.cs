@@ -1,119 +1,109 @@
-﻿// Файл: TaskStatusChangedHandler.cs
-using Apps.Crowdin.Api.RestSharp;
-using Apps.Crowdin.Api.RestSharp.Enterprise;
-using Apps.Crowdin.Factories;
+﻿using Apps.Crowdin.Factories;
+using System.Net;
 using Apps.Crowdin.Models.Request.Task;
 using Apps.Crowdin.Webhooks.Handlers.Base;
 using Apps.Crowdin.Webhooks.Models.Inputs;
 using Apps.Crowdin.Webhooks.Models.Payload.Task;
 using Apps.Crowdin.Webhooks.Models.Payload.Task.Response;
 using Apps.Crowdin.Webhooks.Models.Payload.Task.Wrapper;
-using Blackbird.Applications.Sdk.Common.Authentication;
-using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Webhooks;
-using RestSharp;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Crowdin.Api.Tasks;
 using EventType = Crowdin.Api.Webhooks.EventType;
+using Blackbird.Applications.Sdk.Common.Invocation;
+using Apps.Crowdin.Api.RestSharp.Enterprise;
+using Apps.Crowdin.Api.RestSharp;
+using RestSharp;
+using Blackbird.Applications.Sdk.Utils.Extensions.Http;
+using Apps.Crowdin.Webhooks.Lists;
+using Apps.Crowdin.Invocables;
+using Blackbird.Applications.Sdk.Common.Authentication;
 
-namespace Apps.Crowdin.Webhooks.Handlers.Project.Task
+namespace Apps.Crowdin.Webhooks.Handlers.Project.Task;
+
+public class TaskStatusChangedHandler(InvocationContext invocationContext,[WebhookParameter(true)] ProjectWebhookInput input,
+    [WebhookParameter] GetTaskOptionalRequest taskOptionalRequest) : ProjectWebhookHandler(input), IAfterSubscriptionWebhookEventHandler<TaskStatusChangedWebhookResponse>
 {
-    public class TaskStatusChangedHandler : ProjectWebhookHandler, IAfterSubscriptionWebhookEventHandler<TaskStatusChangedWebhookResponse>
+    protected override List<EventType> SubscriptionEvents => new() { EventType.TaskStatusChanged };
+
+    public async Task<AfterSubscriptionEventResponse<TaskStatusChangedWebhookResponse>> OnWebhookSubscribedAsync()
     {
-        private readonly GetTaskOptionalRequest _taskOptionalRequest;
-        private readonly InvocationContext _invocationContext;
-        private readonly ProjectWebhookInput _input;
-
-        protected override List<EventType> SubscriptionEvents => new() { EventType.TaskStatusChanged };
-
-        public TaskStatusChangedHandler(
-            InvocationContext invocationContext,
-            [WebhookParameter] ProjectWebhookInput input,
-            [WebhookParameter] GetTaskOptionalRequest taskOptionalRequest)
-            : base(input)
+        await WebhookLogger.LogAsync(new
         {
-            _invocationContext = invocationContext;
-            _input = input;
-            _taskOptionalRequest = taskOptionalRequest;
-        }
+            Message = "OnWebhookSubscribedAsync called (TaskStatusChanged)",
+            ProjectId = input.ProjectId,
+            TaskId = taskOptionalRequest.TaskId,
+            DesiredStatus = taskOptionalRequest.Status
+        });
 
-        public async Task<AfterSubscriptionEventResponse<TaskStatusChangedWebhookResponse>> OnWebhookSubscribedAsync()
+        if (!string.IsNullOrEmpty(input.ProjectId) &&
+            !string.IsNullOrEmpty(taskOptionalRequest.TaskId) &&
+            !string.IsNullOrEmpty(taskOptionalRequest.Status))
         {
-            await WebhookLogger.LogAsync(new
+            try
             {
-                Message = "OnWebhookSubscribedAsync called (TaskStatusChanged)",
-                ProjectId = _input.ProjectId,
-                TaskId = _taskOptionalRequest.TaskId,
-                DesiredStatus = _taskOptionalRequest.Status
-            });
+                var context = invocationContext.AuthenticationCredentialsProviders;
+                if (context == null)
+                    throw new System.Exception("InvocationContext is not available in CrowdinContextHolder.");
 
-            if (!string.IsNullOrEmpty(_input.ProjectId) &&
-                !string.IsNullOrEmpty(_taskOptionalRequest.TaskId) &&
-                !string.IsNullOrEmpty(_taskOptionalRequest.Status))
-            {
-                try
+                var client = new Apps.Crowdin.Api.RestSharp.Enterprise.CrowdinEnterpriseRestClient(context);
+
+                var request = new Apps.Crowdin.Api.RestSharp.CrowdinRestRequest(
+                    $"/projects/{input.ProjectId}/tasks/{taskOptionalRequest.TaskId}",
+                    Method.Get,
+                    context);
+
+                var task = await client.ExecuteWithErrorHandling<TaskStatusChangedWebhookResponse>(request);
+
+                await WebhookLogger.LogAsync(new
                 {
-                    var client = new CrowdinEnterpriseRestClient(_invocationContext.AuthenticationCredentialsProviders);
+                    Message = "Task retrieved in OnWebhookSubscribedAsync",
+                    ReturnedStatus = task.Status
+                });
 
-                    var request = new CrowdinRestRequest(
-                        $"/projects/{_input.ProjectId}/tasks/{_taskOptionalRequest.TaskId}",
-                        Method.Get,
-                        _invocationContext.AuthenticationCredentialsProviders);
-
-                    var taskResponse = await client.ExecuteWithErrorHandling<TaskStatusChangedWebhookResponse>(request);
-
+                if (taskOptionalRequest.Status.Contains(task.Status))
+                {
                     await WebhookLogger.LogAsync(new
                     {
-                        Message = "Task retrieved in OnWebhookSubscribedAsync",
-                        ReturnedStatus = taskResponse.Status
+                        Message = "Task already in desired status, triggering Flight!",
+                        CurrentStatus = task.Status
                     });
 
-                    if (_taskOptionalRequest.Status.Contains(taskResponse.Status))
+                    var wrapper = new TaskStatusChangedWrapper
                     {
-                        await WebhookLogger.LogAsync(new
+                        Task = new Apps.Crowdin.Webhooks.Models.Payload.Task.TaskStatusChangedPayload
                         {
-                            Message = "Task already in desired status, triggering Flight!",
-                            CurrentStatus = taskResponse.Status
-                        });
+                            Id = task.Id,
+                            Status = task.Status,
+                        }
+                    };
 
-                        var wrapper = new TaskStatusChangedWrapper
-                        {
-                            Task = new Apps.Crowdin.Webhooks.Models.Payload.Task.TaskStatusChangedPayload
-                            {
-                                Id = taskResponse.Id,
-                                Status = taskResponse.Status,
-                            }
-                        };
+                    var responseDto = new TaskStatusChangedWebhookResponse();
+                    responseDto.ConfigureResponse(wrapper);
 
-                        var responseDto = new TaskStatusChangedWebhookResponse();
-                        responseDto.ConfigureResponse(wrapper);
-
-                        return new AfterSubscriptionEventResponse<TaskStatusChangedWebhookResponse>
-                        {
-                            Result = responseDto
-                        };
-                    }
-                    else
+                    return new AfterSubscriptionEventResponse<TaskStatusChangedWebhookResponse>
                     {
-                        await WebhookLogger.LogAsync(new
-                        {
-                            Message = "Task status does not match the desired status",
-                            CurrentStatus = taskResponse.Status
-                        });
-                    }
+                        Result = responseDto
+                    };
                 }
-                catch (Exception ex)
+                else
                 {
                     await WebhookLogger.LogAsync(new
                     {
-                        Message = "Error in OnWebhookSubscribedAsync (TaskStatusChanged)",
-                        Error = ex.ToString()
+                        Message = "Task status does not match the desired status",
+                        CurrentStatus = task.Status
                     });
-                    throw;
                 }
             }
-            return null;
+            catch (System.Exception ex)
+            {
+                await WebhookLogger.LogAsync(new
+                {
+                    Message = "Error in OnWebhookSubscribedAsync (TaskStatusChanged)",
+                    Error = ex.ToString()
+                });
+                throw;
+            }
         }
+        return null;
     }
 }
