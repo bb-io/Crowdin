@@ -13,6 +13,7 @@ using Blackbird.Applications.Sdk.Common.Invocation;
 using Apps.Crowdin.Api.RestSharp.Enterprise;
 using Apps.Crowdin.Api.RestSharp;
 using RestSharp;
+using Blackbird.Applications.Sdk.Utils.Extensions.Http;
 
 namespace Apps.Crowdin.Webhooks.Handlers.Project.Task;
 
@@ -24,6 +25,17 @@ public class TaskStatusChangedHandler(InvocationContext invocationContext,
 
     public async Task<AfterSubscriptionEventResponse<TaskStatusChangedWebhookResponse>> OnWebhookSubscribedAsync()
     {
+        await WebhookLogger.LogAsync(new
+        {
+            Message = "OnWebhookSubscribedAsync called (TaskStatusChanged)",
+            ProjectId = input.ProjectId,
+            TaskId = taskOptionalRequest.TaskId,
+            DesiredStatus = taskOptionalRequest.Status
+        });
+        try
+        {
+
+        
         if (taskOptionalRequest.TaskId != null && input.ProjectId != null && taskOptionalRequest.Status != null)
         {
 
@@ -41,5 +53,16 @@ public class TaskStatusChangedHandler(InvocationContext invocationContext,
             }
         }
         return null;
+        }
+        catch (Exception ex)
+        {
+            await WebhookLogger.LogAsync(new
+            {
+                Message = "Error in OnWebhookSubscribedAsync (TaskStatusChanged)",
+                Error = ex.ToString()
+            });
+            throw;
+        }
     }
 }
+
