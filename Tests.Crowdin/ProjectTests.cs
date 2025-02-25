@@ -36,7 +36,7 @@ namespace Tests.Crowdin
         {
             var input = new ProjectRequest
             {
-                ProjectId = "750225"
+                ProjectId = "19"
             };
 
             var client = new ProjectActions(InvocationContext, FileManager);
@@ -56,7 +56,7 @@ namespace Tests.Crowdin
 
             foreach (var item in result)
             {
-                Console.WriteLine($"{item.DisplayName} - {item.Value}");
+                Console.WriteLine($"{item.DisplayName} - {item.Value} - ");
                 Assert.IsNotNull(result);
             }
         }

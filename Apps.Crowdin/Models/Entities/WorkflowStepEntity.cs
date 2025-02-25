@@ -3,14 +3,14 @@ using Crowdin.Api.Workflows;
 
 namespace Apps.Crowdin.Models.Entities;
 
-public class WorkflowStepEntity(WorkflowStep workflowStep)
+public class WorkflowStepEntity
 {
     [Display("Workflow step ID")]
-    public string Id { get; set; } = workflowStep.Id.ToString();
-    
-    public string Title { get; set; } = workflowStep.Title;
-    
-    public string Type { get; set; } = workflowStep.Type.ToString();
-    
-    public string[] Languages { get; set; } = workflowStep.Languages;
+    public string Id { get; set; }
+
+    public string Title { get; set; }
+
+    public string Type { get; set; }
+
+    public string[] Languages { get; set; }
 }

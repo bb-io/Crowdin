@@ -18,6 +18,10 @@ using RestSharp;
 using Apps.Crowdin.Models.Request.Users;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Crowdin.Api;
+using Apps.Crowdin.Api.RestSharp.Enterprise;
+using Apps.Crowdin.Api.RestSharp;
+using Newtonsoft.Json;
+using Apps.Crowdin.Models.Request.File;
 
 namespace Apps.Crowdin.Actions;
 
@@ -272,5 +276,80 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
 
         var file = await fileManagementClient.UploadAsync(new MemoryStream(bytes), contentType, fileInfo.Name);
         return new(file);
+    }
+
+
+
+    [Action("Get language progress", Description = "Get translation progress for a specific language in the project")]
+    public async Task<SimplifiedLanguageProgressResponseDto> GetLanguageProgress(
+    [ActionParameter] ProjectRequest project,
+    [ActionParameter] LanguageRequest input)
+    {
+        if (!int.TryParse(project.ProjectId, out var intProjectId))
+            throw new PluginMisconfigurationException($"Invalid Project ID: {project.ProjectId} must be numeric.");
+
+        var languageId = input.LanguageId;
+        if (string.IsNullOrWhiteSpace(languageId))
+            throw new PluginMisconfigurationException("Language ID cannot be empty.");
+
+        var endpoint = $"/projects/{intProjectId}/languages/{input.LanguageId}/progress";
+
+        var enterpriseRestClient = new CrowdinEnterpriseRestClient(invocationContext.AuthenticationCredentialsProviders);
+
+        var request = new CrowdinRestRequest(
+            endpoint,
+            Method.Get,
+            invocationContext.AuthenticationCredentialsProviders);
+        var response = await enterpriseRestClient.ExecuteWithErrorHandling(request);
+
+        var nestedDto = JsonConvert.DeserializeObject<Models.Response.Translation.LanguageProgressResponseDto>(response.Content);
+
+        var simplifiedList = nestedDto.Data.Select(wrapper => new SimplifiedLanguageProgressDto
+        {
+            Words = wrapper.Data.Words,
+            Phrases = wrapper.Data.Phrases,
+            TranslationProgress = wrapper.Data.TranslationProgress,
+            ApprovalProgress = wrapper.Data.ApprovalProgress,
+            FileId = wrapper.Data.FileId,
+            ETag = wrapper.Data.ETag
+        }).ToList();
+
+        return new SimplifiedLanguageProgressResponseDto { Data = simplifiedList };
+    }
+
+
+
+    [Action("Export project translation", Description = "Generate a download link for a project's translation in a specified language for the given files")]
+    public async Task<ExportProjectTranslationResponse> ExportProjectTranslation(
+            [ActionParameter] ProjectRequest project,
+            [ActionParameter] LanguageRequest input,
+            [ActionParameter] FileIdsRequest files)
+    {
+        if (!int.TryParse(project.ProjectId, out var intProjectId))
+            throw new PluginMisconfigurationException($"Invalid Project ID: {project.ProjectId} must be numeric.");
+
+        var fileIdsAsInts = new List<int>();
+        foreach (var fileIdStr in files.Ids)
+        {
+            if (!int.TryParse(fileIdStr, out var fileIdInt))
+                throw new PluginMisconfigurationException($"Invalid file ID: '{fileIdStr}' must be numeric. Please check the input and try again");
+
+            fileIdsAsInts.Add(fileIdInt);
+        }
+
+        var endpoint = $"/projects/{intProjectId}/translations/exports";
+
+        var enterpriseRestClient = new CrowdinEnterpriseRestClient(invocationContext.AuthenticationCredentialsProviders);
+
+        var request = new CrowdinRestRequest(endpoint, Method.Post, invocationContext.AuthenticationCredentialsProviders);
+        request.AddJsonBody(new
+        {
+            targetLanguageId = input.LanguageId,
+            fileIds = fileIdsAsInts
+        });
+     
+        var response = await enterpriseRestClient.ExecuteWithErrorHandling(request);
+        var dto = JsonConvert.DeserializeObject<ExportProjectTranslationResponse>(response.Content);
+        return dto;
     }
 }
