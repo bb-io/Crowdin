@@ -19,7 +19,7 @@ namespace Apps.Crowdin.Webhooks.Handlers.Project.Task;
 
 public class TaskStatusChangedHandler(InvocationContext invocationContext,
     [WebhookParameter(true)] ProjectWebhookInput input,
-    [WebhookParameter] GetTaskOptionalRequest taskOptionalRequest) : ProjectWebhookHandler(input)
+    [WebhookParameter] GetTaskOptionalRequest taskOptionalRequest) : ProjectWebhookHandler(input), IAfterSubscriptionWebhookEventHandler<TaskStatusChangedWebhookResponse>
 {
     protected override List<EventType> SubscriptionEvents => new() { EventType.TaskStatusChanged };
 
