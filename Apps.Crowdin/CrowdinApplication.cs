@@ -26,7 +26,6 @@ public class CrowdinApplication : BaseInvocable, IApplication, ICategoryProvider
     public CrowdinApplication(InvocationContext invocationContext) : base(invocationContext)
     {
         _typesInstances = CreateTypesInstances();
-        CrowdinContextHolder.Current = invocationContext;
     }
 
     public T GetInstance<T>()
