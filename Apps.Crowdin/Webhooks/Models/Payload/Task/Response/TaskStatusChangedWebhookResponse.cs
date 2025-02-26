@@ -28,23 +28,23 @@ public class TaskStatusChangedWebhookResponse : CrowdinWebhookResponse<TaskStatu
 
     public override void ConfigureResponse(TaskStatusChangedWrapper wrapper)
     {
-        Id = wrapper.Task.Id;
-        Type = wrapper.Task.Type;
+        Id = wrapper.Task.Id; 
+        Type = wrapper.Task.Type ?? ""; 
         Vendor = wrapper.Task.Vendor;
-        OldStatus = wrapper.Task.OldStatus;
-        NewStatus = wrapper.Task.NewStatus;
-        Status = wrapper.Task.Status;
-        Title = wrapper.Task.Title;
-        AssigneeIds = wrapper.Task.Assignees?.Select(x => x.Id.ToString()) ?? new List<string>();
-        FileIds = wrapper.Task.FileIds?.Select(x => x.ToString()) ?? new List<string>();
-        Progress = wrapper.Task.Progress;
-        Description = wrapper.Task.Description;
-        TranslationUrl = wrapper.Task.TranslationUrl;
-        Deadline = wrapper.Task.Deadline;
-        CreatedAt = wrapper.Task.CreatedAt;
-        SourceLanguageId = wrapper.Task.SourceLanguage.Id;
-        TargetLanguageId = wrapper.Task.TargetLanguage.Id;
-        ProjectId = wrapper.Task.Project.Id.ToString();
-        TaskCreator = new(wrapper.Task.TaskCreator);
+        OldStatus = wrapper.Task.OldStatus; 
+        NewStatus = wrapper.Task.NewStatus; 
+        Status = wrapper.Task.Status; 
+        Title = wrapper.Task.Title ?? ""; 
+        AssigneeIds = wrapper.Task.Assignees?.Select(x => x.Id.ToString()) ?? Enumerable.Empty<string>(); 
+        FileIds = wrapper.Task.FileIds?.Select(x => x.ToString()) ?? Enumerable.Empty<string>(); 
+        Progress = wrapper.Task.Progress ?? new TaskProgress();
+        Description = wrapper.Task.Description ?? ""; 
+        TranslationUrl = wrapper.Task.TranslationUrl ?? "";
+        Deadline = wrapper.Task.Deadline; 
+        CreatedAt = wrapper.Task.CreatedAt; 
+        SourceLanguageId = wrapper.Task.SourceLanguage?.Id ?? string.Empty; 
+        TargetLanguageId = wrapper.Task.TargetLanguage?.Id ?? string.Empty; 
+        ProjectId = wrapper.Task.Project?.Id.ToString() ?? string.Empty;
+        TaskCreator = wrapper.Task.TaskCreator != null ? new UserEntity(wrapper.Task.TaskCreator) : null; 
     }
 }
