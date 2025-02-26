@@ -52,28 +52,28 @@ public class TaskStatusChangedHandler(InvocationContext invocationContext,[Webho
                     Method.Get,
                     context);
 
-                var task = await client.ExecuteWithErrorHandling<TaskStatusChangedWebhookResponse>(request);
+                var task = await client.ExecuteWithErrorHandling<TaskStatusChangedWrapper>(request);
 
                 await WebhookLogger.LogAsync(new
                 {
                     Message = "Task retrieved in OnWebhookSubscribedAsync",
-                    ReturnedStatus = task.Status
+                    ReturnedStatus = task.Task.Status
                 });
 
-                if (taskOptionalRequest.Status.Contains(task.Status))
+                if (taskOptionalRequest.Status.Contains(task.Task.Status))
                 {
                     await WebhookLogger.LogAsync(new
                     {
                         Message = "Task already in desired status, triggering Flight!",
-                        CurrentStatus = task.Status
+                        CurrentStatus = task.Task.Status
                     });
 
                     var wrapper = new TaskStatusChangedWrapper
                     {
                         Task = new Apps.Crowdin.Webhooks.Models.Payload.Task.TaskStatusChangedPayload
                         {
-                            Id = task.Id,
-                            Status = task.Status,
+                            Id = task.Task.Id,
+                            Status = task.Task.Status,
                         }
                     };
 
@@ -90,7 +90,7 @@ public class TaskStatusChangedHandler(InvocationContext invocationContext,[Webho
                     await WebhookLogger.LogAsync(new
                     {
                         Message = "Task status does not match the desired status",
-                        CurrentStatus = task.Status
+                        CurrentStatus = task.Task.Status
                     });
                 }
             }
