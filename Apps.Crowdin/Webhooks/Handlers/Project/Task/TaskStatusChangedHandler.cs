@@ -74,6 +74,22 @@ public class TaskStatusChangedHandler(InvocationContext invocationContext, [Webh
                         {
                             Id = task.Task.Id,
                             Status = task.Task.Status,
+                            Type = task.Task.Type,                        
+                            Vendor = task.Task.Vendor,                     
+                            OldStatus = task.Task.OldStatus,              
+                            NewStatus = task.Task.NewStatus,              
+                            Title = task.Task.Title,                      
+                            Assignees = task.Task.Assignees,               
+                            FileIds = task.Task.FileIds,                 
+                            Progress = task.Task.Progress,               
+                            Description = task.Task.Description,          
+                            TranslationUrl = task.Task.TranslationUrl,    
+                            Deadline = task.Task.Deadline,                 
+                            CreatedAt = task.Task.CreatedAt,              
+                            SourceLanguage = task.Task.SourceLanguage,    
+                            TargetLanguage = task.Task.TargetLanguage,     
+                            Project = task.Task.Project,                   
+                            TaskCreator = task.Task.TaskCreator            
                         }
                     };
 
