@@ -4,7 +4,9 @@ using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Response;
 using Apps.Crowdin.Utils;
 using Apps.Crowdin.Webhooks.Models.Inputs;
+using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Webhooks;
 using Blackbird.Applications.Sdk.Utils.Extensions.Http;
 using Blackbird.Applications.Sdk.Utils.Parsers;
@@ -16,10 +18,10 @@ using EventType = Crowdin.Api.Webhooks.EventType;
 
 namespace Apps.Crowdin.Webhooks.Handlers.Base;
 
-public abstract class ProjectWebhookHandler(
+public abstract class ProjectWebhookHandler(InvocationContext invocationContext,
     [WebhookParameter(true)] ProjectWebhookInput input,
     bool enableBatching = false)
-    : IWebhookEventHandler
+    :  BaseInvocable(invocationContext), IWebhookEventHandler
 {
     protected abstract List<EventType> SubscriptionEvents { get; }
     
