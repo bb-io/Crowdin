@@ -20,8 +20,8 @@ using Blackbird.Applications.Sdk.Common.Authentication;
 
 namespace Apps.Crowdin.Webhooks.Handlers.Project.Task;
 
-public class TaskStatusChangedHandler(InvocationContext invocationContext,[WebhookParameter(true)] ProjectWebhookInput input,
-    [WebhookParameter] GetTaskOptionalRequest taskOptionalRequest) : ProjectWebhookHandler(invocationContext,input), IAfterSubscriptionWebhookEventHandler<TaskStatusChangedWebhookResponse>
+public class TaskStatusChangedHandler(InvocationContext invocationContext, [WebhookParameter(true)] ProjectWebhookInput input,
+    [WebhookParameter] GetTaskOptionalRequest taskOptionalRequest) : ProjectWebhookHandler(invocationContext, input), IAfterSubscriptionWebhookEventHandler<TaskStatusChangedWebhookResponse>
 {
     protected override List<EventType> SubscriptionEvents => new() { EventType.TaskStatusChanged };
 
