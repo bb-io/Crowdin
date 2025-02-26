@@ -35,8 +35,8 @@ public class TaskStatusChangedWebhookResponse : CrowdinWebhookResponse<TaskStatu
         NewStatus = wrapper.Task.NewStatus;
         Status = wrapper.Task.Status;
         Title = wrapper.Task.Title;
-        AssigneeIds = wrapper.Task.Assignees?.Select(x => x.Id.ToString());
-        FileIds = wrapper.Task.FileIds.Select(x => x.ToString());
+        AssigneeIds = wrapper.Task.Assignees?.Select(x => x.Id.ToString()) ?? new List<string>();
+        FileIds = wrapper.Task.FileIds.Select(x => x.ToString()) ?? new List<string>();
         Progress = wrapper.Task.Progress;
         Description = wrapper.Task.Description;
         TranslationUrl = wrapper.Task.TranslationUrl;
