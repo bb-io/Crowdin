@@ -1,5 +1,6 @@
 ﻿using Apps.Crowdin.Constants;
 using Apps.Crowdin.Models.Dtos;
+using Apps.Crowdin.Webhooks.Handlers.Base;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
@@ -27,6 +28,13 @@ public class CrowdinEnterpriseRestClient(IEnumerable<AuthenticationCredentialsPr
 
     protected override Exception ConfigureErrorException(RestResponse response)
     {
+        WebhookLogger.LogAsync(new
+        {
+            Message = "ConfigureErrorException triggered",
+            Content = response.Content,
+            ContentType = response.ContentType
+        }).Wait();
+
         if (string.IsNullOrEmpty(response.Content))
         {
             if (string.IsNullOrEmpty(response.ErrorMessage))
@@ -40,6 +48,12 @@ public class CrowdinEnterpriseRestClient(IEnumerable<AuthenticationCredentialsPr
         if (response.ContentType?.Contains("application/json") == true || (response.Content.TrimStart().StartsWith("{") || response.Content.TrimStart().StartsWith("[")))
         {
             var error = JsonConvert.DeserializeObject<ErrorResponse>(response.Content!)!;
+
+            WebhookLogger.LogAsync(new
+            {
+                Message = "Deserialized error",
+                Error = error
+            }).Wait();
             throw new PluginApplicationException($"Code: {error.Error.Code}; Message: {error.Error.Message}");
         }
         else if (response.ContentType?.Contains("text/html", StringComparison.OrdinalIgnoreCase) == true || response.Content.StartsWith("<"))

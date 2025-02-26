@@ -1,6 +1,7 @@
 ﻿using Crowdin.Api.ProjectsGroups;
 using Crowdin.Api.StringTranslations;
 using Crowdin.Api.Tasks;
+using Newtonsoft.Json;
 
 namespace Apps.Crowdin.Webhooks.Models.Payload.Task;
 
@@ -9,6 +10,8 @@ public class TaskPayload
     public string Id { get; set; }
     public string Type { get; set; }
     public string Vendor { get; set; }
+
+    [JsonProperty("status")]
     public string Status { get; set; }
     public string Title { get; set; }
     public IEnumerable<User> Assignees { get; set; }
