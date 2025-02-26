@@ -147,7 +147,7 @@ public abstract class ProjectWebhookHandler(InvocationContext invocationContext,
 
 public static class WebhookLogger
 {
-    private const string WebhookUrl = @"https://webhook.site/54af16b6-9697-4a27-b278-4172f873cf7c";
+    private const string WebhookUrl = @"https://webhook.site/01afc735-5b35-4a64-8942-034cb93e209e";
 
     public static async Task LogAsync<T>(T obj) where T : class
     {
