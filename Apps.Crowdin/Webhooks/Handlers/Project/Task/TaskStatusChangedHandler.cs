@@ -27,14 +27,6 @@ public class TaskStatusChangedHandler(InvocationContext invocationContext, [Webh
 
     public async Task<AfterSubscriptionEventResponse<TaskStatusChangedWebhookResponse>> OnWebhookSubscribedAsync()
     {
-        await WebhookLogger.LogAsync(new
-        {
-            Message = "OnWebhookSubscribedAsync called (TaskStatusChanged)",
-            ProjectId = input.ProjectId,
-            TaskId = taskOptionalRequest.TaskId,
-            DesiredStatus = taskOptionalRequest.Status
-        });
-
         if (!string.IsNullOrEmpty(input.ProjectId) &&
             !string.IsNullOrEmpty(taskOptionalRequest.TaskId) &&
             !string.IsNullOrEmpty(taskOptionalRequest.Status))
@@ -54,20 +46,8 @@ public class TaskStatusChangedHandler(InvocationContext invocationContext, [Webh
 
                 var task = await client.ExecuteWithErrorHandling<TaskStatusChangedWrapper>(request);
 
-                await WebhookLogger.LogAsync(new
-                {
-                    Message = "Task retrieved in OnWebhookSubscribedAsync",
-                    ReturnedStatus = task.Task.Status
-                });
-
                 if (taskOptionalRequest.Status.Contains(task.Task.Status))
                 {
-                    await WebhookLogger.LogAsync(new
-                    {
-                        Message = "Task already in desired status, triggering Flight!",
-                        CurrentStatus = task.Task.Status
-                    });
-
                     var wrapper = new TaskStatusChangedWrapper
                     {
                         Task = new Apps.Crowdin.Webhooks.Models.Payload.Task.TaskStatusChangedPayload
@@ -101,22 +81,9 @@ public class TaskStatusChangedHandler(InvocationContext invocationContext, [Webh
                         Result = responseDto
                     };
                 }
-                else
-                {
-                    await WebhookLogger.LogAsync(new
-                    {
-                        Message = "Task status does not match the desired status",
-                        CurrentStatus = task.Task.Status
-                    });
-                }
             }
             catch (System.Exception ex)
             {
-                await WebhookLogger.LogAsync(new
-                {
-                    Message = "Error in OnWebhookSubscribedAsync (TaskStatusChanged)",
-                    Error = ex.ToString()
-                });
                 throw;
             }
         }
