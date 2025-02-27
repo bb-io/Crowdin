@@ -325,12 +325,12 @@ public class ProjectWebhookList(InvocationContext invocationContext) : BaseInvoc
     {
         var result = HandleWehookRequest<TaskStatusChangedWrapper, TaskStatusChangedWebhookResponse>(webhookRequest);
 
-        if ((taskOptionalRequest.TaskId != null && taskOptionalRequest.TaskId != result.Result.Result?.Id) ||
-               (!string.IsNullOrEmpty(taskOptionalRequest.Status) && taskOptionalRequest.Status != result.Result.Result?.Status) ||
-               (!string.IsNullOrEmpty(taskOptionalRequest.Type) && !string.Equals(result.Result.Result?.Type, taskOptionalRequest.Type, StringComparison.OrdinalIgnoreCase)))
-        {
-            return Task.FromResult(PreflightResponse<TaskStatusChangedWebhookResponse>());
-        }
+        //if ((taskOptionalRequest.TaskId != null && taskOptionalRequest.TaskId != result.Result.Result?.Id) ||
+        //       (!string.IsNullOrEmpty(taskOptionalRequest.Status) && taskOptionalRequest.Status != result.Result.Result?.Status) ||
+        //       (!string.IsNullOrEmpty(taskOptionalRequest.Type) && !string.Equals(result.Result.Result?.Type, taskOptionalRequest.Type, StringComparison.OrdinalIgnoreCase)))
+        //{
+        //    return Task.FromResult(PreflightResponse<TaskStatusChangedWebhookResponse>());
+        //}
         return result;
     }
 

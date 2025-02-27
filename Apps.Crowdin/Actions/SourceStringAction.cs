@@ -5,6 +5,7 @@ using Apps.Crowdin.Models.Response.SourceString;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Crowdin.Api.SourceStrings;
@@ -45,11 +46,15 @@ public class SourceStringAction(InvocationContext invocationContext) : AppInvoca
     [Action("Get source string", Description = "Get specific source string")]
     public async Task<SourceStringEntity> GetString([ActionParameter] GetSourceStringRequest input)
     {
-        var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
-        var intStringId = IntParser.Parse(input.StringId, nameof(input.StringId));
-        
+        if (!int.TryParse(input.ProjectId, out var intProjectId))
+            throw new PluginMisconfigurationException($"Invalid Project ID: {input.ProjectId} must be a numeric value. Please check the input project ID");
+
+        if (!int.TryParse(input.StringId, out var intStringId))
+            throw new PluginMisconfigurationException($"Invalid String ID: {input.StringId} must be a numeric value. Please check the input string ID");
+
         var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => await SdkClient.SourceStrings
-            .GetString(intProjectId!.Value, intStringId!.Value, input.DenormalizePlaceholders ?? false));
+        .GetString(intProjectId, intStringId, input.DenormalizePlaceholders ?? false));
+
         return new(response);
     }
 
