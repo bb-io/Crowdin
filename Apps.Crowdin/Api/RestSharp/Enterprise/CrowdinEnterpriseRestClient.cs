@@ -17,7 +17,7 @@ public class CrowdinEnterpriseRestClient(IEnumerable<AuthenticationCredentialsPr
     private static RestClientOptions GetRestClientOptions(IEnumerable<AuthenticationCredentialsProvider> creds)
     {
         var domain = creds.Get(CredsNames.OrganizationDomain).Value;
-        
+
         return new()
         {
             BaseUrl = $"https://{domain}.api.crowdin.com/api/v2".ToUri(),

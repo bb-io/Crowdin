@@ -1,4 +1,5 @@
-﻿using Apps.Crowdin.Models.Request.File;
+﻿using Apps.Crowdin.Invocables;
+using Apps.Crowdin.Models.Request.File;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.SourceString;
 using Apps.Crowdin.Models.Request.Suggestions;
@@ -28,13 +29,14 @@ using Apps.Crowdin.Webhooks.Models.Payload.Task.Wrapper;
 using Apps.Crowdin.Webhooks.Models.Payload.Translation.Response;
 using Apps.Crowdin.Webhooks.Models.Payload.Translation.Wrappers;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Webhooks;
 using Newtonsoft.Json;
 
 namespace Apps.Crowdin.Webhooks.Lists;
 
 [WebhookList]
-public class ProjectWebhookList
+public class ProjectWebhookList(InvocationContext invocationContext) : BaseInvocable(invocationContext)
 {
     #region File
 
@@ -44,13 +46,13 @@ public class ProjectWebhookList
         [WebhookParameter] GetFileOptionalRequest fileOptionalRequest)
     {
         var result = await HandleWehookRequest<FileWithUserWrapper, FileWithUserWebhookResponse>(webhookRequest);
-        
-        if(fileOptionalRequest.FileId != null &&
+
+        if (fileOptionalRequest.FileId != null &&
            fileOptionalRequest.FileId != result.Result?.File.Id)
         {
             return PreflightResponse<FileWithUserWebhookResponse>();
         }
-        
+
         return result;
     }
 
@@ -63,8 +65,8 @@ public class ProjectWebhookList
         [WebhookParameter] GetFileOptionalRequest fileOptionalRequest)
     {
         var result = HandleWehookRequest<FileWithLanguageWrapper, FileWithLanguageWebhookResponse>(webhookRequest);
-        
-        if(fileOptionalRequest.FileId != null &&
+
+        if (fileOptionalRequest.FileId != null &&
            fileOptionalRequest.FileId != result.Result.Result?.File.Id)
         {
             return Task.FromResult(PreflightResponse<FileWithLanguageWebhookResponse>());
@@ -82,14 +84,14 @@ public class ProjectWebhookList
         [WebhookParameter] GetFileOptionalRequest fileOptionalRequest)
     {
         var result = HandleWehookRequest<FileWithUserWrapper, FileWithUserWebhookResponse>(webhookRequest);
-        
-        
-        if(fileOptionalRequest.FileId != null &&
+
+
+        if (fileOptionalRequest.FileId != null &&
            fileOptionalRequest.FileId != result.Result.Result?.File.Id)
         {
             return Task.FromResult(PreflightResponse<FileWithUserWebhookResponse>());
         }
-        
+
         return result;
     }
 
@@ -98,13 +100,13 @@ public class ProjectWebhookList
         [WebhookParameter] GetFileOptionalRequest fileOptionalRequest)
     {
         var result = HandleWehookRequest<FileWithLanguageWrapper, FileWithLanguageWebhookResponse>(webhookRequest);
-        
-        if(fileOptionalRequest.FileId != null &&
+
+        if (fileOptionalRequest.FileId != null &&
            fileOptionalRequest.FileId != result.Result.Result?.File.Id)
         {
             return Task.FromResult(PreflightResponse<FileWithLanguageWebhookResponse>());
         }
-        
+
         return result;
     }
 
@@ -113,13 +115,13 @@ public class ProjectWebhookList
         [WebhookParameter] GetFileOptionalRequest fileOptionalRequest)
     {
         var result = await HandleWehookRequest<FileWithUserWrapper, FileWithUserWebhookResponse>(webhookRequest);
-        
-        if(fileOptionalRequest.FileId != null &&
+
+        if (fileOptionalRequest.FileId != null &&
            fileOptionalRequest.FileId != result.Result?.File.Id)
         {
             return PreflightResponse<FileWithUserWebhookResponse>();
         }
-        
+
         return result;
     }
 
@@ -154,13 +156,13 @@ public class ProjectWebhookList
         [WebhookParameter] GetFileOptionalRequest fileOptionalRequest)
     {
         var result = HandleWehookRequest<EventsWebhookResponse<SourceStringWrapper>, SourceStringWebhookResponse>(webhookRequest);
-        
-        if(fileOptionalRequest.FileId != null &&
+
+        if (fileOptionalRequest.FileId != null &&
            fileOptionalRequest.FileId != result.Result.Result?.String.FileId)
         {
             return Task.FromResult(PreflightResponse<SourceStringWebhookResponse>());
         }
-        
+
         return result;
     }
 
@@ -173,20 +175,20 @@ public class ProjectWebhookList
         [WebhookParameter] GetFileOptionalRequest fileOptionalRequest,
         [WebhookParameter] GetSourceStringOptionalRequest stringOptionalRequest)
     {
-        var result =HandleWehookRequest<EventsWebhookResponse<SourceStringWrapper>, SourceStringWebhookResponse>(webhookRequest);
-        
-        if(fileOptionalRequest.FileId != null &&
+        var result = HandleWehookRequest<EventsWebhookResponse<SourceStringWrapper>, SourceStringWebhookResponse>(webhookRequest);
+
+        if (fileOptionalRequest.FileId != null &&
            fileOptionalRequest.FileId != result.Result.Result?.String.FileId)
         {
             return Task.FromResult(PreflightResponse<SourceStringWebhookResponse>());
         }
-        
-        if(stringOptionalRequest.StringId != null &&
+
+        if (stringOptionalRequest.StringId != null &&
            stringOptionalRequest.StringId != result.Result.Result?.String.Id)
         {
             return Task.FromResult(PreflightResponse<SourceStringWebhookResponse>());
         }
-        
+
         return result;
     }
 
@@ -196,10 +198,10 @@ public class ProjectWebhookList
 
     [Webhook("On string comment created", typeof(StringCommentCreatedHandler),
         Description = "On string comment created")]
-    public async Task<WebhookResponse<StringCommentWebhookResponse>> OnStringCommentCreated(WebhookRequest webhookRequest , [WebhookParameter] ContainsInputRequest input)
-       {
-        
-        var response = await  HandleWehookRequest<StringCommentWrapper, StringCommentWebhookResponse>(webhookRequest);
+    public async Task<WebhookResponse<StringCommentWebhookResponse>> OnStringCommentCreated(WebhookRequest webhookRequest, [WebhookParameter] ContainsInputRequest input)
+    {
+
+        var response = await HandleWehookRequest<StringCommentWrapper, StringCommentWebhookResponse>(webhookRequest);
 
         if (!string.IsNullOrWhiteSpace(input.Text))
         {
@@ -237,13 +239,13 @@ public class ProjectWebhookList
         [WebhookParameter] GetSuggestionOptionalRequest fileOptionalRequest)
     {
         var result = HandleWehookRequest<SuggestionWrapper, SuggestionWebhookResponse>(webhookRequest);
-        
-        if(fileOptionalRequest.SuggestionId != null &&
+
+        if (fileOptionalRequest.SuggestionId != null &&
            fileOptionalRequest.SuggestionId != result.Result.Result?.Id)
         {
             return Task.FromResult(PreflightResponse<SuggestionWebhookResponse>());
         }
-        
+
         return result;
     }
 
@@ -252,13 +254,13 @@ public class ProjectWebhookList
         [WebhookParameter] GetSuggestionOptionalRequest fileOptionalRequest)
     {
         var result = HandleWehookRequest<SuggestionWrapper, SuggestionWebhookResponse>(webhookRequest);
-        
-        if(fileOptionalRequest.SuggestionId != null &&
+
+        if (fileOptionalRequest.SuggestionId != null &&
            fileOptionalRequest.SuggestionId != result.Result.Result?.Id)
         {
             return Task.FromResult(PreflightResponse<SuggestionWebhookResponse>());
         }
-        
+
         return result;
     }
 
@@ -272,13 +274,13 @@ public class ProjectWebhookList
         [WebhookParameter] GetSuggestionOptionalRequest fileOptionalRequest)
     {
         var result = HandleWehookRequest<SuggestionWrapper, SuggestionWebhookResponse>(webhookRequest);
-        
-        if(fileOptionalRequest.SuggestionId != null &&
+
+        if (fileOptionalRequest.SuggestionId != null &&
            fileOptionalRequest.SuggestionId != result.Result.Result?.Id)
         {
             return Task.FromResult(PreflightResponse<SuggestionWebhookResponse>());
         }
-        
+
         return result;
     }
 
@@ -328,7 +330,7 @@ public class ProjectWebhookList
                (!string.IsNullOrEmpty(taskOptionalRequest.Type) && !string.Equals(result.Result.Result?.Type, taskOptionalRequest.Type, StringComparison.OrdinalIgnoreCase)))
         {
             return Task.FromResult(PreflightResponse<TaskStatusChangedWebhookResponse>());
-        }       
+        }
         return result;
     }
 
@@ -348,14 +350,14 @@ public class ProjectWebhookList
 
         var result = new TranslationUpdatedWebhookResponse();
         result.ConfigureResponse(data);
-        
-        if(fileOptionalRequest.FileId != null &&
+
+        if (fileOptionalRequest.FileId != null &&
            fileOptionalRequest.FileId != result.NewTranslation.SourceString.FileId)
         {
             return PreflightResponse<TranslationUpdatedWebhookResponse>();
         }
-        
-        if(sourceStringOptionalRequest.StringId != null &&
+
+        if (sourceStringOptionalRequest.StringId != null &&
            sourceStringOptionalRequest.StringId != result.NewTranslation.SourceString.Id)
         {
             return PreflightResponse<TranslationUpdatedWebhookResponse>();

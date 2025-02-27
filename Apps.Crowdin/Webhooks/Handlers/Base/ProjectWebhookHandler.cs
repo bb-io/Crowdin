@@ -4,8 +4,11 @@ using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Response;
 using Apps.Crowdin.Utils;
 using Apps.Crowdin.Webhooks.Models.Inputs;
+using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Webhooks;
+using Blackbird.Applications.Sdk.Utils.Extensions.Http;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Crowdin.Api;
 using Crowdin.Api.Webhooks;
@@ -15,18 +18,18 @@ using EventType = Crowdin.Api.Webhooks.EventType;
 
 namespace Apps.Crowdin.Webhooks.Handlers.Base;
 
-public abstract class ProjectWebhookHandler(
+public abstract class ProjectWebhookHandler(InvocationContext invocationContext,
     [WebhookParameter(true)] ProjectWebhookInput input,
     bool enableBatching = false)
-    : IWebhookEventHandler
+    : BaseInvocable(invocationContext), IWebhookEventHandler
 {
     protected abstract List<EventType> SubscriptionEvents { get; }
-    
+
     private int ProjectId { get; } = IntParser.Parse(input.ProjectId, nameof(input.ProjectId))!.Value;
-    
+
     private bool EnableBatchingWebhooks { get; } = enableBatching;
-    
-    private static readonly IApiClientFactory ApiClientFactory = new ApiClientFactory();    
+
+    private static readonly IApiClientFactory ApiClientFactory = new ApiClientFactory();
 
     public async Task SubscribeAsync(
         IEnumerable<AuthenticationCredentialsProvider> creds,
@@ -64,7 +67,7 @@ public abstract class ProjectWebhookHandler(
 
         if (webhookToDelete is null)
             return;
-        
+
         await client.Webhooks.DeleteWebhook(ProjectId, webhookToDelete.Data.Id);
     }
 
@@ -73,7 +76,7 @@ public abstract class ProjectWebhookHandler(
     {
         var endpoint = $"/projects/{ProjectId}/webhooks";
         var client = ApiClientFactory.BuildRestClient(creds);
-        
+
         return Paginator.Paginate(async (lim, offset) =>
         {
             var source = $"{endpoint}?limit={lim}&offset={offset}";
