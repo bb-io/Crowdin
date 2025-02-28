@@ -10,6 +10,7 @@ public class SourceStringEntity
     [Display("File ID")] public string FileId { get; set; }
     [Display("Branch ID")] public string? BranchId { get; set; }
     [Display("Directory ID")] public string? DirectoryId { get; set; }
+    [Display("Web URL")] public string? WebUrl { get; set; }
     public string Identifier { get; set; }
     public string Text { get; set; }
     public string Type { get; set; }
@@ -28,5 +29,6 @@ public class SourceStringEntity
         Type = sourceString.Type;
         Context = sourceString.Context;
         CreatedAt = sourceString.CreatedAt.DateTime;
+        WebUrl = sourceString.WebUrl;
     }
 }
