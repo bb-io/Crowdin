@@ -43,6 +43,32 @@ public class SourceStringAction(InvocationContext invocationContext) : AppInvoca
         return new(strings);
     }
 
+    [Action("Find source string", Description = "Return first matching source strings")]
+    public async Task<SourceStringEntity> FindString([ActionParameter] ListStringsRequest input)
+    {
+        var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
+
+        var request = new StringsListParams
+        {
+            Limit = 1,
+            Offset = 0,
+            FileId = IntParser.Parse(input.FileId, nameof(input.FileId)),
+            BranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId)),
+            DirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId)),
+            LabelIds = input.LabelIds,
+            Filter = input.Filter,
+            CroQL = input.CroQl,
+            Scope = EnumParser.Parse<StringScope>(input.Scope, nameof(input.Scope)),
+            DenormalizePlaceholders = input.DenormalizePlaceholders is true ? 1 : 0,
+        };
+
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => await SdkClient.SourceStrings
+            .ListStrings(intProjectId!.Value, request));
+
+        return new(response.Data.FirstOrDefault());
+    }
+
+
     [Action("Get source string", Description = "Get specific source string")]
     public async Task<SourceStringEntity> GetString([ActionParameter] GetSourceStringRequest input)
     {
