@@ -131,7 +131,7 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
             throw new PluginMisconfigurationException($"Invalid Project ID: {project.ProjectId} must be a numeric value. Please check the input project ID");
 
         if (!int.TryParse(input.PrecedingTask, out var intPrecedingTask))
-            throw new PluginMisconfigurationException($"Invalid Preceding task ID: {input.PrecedingTask} must be a numeric value. Please check the input project ID");
+            throw new PluginMisconfigurationException($"Invalid Preceding task ID: {input.PrecedingTask} must be a numeric value. Please check the input task ID");
 
 
         var request = new PendingTaskCreateForm()

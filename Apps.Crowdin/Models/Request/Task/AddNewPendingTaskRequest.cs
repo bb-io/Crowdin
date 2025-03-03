@@ -18,7 +18,7 @@ public class AddNewPendingTaskRequest
 
     public string? Description { get; set; }
     
-    [StaticDataSource(typeof(ProjectMemberDataSourceHandler))]
+    [DataSource(typeof(ProjectMemberDataSourceHandler))]
     public IEnumerable<string>? Assignees { get; set; }
 
     public DateTime? Deadline { get; set; }

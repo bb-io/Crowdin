@@ -7,7 +7,7 @@ public class PendingTaskTypeHandler : IStaticDataSourceItemHandler
 {
     private static Dictionary<string, string> Data => new()
     {
-       { "1", "Proofread" },
+        { "Proofread", "Proofread" }
     };
     
     public IEnumerable<DataSourceItem> GetData()
