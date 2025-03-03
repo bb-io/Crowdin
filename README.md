@@ -105,6 +105,7 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 ### Task 
 
 - **Add task** Add new task
+- **Add pending task** Add new pending task
 - **Delete task** Delete specific task
 - **Download task strings as XLIFF** Download specific task strings as XLIFF
 - **Get task** Get specific task
