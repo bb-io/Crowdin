@@ -121,6 +121,39 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         return new(response);
     }
 
+    [Action("Add pending task", Description = "Add new pending task")]
+    public async Task<TaskEntity> AddPendingTask(
+    [ActionParameter] AssigneesRequest project,
+    [ActionParameter] AddNewPendingTaskRequest input)
+    {
+        
+        if (!int.TryParse(project.ProjectId, out var intProjectId))
+            throw new PluginMisconfigurationException($"Invalid Project ID: {project.ProjectId} must be a numeric value. Please check the input project ID");
+
+        if (!int.TryParse(input.PrecedingTask, out var intPrecedingTask))
+            throw new PluginMisconfigurationException($"Invalid Preceding task ID: {input.PrecedingTask} must be a numeric value. Please check the input project ID");
+
+
+        var request = new PendingTaskCreateForm()
+        {
+            PrecedingTaskId = intPrecedingTask,
+            Title = input.Title,
+            Type = EnumParser.Parse<TaskType>(input.Type, nameof(input.Type))!.Value,
+            Description = input.Description,
+            Assignees = project.Assignees?.Select(assigneeId =>
+            {
+                if (!int.TryParse(assigneeId, out var parsedAssigneeId))
+                    throw new PluginMisconfigurationException($"Invalid Assignee ID: {assigneeId} must be a numeric value. Please check the input assignee ID");
+                return new TaskAssigneeForm { Id = parsedAssigneeId };
+            }).ToList(),
+            DeadLine = input.Deadline
+        };
+
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+        await SdkClient.Tasks.AddTask(intProjectId, request));
+        return new(response);
+    }
+
     [Action("Delete task", Description = "Delete specific task")]
     public async Task DeleteTask(
         [ActionParameter] ProjectRequest project,
