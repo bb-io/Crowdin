@@ -1,10 +1,13 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Crowdin.DataSourceHandlers.EnumHandlers;
+using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dictionaries;
 
 namespace Apps.Crowdin.Models.Request.Task
 {
     public class UpdateTaskRequest
     {
         [Display("Status")]
+        [StaticDataSource(typeof(UpdateTaskStatusHandler))]
         public string? Status { get; set; }
 
         [Display("Title")]

@@ -142,6 +142,11 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
         [ActionParameter] ProjectRequest project,
         [ActionParameter] BuildRequest build)
     {
+        if (!int.TryParse(build.BuildId, out int intBuildID)) 
+        {
+            throw new PluginMisconfigurationException($"Invalid Build ID: {project.ProjectId} must be a numeric value. Please check the input Build ID");
+        }
+
         var filesArchive = await DownloadTranslationsAsZip(project, build);
 
         var zipFile = await FileOperationWrapper.ExecuteFileDownloadOperation(() => fileManagementClient.DownloadAsync(filesArchive.File), filesArchive.File.Name);
