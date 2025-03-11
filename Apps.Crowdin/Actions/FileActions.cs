@@ -226,7 +226,8 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
 
         var client = SdkClient;
 
-        var downloadLink = await client.SourceFiles.DownloadFile(intProjectId!.Value, intFileId!.Value);
+        var downloadLink = await ExceptionWrapper.ExecuteWithErrorHandling(() =>
+            client.SourceFiles.DownloadFile(intProjectId!.Value, intFileId!.Value));
 
         var fileInfo = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
             await client.SourceFiles.GetFile<FileResource>(intProjectId!.Value, intFileId!.Value));
