@@ -320,17 +320,18 @@ public class ProjectWebhookList(InvocationContext invocationContext) : BaseInvoc
     }
 
     [Webhook("On task status changed", typeof(TaskStatusChangedHandler), Description = "On task status changed")]
-    public Task<WebhookResponse<TaskStatusChangedWebhookResponse>> OnTaskStatusChanged(WebhookRequest webhookRequest,
+    public async Task<WebhookResponse<TaskStatusChangedWebhookResponse>> OnTaskStatusChanged(WebhookRequest webhookRequest,
         [WebhookParameter] GetTaskOptionalRequest taskOptionalRequest)
     {
-        var result = HandleWehookRequest<TaskStatusChangedWrapper, TaskStatusChangedWebhookResponse>(webhookRequest);
+        var result = await HandleWehookRequest<TaskStatusChangedWrapper, TaskStatusChangedWebhookResponse>(webhookRequest);
 
-        if ((taskOptionalRequest.TaskId != null && taskOptionalRequest.TaskId != result.Result.Result?.Id) ||
-               (!string.IsNullOrEmpty(taskOptionalRequest.Status) && taskOptionalRequest.Status != result.Result.Result?.Status) ||
-               (!string.IsNullOrEmpty(taskOptionalRequest.Type) && !string.Equals(result.Result.Result?.Type, taskOptionalRequest.Type, StringComparison.OrdinalIgnoreCase)))
+        if ((taskOptionalRequest.TaskId != null && taskOptionalRequest.TaskId != result.Result?.Id) ||
+               (!string.IsNullOrEmpty(taskOptionalRequest.Status) && taskOptionalRequest.Status != result.Result?.Status) ||
+               (!string.IsNullOrEmpty(taskOptionalRequest.Type) && !string.Equals(result.Result?.Type, taskOptionalRequest.Type, StringComparison.OrdinalIgnoreCase)))
         {
-            return Task.FromResult(PreflightResponse<TaskStatusChangedWebhookResponse>());
+            return PreflightResponse<TaskStatusChangedWebhookResponse>();
         }
+        
         return result;
     }
 
@@ -374,7 +375,7 @@ public class ProjectWebhookList(InvocationContext invocationContext) : BaseInvoc
     public async Task<WebhookResponse<TV>> HandleWehookRequest<T, TV>(WebhookRequest webhookRequest)
         where TV : CrowdinWebhookResponse<T>, new()
     {
-        var data = JsonConvert.DeserializeObject<T>(webhookRequest.Body.ToString());
+        var data = JsonConvert.DeserializeObject<T>(webhookRequest.Body.ToString()!);
 
         if (data is null)
             throw new InvalidCastException(nameof(webhookRequest.Body));
