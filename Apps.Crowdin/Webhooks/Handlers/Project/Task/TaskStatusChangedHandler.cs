@@ -1,22 +1,14 @@
-﻿using Apps.Crowdin.Factories;
-using System.Net;
-using Apps.Crowdin.Models.Request.Task;
+﻿using Apps.Crowdin.Models.Request.Task;
 using Apps.Crowdin.Webhooks.Handlers.Base;
 using Apps.Crowdin.Webhooks.Models.Inputs;
-using Apps.Crowdin.Webhooks.Models.Payload.Task;
 using Apps.Crowdin.Webhooks.Models.Payload.Task.Response;
 using Apps.Crowdin.Webhooks.Models.Payload.Task.Wrapper;
 using Blackbird.Applications.Sdk.Common.Webhooks;
-using Crowdin.Api.Tasks;
 using EventType = Crowdin.Api.Webhooks.EventType;
 using Blackbird.Applications.Sdk.Common.Invocation;
-using Apps.Crowdin.Api.RestSharp.Enterprise;
-using Apps.Crowdin.Api.RestSharp;
 using RestSharp;
-using Blackbird.Applications.Sdk.Utils.Extensions.Http;
-using Apps.Crowdin.Webhooks.Lists;
-using Apps.Crowdin.Invocables;
-using Blackbird.Applications.Sdk.Common.Authentication;
+using Apps.Crowdin.Models.Dtos;
+using Apps.Crowdin.Webhooks.Models.Payload.Task;
 
 namespace Apps.Crowdin.Webhooks.Handlers.Project.Task;
 
@@ -44,32 +36,32 @@ public class TaskStatusChangedHandler(InvocationContext invocationContext, [Webh
                     Method.Get,
                     context);
 
-                var task = await client.ExecuteWithErrorHandling<TaskStatusChangedWrapper>(request);
+                var task = await client.ExecuteWithErrorHandling<DataWrapperDto<TaskStatusChangedPayload>>(request);
 
-                if (taskOptionalRequest.Status.Contains(task.Task.Status))
+                if (taskOptionalRequest.Status.Contains(task.Data.Status))
                 {
                     var wrapper = new TaskStatusChangedWrapper
                     {
                         Task = new Apps.Crowdin.Webhooks.Models.Payload.Task.TaskStatusChangedPayload
                         {
-                            Id = task.Task.Id,
-                            Status = task.Task.Status,
-                            Type = task.Task.Type,                        
-                            Vendor = task.Task.Vendor,                     
-                            OldStatus = task.Task.OldStatus,              
-                            NewStatus = task.Task.NewStatus,              
-                            Title = task.Task.Title,                      
-                            Assignees = task.Task.Assignees,               
-                            FileIds = task.Task.FileIds,                 
-                            Progress = task.Task.Progress,               
-                            Description = task.Task.Description,          
-                            TranslationUrl = task.Task.TranslationUrl,    
-                            Deadline = task.Task.Deadline,                 
-                            CreatedAt = task.Task.CreatedAt,              
-                            SourceLanguage = task.Task.SourceLanguage,    
-                            TargetLanguage = task.Task.TargetLanguage,     
-                            Project = task.Task.Project,                   
-                            TaskCreator = task.Task.TaskCreator            
+                            Id = task.Data.Id,
+                            Status = task.Data.Status,
+                            Type = task.Data.Type,                        
+                            Vendor = task.Data.Vendor,                     
+                            OldStatus = task.Data.OldStatus,              
+                            NewStatus = task.Data.NewStatus,              
+                            Title = task.Data.Title,                      
+                            Assignees = task.Data.Assignees,               
+                            FileIds = task.Data.FileIds,                 
+                            Progress = task.Data.Progress,               
+                            Description = task.Data.Description,          
+                            TranslationUrl = task.Data.TranslationUrl,    
+                            Deadline = task.Data.Deadline,                 
+                            CreatedAt = task.Data.CreatedAt,              
+                            SourceLanguage = task.Data.SourceLanguage,    
+                            TargetLanguage = task.Data.TargetLanguage,     
+                            Project = task.Data.Project,                   
+                            TaskCreator = task.Data.TaskCreator            
                         }
                     };
 

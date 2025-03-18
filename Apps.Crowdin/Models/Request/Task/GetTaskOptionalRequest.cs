@@ -10,11 +10,9 @@ public class GetTaskOptionalRequest
     [Display("Task ID")]
     public string? TaskId { get; set; }
 
-    [Display("Status")]
-    [StaticDataSource(typeof(TaskStatusTypeHandler))]
+    [Display("Status"), StaticDataSource(typeof(TaskStatusTypeHandler))]
     public string? Status {  get; set; }
 
-    [Display("Task type")]
-    [StaticDataSource(typeof(TaskTypeWebhookHandler))]
+    [Display("Task type"), StaticDataSource(typeof(TaskTypeWebhookHandler))]
     public string? Type { get; set; }
 }
