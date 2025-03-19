@@ -58,7 +58,7 @@ public class TeamActions(InvocationContext invocationContext) : AppInvocable(inv
     }
 
     [Action("[Enterprise] Search team members", Description = "Search team members in a specified team")]
-    public async Task<IEnumerable<TeamMember>> ListTeamMembers(
+    public async Task<SearchTeamMembersResponse> ListTeamMembers(
         [ActionParameter] TeamRequest team)
     {
         CheckAccessToEnterpriseAction();
@@ -68,7 +68,7 @@ public class TeamActions(InvocationContext invocationContext) : AppInvocable(inv
 
         var result = responseList.Data.Select(wrapper => wrapper).ToList();
 
-        return result;
+        return new SearchTeamMembersResponse { Members = result, Ids = result.Select(x => x.Id.ToString()).ToList() };
     }
 
     private Task<ResponseList<Team>> ListTeamsAsync(int limit = 25, int offset = 0)
