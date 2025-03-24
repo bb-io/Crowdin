@@ -36,7 +36,7 @@ namespace Tests.Crowdin
         {
             var action = new TaskActions(InvocationContext, FileManager);
 
-            var input1 = new ListTasksRequest { ProjectId = "750225" };
+            var input1 = new ListTasksRequest { ProjectId = "19" };
 
             var result = await action.ListTasks(input1);
 
