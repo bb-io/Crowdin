@@ -34,7 +34,7 @@ namespace Tests.Crowdin
             var teamId = new TeamRequest { TeamId = "1" };
 
             var response = await action.ListTeamMembers(teamId);
-            foreach (var member in response)
+            foreach (var member in response.Members)
             {
                 Console.WriteLine($"{member.FirstName} - {member.Id} - {member.LastName}");
                 Assert.IsNotNull(member);

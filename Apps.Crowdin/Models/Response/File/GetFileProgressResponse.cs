@@ -9,9 +9,17 @@ namespace Apps.Crowdin.Models.Response.File
         [Display("Progress")]
         public IEnumerable<FileLanguageProgressEntity> Progress { get; set; }
 
+        [Display("All languages translated")]
+        public bool AllTranslated {get; set;}
+
+        [Display("All languages approved")]
+        public bool AllApproved { get; set; }
+
         public GetFileProgressResponse(IEnumerable<FileLanguageProgressEntity> progress)
         {
             Progress = progress;
+            AllTranslated = progress.All(x => x.TranslationProgress == 100);
+            AllApproved = progress.All(x => x.ApprovalProgress == 100);
         }
     }
 
