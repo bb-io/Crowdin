@@ -12,6 +12,7 @@ using Blackbird.Applications.Sdk.Utils.Parsers;
 using Blackbird.Applications.Sdk.Utils.Utilities;
 using Crowdin.Api.TranslationMemory;
 using Apps.Crowdin.Invocables;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Crowdin.Actions;
 
@@ -97,15 +98,24 @@ public class TranslationMemoryActions(InvocationContext invocationContext, IFile
     public async Task<DownloadFileResponse> DownloadTranslationMemory(
         [ActionParameter] DownloadTranslationMemoryRequest input)
     {
-        var intTmId = IntParser.Parse(input.TranslationMemoryId, nameof(input.TranslationMemoryId));
+
+        if (!int.TryParse(input.TranslationMemoryId, out var intTmId))
+        {
+            throw new PluginMisconfigurationException(
+                $"Invalid Translation Memory ID: {input.TranslationMemoryId} must be a numeric value. Please check the input.");
+        }
+
         var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-            await SdkClient.TranslationMemory.DownloadTm(intTmId!.Value, input.ExportId));
+            await SdkClient.TranslationMemory.DownloadTm(intTmId, input.ExportId));
 
         var fileContent = await FileDownloader.DownloadFileBytes(response.Url);
-        await FileOperationWrapper.ExecuteFileOperation(() => Task.CompletedTask, fileContent.FileStream, fileContent.Name);
-        var file = await fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType,
-            fileContent.Name);
-        return new(file);
+        await FileOperationWrapper.ExecuteFileOperation(
+            () => Task.CompletedTask, fileContent.FileStream, fileContent.Name);
+
+        var file = await fileManagementClient.UploadAsync(
+            fileContent.FileStream, fileContent.ContentType, fileContent.Name);
+
+        return new DownloadFileResponse(file);
     }
 
     [Action("Add translation memory segment", Description = "Add new segment to the translation memory")]
