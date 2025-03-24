@@ -9,6 +9,46 @@ namespace Apps.Crowdin.Api.RestSharp.Basic;
 
 public class CrowdinRestClient() : BlackBirdRestClient(new RestClientOptions { BaseUrl = new("https://api.crowdin.com/api/v2"), MaxTimeout= 200000})
 {
+    private const int MaxRetries = 3;
+    private const int DelayBetweenRetriesMs = 2000;
+
+    public override async Task<T> ExecuteWithErrorHandling<T>(RestRequest request)
+    {
+        string content = (await ExecuteWithErrorHandling(request)).Content;
+        T val = JsonConvert.DeserializeObject<T>(content, JsonSettings);
+        if (val == null)
+        {
+            throw new Exception($"Could not parse {content} to {typeof(T)}");
+        }
+
+        return val;
+    }
+
+    public override async Task<RestResponse> ExecuteWithErrorHandling(RestRequest request)
+    {
+        int retryCount = 0;
+
+        while (true)
+        {
+            RestResponse response = await ExecuteAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                if (!string.IsNullOrEmpty(response.Content) &&
+                    response.Content.Contains("Other files are currently being processed") &&
+                    retryCount < MaxRetries)
+                {
+                    retryCount++;
+                    await Task.Delay(DelayBetweenRetriesMs);
+                    continue;
+                }
+
+                throw ConfigureErrorException(response);
+            }
+
+            return response;
+        }
+    }
+
     protected override Exception ConfigureErrorException(RestResponse response)
     {
         if (string.IsNullOrEmpty(response.Content))

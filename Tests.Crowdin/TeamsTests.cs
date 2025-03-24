@@ -24,7 +24,8 @@ namespace Tests.Crowdin
                 Console.WriteLine($"{member.Name} - {member.Id}");
                 Assert.IsNotNull(member);
             }
-          
+            Assert.IsNotNull(response);
+
         }
 
         [TestMethod]
