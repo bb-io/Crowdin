@@ -11,10 +11,10 @@ namespace Apps.Crowdin.Polling.Models.Requests
     {
         [Display("Translation memory ID")]
         [DataSource(typeof(TmDataHandler))]
-        public string TranslationMemoryId { get; set; }
+        public string TranslationMemoryId { get; set; } = default!;
 
         [Display("Export ID")]
         [DataSource(typeof(TmDataHandler))]
-        public string ExportId { get; set; }
+        public string ExportId { get; set; } = default!;
     }
 }

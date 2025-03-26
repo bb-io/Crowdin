@@ -10,17 +10,17 @@ namespace Apps.Crowdin.Polling.Models.Responses;
 public class TranslationMemoryStatusResponse
 {
     [Display("ID")]
-    public string Id { get; set; }
+    public string Identifier { get; set; } = default!;
 
     [Display("Status")]
     public string Status { get; set; }
 
     [Display("Created at")]
     public DateTime CreatedAt { get; set; }
-
+    public TranslationMemoryStatusResponse() { }
     public TranslationMemoryStatusResponse(TmExportStatus response)
     {
-        Id = response.Identifier;
+        Identifier = response.Identifier;
         Status = response.Status.ToString();
         CreatedAt = response.CreatedAt.DateTime;
     }
