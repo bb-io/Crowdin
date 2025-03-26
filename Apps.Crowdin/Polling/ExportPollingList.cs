@@ -33,7 +33,7 @@ public class ExportPollingList(InvocationContext invocationContext) : AppInvocab
 
         var TmExportHasRightStatus = false;
 
-        if (tmExportStatusResponse.Status == OperationStatus.Finished)
+        if (tmExportStatusResponse.Status != OperationStatus.InProgress)
         {
             TmExportHasRightStatus = true;
         }
