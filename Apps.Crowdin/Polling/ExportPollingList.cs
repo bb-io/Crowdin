@@ -17,7 +17,6 @@ public class ExportPollingList(InvocationContext invocationContext) : AppInvocab
         PollingEventRequest<PollingMemory> request,
         [PollingEventParameter] TranslationMemoryExportStatusChangedRequest tmExportStatusChangedRequest)
     {
-        var tmExportStatusResponse = await SdkClient.TranslationMemory.CheckTmExportStatus(Convert.ToInt32(tmExportStatusChangedRequest.TranslationMemoryId), tmExportStatusChangedRequest.ExportId);
         if (request.Memory is null)
         {
             return new()
@@ -30,6 +29,7 @@ public class ExportPollingList(InvocationContext invocationContext) : AppInvocab
                 }
             };
         }
+        var tmExportStatusResponse = await SdkClient.TranslationMemory.CheckTmExportStatus(Convert.ToInt32(tmExportStatusChangedRequest.TranslationMemoryId), tmExportStatusChangedRequest.ExportId);
 
         var TmExportHasRightStatus = false;
 
