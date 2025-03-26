@@ -4,6 +4,7 @@ using Apps.Crowdin.Models.Request.Project;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Crowdin.Api;
 
 namespace Apps.Crowdin.Polling.Models.Requests;
@@ -41,7 +42,7 @@ public class PreTranslationStatusChangedRequest : ProjectRequest
             case "finished":
                 return BuildStatus.Finished;
             default:
-                throw new ArgumentException(
+                throw new PluginMisconfigurationException(
                     "Pre-translation status is wrong. Supported statuses: created, in_progress, canceled, failed, finished");
         }
     }

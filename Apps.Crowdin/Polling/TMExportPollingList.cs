@@ -5,14 +5,15 @@ using Apps.Crowdin.Polling.Models.Responses;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Polling;
 using Crowdin.Api;
+using Crowdin.Api.Translations;
 
 namespace Apps.Crowdin.Polling;
 
 [PollingEventList]
-public class ExportPollingList(InvocationContext invocationContext) : AppInvocable(invocationContext)
+public class TMExportPollingList(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
-    [PollingEvent("On TM Export Status Changed", Description = 
-        "")] //TODO: fill out description
+    [PollingEvent("On TM export status changed", Description =
+        "Triggered when the status of Translation Memory export changes to one of the specified statuses")]
     public async Task<PollingEventResponse<PollingMemory, TranslationMemoryStatusResponse>> OnPreTranslationStatusChanged(
         PollingEventRequest<PollingMemory> request,
         [PollingEventParameter] TranslationMemoryExportStatusChangedRequest tmExportStatusChangedRequest)
@@ -31,12 +32,8 @@ public class ExportPollingList(InvocationContext invocationContext) : AppInvocab
         }
         var tmExportStatusResponse = await SdkClient.TranslationMemory.CheckTmExportStatus(Convert.ToInt32(tmExportStatusChangedRequest.TranslationMemoryId), tmExportStatusChangedRequest.ExportId);
 
-        var TmExportHasRightStatus = false;
-
-        if (tmExportStatusResponse.Status != OperationStatus.InProgress)
-        {
-            TmExportHasRightStatus = true;
-        }
+        var TmExportHasRightStatus = tmExportStatusChangedRequest.GetCrowdinOperationStatuses()
+            .Any(x => x == tmExportStatusResponse.Status);
 
         var triggered = TmExportHasRightStatus && !request.Memory.Triggered;
 
