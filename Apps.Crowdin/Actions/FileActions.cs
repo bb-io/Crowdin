@@ -254,7 +254,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         if (existingFile != null)
         {
             return await UpdateFile(project, new() { FileId = existingFile.Id }, new() { File = input.File },
-                new() { UpdateOption = input.UpdateOption });
+                new() { UpdateOption = input.UpdateOption ?? string.Empty});
         }
 
         return await AddFile(project, input);
