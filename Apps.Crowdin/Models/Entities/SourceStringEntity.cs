@@ -25,7 +25,7 @@ public class SourceStringEntity
         BranchId = sourceString.BranchId?.ToString();
         DirectoryId = sourceString.DirectoryId?.ToString();
         Identifier = sourceString.Identifier;
-        Text = sourceString.Text;
+        Text = sourceString.Text.ToString();
         Type = sourceString.Type;
         Context = sourceString.Context;
         CreatedAt = sourceString.CreatedAt.DateTime;
