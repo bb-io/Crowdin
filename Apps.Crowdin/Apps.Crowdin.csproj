@@ -5,21 +5,21 @@
     <Nullable>enable</Nullable>
     <Product>Crowdin</Product>
     <Description>Cloud-based solution that streamlines localization management</Description>
-    <Version>1.2.0</Version>
+    <Version>1.2.1</Version>
     <AssemblyName>Apps.Crowdin</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.11.1" />
+    <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.12.0" />
     <PackageReference Include="Blackbird.Applications.SDK.Extensions.FileManagement" Version="1.0.1" />
     <PackageReference Include="Blackbird.Applications.Sdk.Glossaries.Utils" Version="1.0.2-alpha1" />
-    <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.0.26" />
-    <PackageReference Include="Crowdin.Api" Version="2.31.0" />
-    <PackageReference Include="EPPlus" Version="7.6.0" />
-    <PackageReference Include="MimeTypes" Version="2.4.1">
+    <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.1.0-rc.8709" />
+    <PackageReference Include="Crowdin.Api" Version="2.33.0" />
+    <PackageReference Include="EPPlus" Version="7.7.0" />
+    <PackageReference Include="MimeTypes" Version="2.5.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.3.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.7.0" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource CopyToOutputDirectory="Always" Include="image\icon.png" />

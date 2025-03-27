@@ -10,5 +10,5 @@ public class ManageFileRequest
     [Display("Storage ID"), DataSource(typeof(StorageDataHandler))]
     public string? StorageId { get; set; }
     
-    public FileReference? File { get; set; }
+    public FileReference File { get; set; }
 }
