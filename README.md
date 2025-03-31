@@ -72,6 +72,8 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 - **Get project** Get specific project
 - **Search projects** List all projects
 - **Build project** Build project translation
+- **Download translations** Downloads project translations from build
+- **Download file translations from build** Downloads single file translations from build (useful for multilingual files)
 
 ### Project Group
 
@@ -125,7 +127,7 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 - **Add string translation** Add new string translation
 - **Apply pre-translation** Apply pre-translation to chosen files
 - **Delete translation** Delete specific translation
-- **Download file translation** Builds and downloads the translation of a file
+- **Download file translation** Builds and downloads the translation of a file (for a specific target language)
 - **Get translation** Get specific translation
 - **List language translations** List project language translations
 - **List string translations** List project string translations
