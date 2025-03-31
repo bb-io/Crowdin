@@ -144,7 +144,7 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
     {
         if (!int.TryParse(build.BuildId, out int intBuildID)) 
         {
-            throw new PluginMisconfigurationException($"Invalid Build ID: {project.ProjectId} must be a numeric value. Please check the input Build ID");
+            throw new PluginMisconfigurationException($"Invalid Build ID: {build.BuildId} must be a numeric value. Please check the input Build ID");
         }
 
         var filesArchive = await DownloadTranslationsAsZip(project, build);
@@ -166,5 +166,34 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
 
         var fileReferences = await Task.WhenAll(tasks);
         return new(fileReferences.ToList());
+    }
+
+    [Action("Download file translations from build", Description = "Download one file from project translations")]
+    public async Task<DownloadFileResponse> DownloadFileTranslations(
+    [ActionParameter] ProjectRequest project,
+    [ActionParameter] BuildRequest build,
+    [ActionParameter] [Display("File name")]string FileName)
+    {
+        if (!int.TryParse(build.BuildId, out int intBuildID))
+        {
+            throw new PluginMisconfigurationException($"Invalid Build ID: {build.BuildId} must be a numeric value. Please check the input Build ID");
+        }
+
+        var filesArchive = await DownloadTranslationsAsZip(project, build);
+
+        var zipFile = await FileOperationWrapper.ExecuteFileDownloadOperation(() => fileManagementClient.DownloadAsync(filesArchive.File), filesArchive.File.Name);
+        var files = await zipFile.GetFilesFromZip();
+
+        var result = files.FirstOrDefault(x => x.FileStream.Length > 0 && x.UploadName == FileName);
+
+        if (result == null)
+        { return null; }
+
+        result.Path = string.Join('/', result.Path.Split("/").Skip(1));
+
+        var contentType = MimeTypes.GetMimeType(result.UploadName);
+        var response = await fileManagementClient.UploadAsync(result.FileStream, contentType, result.UploadName);
+        
+        return new(response);
     }
 }
