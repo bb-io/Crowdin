@@ -94,11 +94,11 @@ public class DirectoryActions(InvocationContext invocationContext) : AppInvocabl
         [ActionParameter] ProjectRequest project,
         [ActionParameter] AddNewDirectoryRequest input)
     {
-         var purePath = input.PathContainsFile is true
-            ? input.Path.Replace(Path.GetFileName(input.Path), string.Empty)
-            : input.Path;
-        
-        if(string.IsNullOrWhiteSpace(purePath))
+        var purePath = input.PathContainsFile is true
+               ? Path.GetDirectoryName(input.Path)?.Replace("\\", "/") ?? input.Path
+               : input.Path;
+
+        if (string.IsNullOrWhiteSpace(purePath))
         {
             return new()
             {
