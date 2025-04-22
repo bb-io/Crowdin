@@ -51,12 +51,6 @@ public class ConnectionDefinition : IConnectionDefinition
             var domain = GetOrganization(token);
             credentials.Add(new(CredsNames.OrganizationDomain, domain));
         }
-        if (plan == Plans.Basic)
-        {
-            var token = values.First(x => x.Key == CredsNames.ApiToken).Value;
-            var domain = GetOrganization(token);
-            credentials.Add(new(CredsNames.OrganizationDomain, domain));
-        }
 
         return credentials;
     }

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<tbx type="TBX-Core" style="dca" xml:lang="en" xmlns="urn:iso:std:iso:30042:ed-2">
+  <tbxHeader>
+    <fileDesc>
+      <titleStmt>
+        <title>glossary-216000.tbx</title>
+      </titleStmt>
+      <sourceDesc>
+        <p>Crowdin Enterprise glossary download</p>
+      </sourceDesc>
+    </fileDesc>
+  </tbxHeader>
+  <text>
+    <body>
+      <conceptEntry id="db8e1af0cb3aca1ae2d0018624204529276">
+        <descrip type="definition">father</descrip>
+        <langSec xml:lang="en">
+          <termSec>
+            <term>father</term>
+            <descrip type="partOfSpeech">Noun</descrip>
+          </termSec>
+        </langSec>
+      </conceptEntry>
+    </body>
+  </text>
+</tbx>

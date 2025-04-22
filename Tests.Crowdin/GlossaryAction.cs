@@ -15,14 +15,23 @@ namespace Tests.Crowdin
         [TestMethod]
         public async Task ExportGlossary_IsSuccess()
         {
-            var glossaryId = 576248;
+            //var glossaryId = "576248";    //basic plan
+            var glossaryId = "66";          //enterprise plan
             var action = new GlossariesActions(InvocationContext,FileManager);
             var request = new GetGlossaryRequest
             {
-                GlossaryId = glossaryId.ToString()
+                GlossaryId = glossaryId
             };
             var response = await action.ExportGlossaryAsync(request);
 
+            Assert.IsNotNull(response);
+        }
+
+        [TestMethod]
+        public async Task Debug_IsSuccess()
+        {
+            var action = new DebugActions(InvocationContext);
+            var response = action.DebugAction();
             Assert.IsNotNull(response);
         }
     }
