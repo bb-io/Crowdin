@@ -34,7 +34,13 @@ public class CrowdinClient(CrowdinCredentials credentials, AuthenticationCredent
         var token = creds.Get(CredsNames.ApiToken)?.Value
                     ?? throw new PluginApplicationException("Missing credential: access token");
 
-        var restClient = new RestClient(baseUrl);
+        var options = new RestClientOptions
+        {
+            BaseUrl = new Uri(baseUrl),
+            Timeout = TimeSpan.FromSeconds(180)
+        };
+
+        var restClient = new RestClient(options);
         var restRequest = new RestRequest($"/glossaries/{glossaryId}/exports", Method.Post)
             .WithHeaders(new Dictionary<string, string>
             {
