@@ -27,6 +27,7 @@ public class GlossariesActions(InvocationContext invocationContext, IFileManagem
         
         var exportGlossary = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
             await client.ExportGlossaryAsync(glossaryId));
+        Task.Delay(3000).Wait();
         var downloadLink = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
             await client.Glossaries.DownloadGlossary(glossaryId, exportGlossary.Identifier));
 
