@@ -159,8 +159,18 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
                 );
             }
 
-            var allFiles = await ListFiles(project, new());
-            var fileToUpdate = allFiles.Files.First(x => x.Name == fileName);
+            var allFiles = await ListFiles(project, new ListFilesRequest
+            {
+                DirectoryId = input.DirectoryId?.ToString()
+            });
+            var fileToUpdate = allFiles.Files.FirstOrDefault(x =>
+            x.Name == fileName &&
+            (input.DirectoryId == null || x.DirectoryId.ToString() == input.DirectoryId));
+
+            if (fileToUpdate == null)
+            {
+                throw new PluginApplicationException("File not found for update. Please check your input and try again");
+            }
 
             return await UpdateFile(project, new()
             {
@@ -249,8 +259,14 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         [ActionParameter] ProjectRequest project,
         [ActionParameter] AddOrUpdateFileRequest input)
     {
-        var projectFiles = await ListFiles(project, new ListFilesRequest());
-        var existingFile = projectFiles.Files.FirstOrDefault(f => f.Name == input.File.Name);
+        var projectFiles = await ListFiles(project, new ListFilesRequest
+        {
+            DirectoryId = input.DirectoryId?.ToString()
+        });
+        var existingFile = projectFiles.Files.FirstOrDefault(f =>
+        f.Name == input.File.Name &&
+        (input.DirectoryId == null || f.DirectoryId.ToString() == input.DirectoryId));
+
         if (existingFile != null)
         {
             return await UpdateFile(project, new() { FileId = existingFile.Id }, new() { File = input.File },
