@@ -95,8 +95,8 @@ namespace Tests.Crowdin
         public async Task ListFile_ReturnsSuccess()
         {
             var action = new FileActions(InvocationContext, FileManager);
-            var input1 = new ProjectRequest { ProjectId = "19" };
-            var input2 = new ListFilesRequest { };
+            var input1 = new ProjectRequest { ProjectId = "788306" };
+            var input2 = new ListFilesRequest { DirectoryId= "174891" , Filter= "{815FE6AB-F681-4227-AB0D-DE06B9B56F6B}_Story Card 2.html" };
 
             var response = await action.ListFiles(input1, input2);
             foreach (var file in response.Files)
