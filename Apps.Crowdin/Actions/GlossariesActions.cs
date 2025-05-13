@@ -25,7 +25,7 @@ public class GlossariesActions(InvocationContext invocationContext, IFileManagem
 
         if (!int.TryParse(request.GlossaryId, out var glossaryId))
         {
-            throw new PluginMisconfigurationException("Invalid GlossaryId format, expected a valid integer. Please check your input and try again");
+            throw new PluginMisconfigurationException("Invalid Glossary ID format. Please check your input and try again");
         }
 
         var exportGlossary = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
