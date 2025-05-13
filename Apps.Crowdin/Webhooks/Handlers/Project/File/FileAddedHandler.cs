@@ -9,4 +9,5 @@ namespace Apps.Crowdin.Webhooks.Handlers.Project.File;
 public class FileAddedHandler(InvocationContext invocationContext, [WebhookParameter(true)] ProjectWebhookInput input) : ProjectWebhookHandler(invocationContext, input)
 {
     protected override List<EventType> SubscriptionEvents => new() { EventType.FileAdded };
+
 }
