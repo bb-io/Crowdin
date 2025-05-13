@@ -46,7 +46,7 @@ namespace Apps.Crowdin.Webhooks.Bridge
             var bridge = new BridgeService(credentials, _bridgeServiceUrl);
             foreach (var ev in SubscriptionEvents)
             {
-                bridge.Subscribe(ev.ToString(), _projectId.ToString(), payloadUrl);
+                bridge.Subscribe(ev.ToDescription(), _projectId.ToString(), payloadUrl);
             }
             var logger = new WebhookLogger();
             await logger.LogSubscriptionAsync(
@@ -75,7 +75,7 @@ namespace Apps.Crowdin.Webhooks.Bridge
             {
                 name = $"Bridge-{Guid.NewGuid()}",
                 url = _bridgeServiceUrl,
-                events = SubscriptionEvents.Select(e => e.ToString()).ToList(),
+                events = SubscriptionEvents.Select(e => e.ToDescription()).ToList(),
                 requestType = "POST",
                 batchingEnabled = _enableBatching
             };
@@ -112,7 +112,7 @@ namespace Apps.Crowdin.Webhooks.Bridge
             var bridge = new BridgeService(credentials, _bridgeServiceUrl);
             foreach (var ev in SubscriptionEvents)
             {
-                bridge.Unsubscribe(ev.ToString(), _projectId.ToString(), payloadUrl);
+                bridge.Unsubscribe(ev.ToDescription(), _projectId.ToString(), payloadUrl);
             }
 
             var listReq = new CrowdinRestRequest($"/projects/{_projectId}/webhooks", Method.Get, credentials);
