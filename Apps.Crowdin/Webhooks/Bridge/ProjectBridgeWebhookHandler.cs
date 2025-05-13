@@ -10,6 +10,8 @@ using Blackbird.Applications.Sdk.Utils.Parsers;
 using Crowdin.Api.Webhooks;
 using Microsoft.Extensions.Logging;
 using RestSharp;
+using System.ComponentModel;
+using System.Text.Json;
 using EventType = Crowdin.Api.Webhooks.EventType;
 
 namespace Apps.Crowdin.Webhooks.Bridge
@@ -67,15 +69,23 @@ namespace Apps.Crowdin.Webhooks.Bridge
                 
 
             var addReq = new CrowdinRestRequest($"/projects/{_projectId}/webhooks", Method.Post, credentials);
-            addReq.AddJsonBody(new AddWebhookRequest
+            var eventStrings = SubscriptionEvents.Select(e => e.ToDescription()).ToList();
+
+            var webhookRequest = new
             {
-                Name = $"Bridge-{Guid.NewGuid()}",
-                Url = _bridgeServiceUrl,
-                RequestType = RequestType.POST,
-                Events = SubscriptionEvents,
-                BatchingEnabled = _enableBatching
-            });
+                name = $"Bridge-{Guid.NewGuid()}",
+                url = _bridgeServiceUrl,
+                events = SubscriptionEvents.Select(e => e.ToString()).ToList(),
+                requestType = "POST",
+                batchingEnabled = _enableBatching
+            };
+
+            addReq.AddJsonBody(webhookRequest);
+
             var addResp = await _restClient.ExecuteAsync(addReq);
+            var rawResponseJson = addResp.Content ?? "No response content";
+            await logger.LogAsync(_projectId, "CreateWebhook", "Response", $"Raw response JSON: {rawResponseJson}");
+
             if (!addResp.IsSuccessful)
             {
                 await logger.LogAsync(
@@ -90,10 +100,10 @@ namespace Apps.Crowdin.Webhooks.Bridge
                 throw new Exception($"Failed to create Crowdin webhook. Status: {addResp.StatusCode}, Error: {addResp.ErrorMessage}");
             }
 
-            await logger.LogAsync(_projectId, "CreateWebhook", "Success", "Webhook created successfully.");
+
 
         }
-
+     
         public async Task UnsubscribeAsync(
             IEnumerable<AuthenticationCredentialsProvider> credentials,
             Dictionary<string, string> values)
@@ -121,7 +131,19 @@ namespace Apps.Crowdin.Webhooks.Bridge
         }
     }
 
+    public static class EnumExtensions
+    {
+        public static string ToDescription(this Enum value)
+        {
+            var fi = value.GetType().GetField(value.ToString());
+            if (fi == null) return value.ToString();
 
+            var attr = fi.GetCustomAttributes(typeof(DescriptionAttribute), false)
+                         .OfType<DescriptionAttribute>()
+                         .FirstOrDefault();
+            return attr?.Description ?? value.ToString();
+        }
+    }
 
 
     public class WebhookLogger
