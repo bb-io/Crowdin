@@ -20,13 +20,10 @@ namespace Apps.Crowdin.Webhooks.Bridge
 
         public void Subscribe(string _event, string projectId, string url)
         {
-            var logger = new WebhookLogger();
             var client = new RestClient(BridgeServiceUrl);
             var request = new RestRequest($"/{projectId}/{_event}", Method.Post);
             request.AddHeader("Blackbird-Token", ApplicationConstants.BlackbirdToken);
             request.AddBody(url);
-
-            logger.LogAsync(int.Parse(projectId), "BridgeUnsubscribe", "Started", $"Unsubscribing from event {_event} for project {projectId}, URL: {url}").GetAwaiter().GetResult();
 
             var response = client.Execute(request);
             if (!response.IsSuccessful)
