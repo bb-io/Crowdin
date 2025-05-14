@@ -6,4 +6,5 @@ public class ApplicationConstants
     public const string ClientSecret = "#{CROWDIN_SECRET}#";
     public const string Scope =
         "tm mt group team user webhook project project.task project.status project.source project.webhook project.translation glossary";
+    public const string BlackbirdToken = "#{BLACKBIRD_CROWDIN_TOKEN}#";
 }
