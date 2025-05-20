@@ -166,5 +166,21 @@ namespace Tests.Crowdin
             Console.WriteLine(response.Data.Url);
             Assert.IsNotNull(response);
         }
+
+
+        [TestMethod]
+        public async Task AddFileTranslation_ReturnsSuccess()
+        {
+            var action = new TranslationActions(InvocationContext, FileManager);
+           
+            var response = await action.AddFileTranslation(new AddNewFileTranslationRequest {LanguageId="fr", 
+                ProjectId= "665202",
+                SourceFileId= "3499",
+                File = new FileReference { Name = "test1.xlsx" },
+            });
+            Console.WriteLine(response);
+            Assert.IsNotNull(response);
+
+        }
     }
 }
