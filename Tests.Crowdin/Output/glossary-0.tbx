@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<tbx type="TBX-Core" style="dca" xml:lang="en" xmlns="urn:iso:std:iso:30042:ed-2">
+  <tbxHeader>
+    <fileDesc>
+      <titleStmt>
+        <title>glossary-0.tbx</title>
+      </titleStmt>
+      <sourceDesc>
+        <p>Crowdin glossary download</p>
+      </sourceDesc>
+    </fileDesc>
+  </tbxHeader>
+  <text>
+    <body>
+      <conceptEntry id="eccbc87e4b5ce2fe28308fd9f2a7baf33">
+        <langSec xml:lang="en">
+          <termSec>
+            <term>Mother</term>
+            <descrip type="partOfSpeech">Noun</descrip>
+          </termSec>
+        </langSec>
+      </conceptEntry>
+    </body>
+  </text>
+</tbx>

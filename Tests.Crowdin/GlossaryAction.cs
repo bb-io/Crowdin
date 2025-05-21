@@ -15,8 +15,8 @@ namespace Tests.Crowdin
         [TestMethod]
         public async Task ExportGlossary_IsSuccess()
         {
-            //var glossaryId = "576248";    //basic plan
-            var glossaryId = "465204";          //enterprise plan
+            var glossaryId = "576248";    //basic plan
+            //var glossaryId = "465204";          //enterprise plan
             var action = new GlossariesActions(InvocationContext,FileManager);
             var request = new GetGlossaryRequest
             {

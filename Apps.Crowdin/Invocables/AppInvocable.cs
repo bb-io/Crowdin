@@ -15,37 +15,8 @@ public class AppInvocable(InvocationContext invocationContext) : BaseInvocable(i
     private static readonly IApiClientFactory ApiClientFactory = new ApiClientFactory();
 
     protected List<AuthenticationCredentialsProvider> Creds => InvocationContext.AuthenticationCredentialsProviders.ToList();
+    protected RestClient RestClient => ApiClientFactory.BuildRestClient(InvocationContext.AuthenticationCredentialsProviders);
 
-    //protected RestClient RestClient => ApiClientFactory.BuildRestClient(InvocationContext.AuthenticationCredentialsProviders);
-
-    protected RestClient RestClient
-    {
-        get
-        {
-            var orig = ApiClientFactory.BuildRestClient(Creds);
-
-            var httpProp = typeof(RestClient)
-                .GetProperty("HttpClient", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)!;
-            var httpClient = (HttpClient)httpProp.GetValue(orig)!;
-
-            var baseUrl = orig.Options.BaseUrl!;
-
-            var options = new RestClientOptions(baseUrl)
-            {
-                Timeout =TimeSpan.FromMinutes(5),
-                FollowRedirects = orig.Options.FollowRedirects,
-                Proxy = orig.Options.Proxy,
-                AutomaticDecompression = orig.Options.AutomaticDecompression,
-            };
-            var client = new RestClient(
-                httpClient,
-                options,
-                disposeHttpClient: false
-            );
-
-            return client;
-        }
-    }
 
     protected CrowdinClient SdkClient =>
         ApiClientFactory.BuildSdkClient(InvocationContext.AuthenticationCredentialsProviders);
