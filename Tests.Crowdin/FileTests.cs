@@ -124,8 +124,8 @@ namespace Tests.Crowdin
         public async Task GetFileProgress_ReturnsSuccess()
         {
             var action = new FileActions(InvocationContext, FileManager);
-            var input1 = new ProjectRequest { ProjectId = "19" };
-            var input2 = new FileRequest { FileId= "581" };
+            var input1 = new ProjectRequest { ProjectId = "614573" };
+            var input2 = new FileRequest { FileId= "95064" };
 
             var progress=await action.GetFileProgress(input1, input2);
 
@@ -134,6 +134,21 @@ namespace Tests.Crowdin
                 Assert.IsTrue(true);
             }
 
+        }
+
+        [TestMethod]
+        public async Task GetFile_ReturnsSuccess()
+        {
+            var action = new FileActions(InvocationContext, FileManager);
+            var input1 = new ProjectRequest { ProjectId = "614573" };
+            var input2 = new FileRequest { FileId = "95064" };
+
+            //var input1 = new ProjectRequest { ProjectId = "596457" };
+            //var input2 = new FileRequest { FileId = "149138" };
+
+            var file = await action.GetFile(input1, input2);
+
+            Assert.IsNotNull(file);
         }
 
         [TestMethod]

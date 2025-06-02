@@ -22,6 +22,7 @@ using Newtonsoft.Json;
 using Apps.Crowdin.Api.RestSharp.Enterprise;
 using Apps.Crowdin.Api.RestSharp;
 using OfficeOpenXml;
+using Apps.Crowdin.Api.RestSharp.Basic;
 
 namespace Apps.Crowdin.Actions;
 
@@ -62,11 +63,22 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         [ActionParameter] ProjectRequest project,
         [ActionParameter] FileRequest fileRequest)
     {
-        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
-        var intFileId = IntParser.Parse(fileRequest.FileId, nameof(fileRequest.FileId));
+        if (!int.TryParse(project.ProjectId, out var intProjectId))
+            throw new PluginMisconfigurationException(
+                $"Invalid Project ID: {project.ProjectId} must be a numeric value. Please check the input project ID");
+
+        if (!int.TryParse(fileRequest.FileId, out var intFileId))
+            throw new PluginMisconfigurationException(
+                $"Invalid File ID: {fileRequest.FileId} must be a numeric value. Please check the input file ID");
+
+        var crowdinClient = new CrowdinRestClient();
+        var request = new CrowdinRestRequest(
+                $"/projects/{intProjectId}/files/{intFileId}",
+                Method.Get,
+                invocationContext.AuthenticationCredentialsProviders);
 
         var file = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-            await SdkClient.SourceFiles.GetFile<FileInfoResource>(intProjectId!.Value, intFileId!.Value));
+            await crowdinClient.ExecuteWithErrorHandling<FileInfoResource>(request));
         if (file is FileResource fileRes)
         {
             return new FileEntity(fileRes);
