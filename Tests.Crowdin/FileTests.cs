@@ -6,6 +6,7 @@ using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.Translation;
 using Blackbird.Applications.Sdk.Common.Files;
 using Crowdin.Api.Translations;
+using Newtonsoft.Json;
 using Tests.Crowdin.Base;
 
 namespace Tests.Crowdin
@@ -147,6 +148,9 @@ namespace Tests.Crowdin
             //var input2 = new FileRequest { FileId = "149138" };
 
             var file = await action.GetFile(input1, input2);
+
+            var json = JsonConvert.SerializeObject(file, Formatting.Indented);
+            Console.WriteLine(json);
 
             Assert.IsNotNull(file);
         }

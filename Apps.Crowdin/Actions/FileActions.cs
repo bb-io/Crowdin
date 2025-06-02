@@ -59,7 +59,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
     }
 
     [Action("Get file", Description = "Get specific file info")]
-    public async Task<FileEntity> GetFile(
+    public async Task<FileDetailsEntity> GetFile(
         [ActionParameter] ProjectRequest project,
         [ActionParameter] FileRequest fileRequest)
     {
@@ -78,15 +78,27 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
                 invocationContext.AuthenticationCredentialsProviders);
 
         var file = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-            await crowdinClient.ExecuteWithErrorHandling<FileInfoResource>(request));
-        if (file is FileResource fileRes)
+            await crowdinClient.ExecuteWithErrorHandling<FileResponseDto>(request));
+
+        if (file == null || file.Data == null)
+            throw new PluginApplicationException("Crowdin response is null. Please try again");
+
+        var dto = file.Data;
+        var result = new FileDetailsEntity
         {
-            return new FileEntity(fileRes);
-        }
-        else
-        {
-            return new FileEntity(file);
-        }
+            Id = dto.Id,
+            ProjectId = dto.ProjectId,
+            BranchId = dto.BranchId,
+            DirectoryId = dto.DirectoryId,
+            Name = dto.Name,
+            Title = dto.Title,
+            Context = dto.Context,
+            Type = dto.Type,
+            Path = dto.Path,
+            Status = dto.Status
+        };
+
+        return result;
     }
 
     [Action("Add file", Description = "Add new file")]
