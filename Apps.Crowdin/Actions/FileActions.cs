@@ -22,6 +22,7 @@ using Newtonsoft.Json;
 using Apps.Crowdin.Api.RestSharp.Enterprise;
 using Apps.Crowdin.Api.RestSharp;
 using OfficeOpenXml;
+using Apps.Crowdin.Api.RestSharp.Basic;
 
 namespace Apps.Crowdin.Actions;
 
@@ -58,23 +59,46 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
     }
 
     [Action("Get file", Description = "Get specific file info")]
-    public async Task<FileEntity> GetFile(
+    public async Task<FileDetailsEntity> GetFile(
         [ActionParameter] ProjectRequest project,
         [ActionParameter] FileRequest fileRequest)
     {
-        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
-        var intFileId = IntParser.Parse(fileRequest.FileId, nameof(fileRequest.FileId));
+        if (!int.TryParse(project.ProjectId, out var intProjectId))
+            throw new PluginMisconfigurationException(
+                $"Invalid Project ID: {project.ProjectId} must be a numeric value. Please check the input project ID");
+
+        if (!int.TryParse(fileRequest.FileId, out var intFileId))
+            throw new PluginMisconfigurationException(
+                $"Invalid File ID: {fileRequest.FileId} must be a numeric value. Please check the input file ID");
+
+        var crowdinClient = new CrowdinRestClient();
+        var request = new CrowdinRestRequest(
+                $"/projects/{intProjectId}/files/{intFileId}",
+                Method.Get,
+                invocationContext.AuthenticationCredentialsProviders);
 
         var file = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-            await SdkClient.SourceFiles.GetFile<FileInfoResource>(intProjectId!.Value, intFileId!.Value));
-        if (file is FileResource fileRes)
+            await crowdinClient.ExecuteWithErrorHandling<FileResponseDto>(request));
+
+        if (file == null || file.Data == null)
+            throw new PluginApplicationException("Crowdin response is null. Please try again");
+
+        var dto = file.Data;
+        var result = new FileDetailsEntity
         {
-            return new FileEntity(fileRes);
-        }
-        else
-        {
-            return new FileEntity(file);
-        }
+            Id = dto.Id,
+            ProjectId = dto.ProjectId,
+            BranchId = dto.BranchId,
+            DirectoryId = dto.DirectoryId,
+            Name = dto.Name,
+            Title = dto.Title,
+            Context = dto.Context,
+            Type = dto.Type,
+            Path = dto.Path,
+            Status = dto.Status
+        };
+
+        return result;
     }
 
     [Action("Add file", Description = "Add new file")]
