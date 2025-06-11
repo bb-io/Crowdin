@@ -14,7 +14,7 @@ namespace Apps.Crowdin.Api;
 public class CrowdinClient(CrowdinCredentials credentials, AuthenticationCredentialsProvider[] creds)
     : CrowdinApiClient(credentials,new HttpClient { Timeout=TimeSpan.FromMinutes(5)})
 {
-    public async Task<ExportGlossaryModel> ExportGlossaryAsync(int glossaryId)
+    public async Task<ExportGlossaryModel> ExportGlossaryAsync(int glossaryId, string format)
     {
         var plan = creds.Get(CredsNames.CrowdinPlan)?.Value
                    ?? throw new PluginMisconfigurationException("Missing crowdin plan");
@@ -46,7 +46,7 @@ public class CrowdinClient(CrowdinCredentials credentials, AuthenticationCredent
             {
                 ["Authorization"] = $"Bearer {token}"
             })
-            .WithJsonBody(new { format = "tbx" });
+            .WithJsonBody(new { format = format });
 
         var exportResponse = await restClient.ExecuteAsync<GlossaryExportStatus>(restRequest);
         var data = JsonConvert
