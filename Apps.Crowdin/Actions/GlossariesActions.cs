@@ -27,15 +27,22 @@ public class GlossariesActions(InvocationContext invocationContext, IFileManagem
         {
             throw new PluginMisconfigurationException("Invalid Glossary ID format. Please check your input and try again");
         }
-
+        var format = String.IsNullOrEmpty(request.Format) ? "tbx" : request.Format; 
         var exportGlossary = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
-            await client.ExportGlossaryAsync(glossaryId));
+            await client.ExportGlossaryAsync(glossaryId, format));
         Task.Delay(3000).Wait();
         var downloadLink = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
             await client.Glossaries.DownloadGlossary(glossaryId, exportGlossary.Identifier));
 
         var fileContent = await ExceptionWrapper.ExecuteWithErrorHandling(() => FileDownloader.DownloadFileBytes(downloadLink.Url));
         await FileOperationWrapper.ExecuteFileOperation(() => Task.CompletedTask, fileContent.FileStream, fileContent.Name);
+
+        if (format != "tbx")
+        {
+            var Glossary = await fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType,
+          fileContent.Name ?? "Glossary." + format);
+            return new(Glossary);
+        }
 
         string glossaryTitle = fileContent.Name ?? "Glossary.tbx";
         var glossaryExporter = new GlossaryExporter(fileContent.FileStream);
