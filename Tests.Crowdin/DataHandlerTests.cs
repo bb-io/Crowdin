@@ -76,7 +76,31 @@ namespace Tests.Crowdin
 
             foreach (var file in response)
             {
-                Console.WriteLine($"Branch ID: {file.Value}, Name: {file.DisplayName}");
+                Console.WriteLine($"File ID: {file.Value}, Name: {file.DisplayName}");
+            }
+            Assert.IsNotNull(response);
+        }
+
+       
+
+        [TestMethod]
+        public async Task TargetLanguageDataHandler_IsSuccess()
+        {
+            var handler = new ProjectTargetLanguageDataHandler(
+                InvocationContext,
+                new ProjectRequest
+                {
+                    ProjectId = "783572"
+                });
+            var response = await handler.GetDataAsync(
+                new DataSourceContext
+                {
+                },
+                CancellationToken.None);
+
+            foreach (var file in response)
+            {
+                Console.WriteLine($"Lang ID: {file.Value}, Name: {file.DisplayName}");
             }
             Assert.IsNotNull(response);
         }

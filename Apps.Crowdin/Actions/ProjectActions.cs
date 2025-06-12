@@ -1,4 +1,5 @@
-﻿using Apps.Crowdin.Api;
+﻿using Apps.Crowdin.Api.RestSharp;
+using Apps.Crowdin.Api.RestSharp.Basic;
 using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Project;
@@ -7,16 +8,18 @@ using Apps.Crowdin.Models.Response.Project;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
-using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
-using Blackbird.Applications.Sdk.Utils.Models;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Blackbird.Applications.Sdk.Utils.Utilities;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Crowdin.Api.ProjectsGroups;
+using Crowdin.Api.Reports;
 using Crowdin.Api.Translations;
+using RestSharp;
+using System.Net;
+using System.Text.Json;
 
 namespace Apps.Crowdin.Actions;
 
@@ -196,4 +199,194 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
         
         return new(response);
     }
+
+
+    [Action("Generate translation costs post-editing", Description = "Generates report")]
+    public async Task<Models.Response.Project.TranslationCostReportResponse> GenerateTranslateCostReport([ActionParameter] ProjectRequest project,
+       [ActionParameter] GenerateTranslationCostReportOptions options)
+    {
+        var reportRequest = new CrowdinRestRequest($"/projects/{project.ProjectId}/reports", Method.Post, InvocationContext.AuthenticationCredentialsProviders);
+        var action = new CrowdinRestClient();
+        reportRequest.AddJsonBody(new
+        {
+            name = "translation-costs-pe",
+            schema = new
+            {
+                unit = "words",
+                currency = "USD",
+                format = "json",
+                baseRates = new
+                {
+                    fullTranslation = options.BaseFullTranslations ?? 0.10f,
+                    proofread = options.BaseProofRead ?? 0.05f
+                },
+                individualRates = options.LanguageIds?.Any() == true || options.UserIds?.Any() == true
+                ? new[]
+                {
+                    new
+                    {
+                        languageIds = options.LanguageIds,
+                        userIds = options.UserIds,
+                        fullTranslation = options.IndividualFullTranslations ?? 0.10f,
+                        proofread = options.IndividualProofRead ?? 0.05f
+                    }
+                }
+                : null,
+                netRateSchemes = new
+                {
+                    tmMatch = new[]
+                {
+                    new { matchType = "perfect", price = options.TmMatchType == "perfect" ? (options.TmPrice ?? 0.02f) : 0.0f },
+                    new { matchType = "100", price = options.TmMatchType == "100" ? (options.TmPrice ?? 0.02f) : 0.0f },
+                    new { matchType = "99-82", price = options.TmMatchType == "99-82" ? (options.TmPrice ?? 0.02f) : 0.0f },
+                    new { matchType = "81-60", price = options.TmMatchType == "81-60" ? (options.TmPrice ?? 0.02f) : 0.0f }
+                },
+                    mtMatch = new[]
+                {
+                    new { matchType = "100", price = options.MtMatchType == "100" ? (options.MtPrice ?? 0.01f) : 0.0f },
+                    new { matchType = "99-82", price = options.MtMatchType == "99-82" ? (options.MtPrice ?? 0.01f) : 0.0f },
+                    new { matchType = "81-60", price = options.MtMatchType == "81-60" ? (options.MtPrice ?? 0.01f) : 0.0f }
+                },
+                    suggestionMatch = new[]
+                {
+                    new { matchType = "100", price = options.SuggestMatchType == "100" ? (options.SuggestPrice ?? 0.03f) : 0.0f },
+                    new { matchType = "99-82", price = options.SuggestMatchType == "99-82" ? (options.SuggestPrice ?? 0.03f) : 0.0f }
+                }
+                },
+                dateFrom = options.FromDate?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss+00:00"),
+                dateTo = options.ToDate?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss+00:00"),
+                languageIds = options.LanguageIds,
+                userIds = options.UserIds
+            }
+        });
+
+        var generateReport = await ExceptionWrapper.ExecuteWithErrorHandling(() => action.ExecuteWithErrorHandling<GenerateReportResponse>(reportRequest));
+        var downloadRequest = new CrowdinRestRequest($"/projects/{project.ProjectId}/reports/{generateReport.Data.Identifier}/download", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
+        var downloadResponse = await ExceptionWrapper.ExecuteWithErrorHandling(() => action.ExecuteWithErrorHandling<GetReportResponse>(downloadRequest));
+
+        if (downloadResponse.Data.Url is null)
+        {
+            throw new PluginApplicationException("Report is still being generated, please try again later.");
+        }
+
+        using var file = await ExceptionWrapper.ExecuteWithErrorHandling(() =>FileDownloader.DownloadFileBytes(downloadResponse.Data.Url));
+
+        using var memoryStream = new MemoryStream();
+        await file.FileStream.CopyToAsync(memoryStream);
+        memoryStream.Position = 0;
+
+        var jsonDocument = await JsonDocument.ParseAsync(memoryStream);
+        var root = jsonDocument.RootElement;
+
+        var response = new Models.Response.Project.TranslationCostReportResponse
+        {
+            TotalWords = root.GetProperty("preTranslated").GetProperty("total").GetInt32(),
+            WeightedWords = root.GetProperty("weightedUnits").GetProperty("total").GetDecimal(),
+            TaskName = root.GetProperty("name").GetString() ?? string.Empty,
+            TranslationCost = root.GetProperty("totalCosts").GetDecimal(),
+            ProofreadingCost = root.GetProperty("approvalCosts").GetProperty("total").GetDecimal(),
+            EstimatedTMSavingsTotal = root.GetProperty("savings").GetProperty("total").GetDecimal()
+        };
+
+        return response;
+    }
+
+    [Action("Generate estimation post-editing cost", Description = "Generates report")]
+    public async Task<EstimateCostReportResponse> GenerateCostReport([ActionParameter] ProjectRequest project,
+      [ActionParameter] GenerateEstimateCostReportOptions options)
+    {
+        var reportRequest = new CrowdinRestRequest($"/projects/{project.ProjectId}/reports", Method.Post, InvocationContext.AuthenticationCredentialsProviders);
+        var action = new CrowdinRestClient();
+        reportRequest.AddJsonBody(new
+        {
+            name = "costs-estimation-pe",
+            schema = new
+            {
+                unit = "words",
+                currency = "USD",
+                format = "json",
+                baseRates = new
+                {
+                    fullTranslation = options.BaseFullTranslations ?? 0.10f,
+                    proofread = options.BaseProofRead ?? 0.05f
+                },
+                individualRates = options.LanguageIds?.Any() == true
+                ? new[]
+                {
+                    new
+                    {
+                        languageIds = options.LanguageIds,
+                        fullTranslation = options.IndividualFullTranslations ?? 0.10f,
+                        proofread = options.IndividualProofRead ?? 0.05f
+                    }
+                }
+                : null,
+                netRateSchemes = new
+                {
+                    tmMatch = new[]
+                {
+                    new { matchType = "perfect", price = options.TmMatchType == "perfect" ? (options.TmPrice ?? 0.02f) : 0.0f },
+                    new { matchType = "100", price = options.TmMatchType == "100" ? (options.TmPrice ?? 0.02f) : 0.0f },
+                    new { matchType = "99-82", price = options.TmMatchType == "99-82" ? (options.TmPrice ?? 0.02f) : 0.0f },
+                    new { matchType = "81-60", price = options.TmMatchType == "81-60" ? (options.TmPrice ?? 0.02f) : 0.0f }
+                }
+                },
+                dateFrom = options.FromDate?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss+00:00"),
+                dateTo = options.ToDate?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss+00:00"),
+                languageIds = options.LanguageIds
+            }
+        });
+
+        var generateReport = await ExceptionWrapper.ExecuteWithErrorHandling(() => action.ExecuteWithErrorHandling<GenerateReportResponse>(reportRequest));
+        var downloadRequest = new CrowdinRestRequest($"/projects/{project.ProjectId}/reports/{generateReport.Data.Identifier}/download", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
+        var downloadResponse = await ExceptionWrapper.ExecuteWithErrorHandling(() => action.ExecuteWithErrorHandling<GetReportResponse>(downloadRequest));
+
+        if (downloadResponse.Data.Url is null)
+        {
+            throw new PluginApplicationException("Report is still being generated, please try again later.");
+        }
+
+        using var file = await ExceptionWrapper.ExecuteWithErrorHandling(() => FileDownloader.DownloadFileBytes(downloadResponse.Data.Url));
+
+        using var memoryStream = new MemoryStream();
+        await file.FileStream.CopyToAsync(memoryStream);
+        memoryStream.Position = 0;
+
+        var jsonDocument = await JsonDocument.ParseAsync(memoryStream);
+        var root = jsonDocument.RootElement;
+
+        int totalWords = 0;
+        if (root.TryGetProperty("data", out var dataArray) && dataArray.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in dataArray.EnumerateArray())
+            {
+                if (item.TryGetProperty("statistics", out var stats) &&
+                    stats.TryGetProperty("untranslated", out var untranslated))
+                {
+                    totalWords += untranslated.GetInt32();
+                }
+            }
+        }
+
+        var response = new EstimateCostReportResponse
+        {
+            TotalWords = totalWords,
+            WeightedWords = root.TryGetProperty("weightedUnits", out var weightedUnits) &&
+                        weightedUnits.TryGetProperty("total", out var weightedTotal) ?
+                        weightedTotal.GetDecimal() : null,
+            TaskName = root.TryGetProperty("name", out var name) ? name.GetString() : string.Empty,
+            TranslationCost = root.TryGetProperty("translationCosts", out var transCosts) &&
+                         transCosts.TryGetProperty("total", out var transTotal) ?
+                         transTotal.GetDecimal() : null,
+            ProofreadingCost = root.TryGetProperty("approvalCosts", out var approvalCosts) &&
+                          approvalCosts.TryGetProperty("total", out var approvalTotal) ?
+                          approvalTotal.GetDecimal() : null,
+            EstimatedTMSavingsTotal = root.TryGetProperty("savings", out var savings) &&
+                                 savings.TryGetProperty("total", out var savingsTotal) ?
+                                 savingsTotal.GetDecimal() : null
+        };
+
+        return response;
+    }
+
 }
