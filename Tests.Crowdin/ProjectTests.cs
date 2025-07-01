@@ -89,13 +89,7 @@ namespace Tests.Crowdin
                 ProjectId = "783572"
             }, new GenerateEstimateCostReportOptions
             {
-                BaseFullTranslations = 0.10f,
-                BaseProofRead = 0.05f,
                 LanguageIds = new[] { "en", "en-BZ" },
-                TmMatchType = "perfect",
-                TmPrice = 0.02f,
-                FromDate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                ToDate = new DateTime(2025, 6, 11, 23, 59, 59, DateTimeKind.Utc)
             });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented);
