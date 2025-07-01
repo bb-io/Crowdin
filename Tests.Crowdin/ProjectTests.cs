@@ -72,21 +72,11 @@ namespace Tests.Crowdin
             {
                 ProjectId = "783572"
             }, new GenerateTranslationCostReportOptions {
-                BaseFullTranslations = 0.10f,
-                BaseProofRead = 0.05f,
-                TmMatchType = "perfect",
-                TmPrice = 0.0f,
-                MtMatchType = "100",
-                MtPrice = 0.0f,
-                SuggestMatchType = "100",
-                SuggestPrice = 0.0f,
-                FromDate = DateTime.UtcNow.AddDays(-30).ToUniversalTime(),
-                ToDate = DateTime.UtcNow.ToUniversalTime()
-            });
 
-           
-                Console.WriteLine($"{result.TaskName} - {result.TotalWords} - ");
-                Assert.IsNotNull(result);
+            });
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented);
+            Console.WriteLine(json);
+            Assert.IsNotNull(result);
 
         }
 
@@ -153,20 +143,23 @@ namespace Tests.Crowdin
             }, new GenerateTranslationCostReportByTaskOptions
             {
                 TaskId = "1",
-                BaseFullTranslations = 0.10f,
-                BaseProofRead = 0.05f,
-                TmMatchType = "perfect",
-                TmPrice = 0.0f,
-                MtMatchType = "100",
-                MtPrice = 0.0f,
-                SuggestMatchType = "100",
-                SuggestPrice = 0.0f,
-                FromDate = DateTime.UtcNow.AddDays(-30).ToUniversalTime(),
-                ToDate = DateTime.UtcNow.ToUniversalTime()
+                //BaseFullTranslations = 0.10f,
+                //BaseProofRead = 0.05f,
+                //TmMatchType = "perfect",
+                //TmPrice = 0.0f,
+                //MtMatchType = "100",
+                //MtPrice = 0.0f,
+                //SuggestMatchType = "100",
+                //SuggestPrice = 0.0f,
+                //FromDate = DateTime.UtcNow.AddDays(-30).ToUniversalTime(),
+                //ToDate = DateTime.UtcNow.ToUniversalTime()
             });
 
 
             Console.WriteLine($"{result.TaskName} - {result.TotalWords} - ");
+
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented);
+            Console.WriteLine(json);
             Assert.IsNotNull(result);
 
         }

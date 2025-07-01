@@ -213,43 +213,42 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
             schema = new
             {
                 unit = "words",
-                currency = "USD",
+                currency = options.Currency ?? "USD",
                 format = "json",
                 baseRates = new
                 {
                     fullTranslation = options.BaseFullTranslations ?? 0.10f,
                     proofread = options.BaseProofRead ?? 0.05f
                 },
-                individualRates = options.LanguageIds?.Any() == true || options.UserIds?.Any() == true
-                ? new[]
-                {
-                    new
+                individualRates = (options.LanguageIds?.Any() == true || options.UserIds?.Any() == true)
+                    ? new[]
                     {
-                        languageIds = options.LanguageIds,
-                        userIds = options.UserIds,
+                    new {
+                        languageIds     = options.LanguageIds,
+                        userIds         = options.UserIds,
                         fullTranslation = options.IndividualFullTranslations ?? 0.10f,
-                        proofread = options.IndividualProofRead ?? 0.05f
+                        proofread       = options.IndividualProofRead        ?? 0.05f
                     }
-                }
-                : null,
+                    }
+                    : null,
                 netRateSchemes = new
                 {
                     tmMatch = new[]
-                {
+                    {
                     new { matchType = "perfect", price = options.TmMatchType == "perfect" ? (options.TmPrice ?? 0.02f) : 0.0f },
-                    new { matchType = "100", price = options.TmMatchType == "100" ? (options.TmPrice ?? 0.02f) : 0.0f },
-                    new { matchType = "99-82", price = options.TmMatchType == "99-82" ? (options.TmPrice ?? 0.02f) : 0.0f },
-                    new { matchType = "81-60", price = options.TmMatchType == "81-60" ? (options.TmPrice ?? 0.02f) : 0.0f }
+                    new { matchType = "100",     price = options.TmMatchType == "100"     ? (options.TmPrice ?? 0.02f) : 0.0f },
+                    new { matchType = "99-82",   price = options.TmMatchType == "99-82"   ? (options.TmPrice ?? 0.02f) : 0.0f },
+                    new { matchType = "81-60",   price = options.TmMatchType == "81-60"   ? (options.TmPrice ?? 0.02f) : 0.0f }
                 },
                     mtMatch = new[]
-                {
-                    new { matchType = "100", price = options.MtMatchType == "100" ? (options.MtPrice ?? 0.01f) : 0.0f },
+                    {
+                    new { matchType = "100",   price = options.MtMatchType == "100"   ? (options.MtPrice ?? 0.01f) : 0.0f },
                     new { matchType = "99-82", price = options.MtMatchType == "99-82" ? (options.MtPrice ?? 0.01f) : 0.0f },
                     new { matchType = "81-60", price = options.MtMatchType == "81-60" ? (options.MtPrice ?? 0.01f) : 0.0f }
                 },
                     suggestionMatch = new[]
-                {
-                    new { matchType = "100", price = options.SuggestMatchType == "100" ? (options.SuggestPrice ?? 0.03f) : 0.0f },
+                    {
+                    new { matchType = "100",   price = options.SuggestMatchType == "100"   ? (options.SuggestPrice ?? 0.03f) : 0.0f },
                     new { matchType = "99-82", price = options.SuggestMatchType == "99-82" ? (options.SuggestPrice ?? 0.03f) : 0.0f }
                 }
                 },
@@ -260,17 +259,28 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
             }
         });
 
-        var generateReport = await ExceptionWrapper.ExecuteWithErrorHandling(() => action.ExecuteWithErrorHandling<GenerateReportResponse>(reportRequest));
-        var downloadRequest = new CrowdinRestRequest($"/projects/{project.ProjectId}/reports/{generateReport.Data.Identifier}/download", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-        var downloadResponse = await ExceptionWrapper.ExecuteWithErrorHandling(() => action.ExecuteWithErrorHandling<GetReportResponse>(downloadRequest));
+        var generateReport = await ExceptionWrapper.ExecuteWithErrorHandling(
+            () => action.ExecuteWithErrorHandling<GenerateReportResponse>(reportRequest)
+        );
+
+        Task.Delay(5000).Wait();
+
+
+        var downloadRequest = new CrowdinRestRequest(
+            $"/projects/{project.ProjectId}/reports/{generateReport.Data.Identifier}/download",
+            Method.Get,
+            InvocationContext.AuthenticationCredentialsProviders
+        );
+        var downloadResponse = await ExceptionWrapper.ExecuteWithErrorHandling(
+            () => action.ExecuteWithErrorHandling<GetReportResponse>(downloadRequest)
+        );
 
         if (downloadResponse.Data.Url is null)
-        {
             throw new PluginApplicationException("Report is still being generated, please try again later.");
-        }
 
-        using var file = await ExceptionWrapper.ExecuteWithErrorHandling(() =>FileDownloader.DownloadFileBytes(downloadResponse.Data.Url));
-
+        using var file = await ExceptionWrapper.ExecuteWithErrorHandling(
+            () => FileDownloader.DownloadFileBytes(downloadResponse.Data.Url)
+        );
         using var memoryStream = new MemoryStream();
         await file.FileStream.CopyToAsync(memoryStream);
         memoryStream.Position = 0;
@@ -278,14 +288,28 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
         var jsonDocument = await JsonDocument.ParseAsync(memoryStream);
         var root = jsonDocument.RootElement;
 
+        var totalWordsDecimal = root.GetProperty("preTranslated").GetProperty("total").GetDecimal();
+        var weightedWordsDecimal = root.GetProperty("weightedUnits").GetProperty("total").GetDecimal();
+
+        var translationCostsArr = ParseBreakdownObject(root.GetProperty("translationCosts"));
+        var savingsArr = ParseBreakdownObject(root.GetProperty("savings"));
+        var weightedArr = ParseBreakdownObject(root.GetProperty("weightedUnits"));
+        var preTransArr = ParseBreakdownObject(root.GetProperty("preTranslated"));
+
         var response = new Models.Response.Project.TranslationCostReportResponse
         {
-            TotalWords = root.GetProperty("preTranslated").GetProperty("total").GetInt32(),
-            WeightedWords = root.GetProperty("weightedUnits").GetProperty("total").GetDecimal(),
+            TotalWords = (int)totalWordsDecimal,
+            WeightedWords = weightedWordsDecimal,
             TaskName = root.GetProperty("name").GetString() ?? string.Empty,
             TranslationCost = root.GetProperty("totalCosts").GetDecimal(),
             ProofreadingCost = root.GetProperty("approvalCosts").GetProperty("total").GetDecimal(),
-            EstimatedTMSavingsTotal = root.GetProperty("savings").GetProperty("total").GetDecimal()
+            EstimatedTMSavingsTotal = root.GetProperty("savings").GetProperty("total").GetDecimal(),
+            Currency = root.GetProperty("currency").GetString(),
+
+            TranslationCosts = translationCostsArr,
+            Savings = savingsArr,
+            WeightedUnits = weightedArr,
+            PreTranslated = preTransArr
         };
 
         return response;
@@ -486,9 +510,7 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
     [ActionParameter] GenerateTranslationCostReportByTaskOptions options)
     {
         if (!int.TryParse(options.TaskId, out var parsedTaskId))
-        {
             throw new PluginMisconfigurationException("Task ID must be a valid integer.");
-        }
 
         var reportRequest = new CrowdinRestRequest($"/projects/{project.ProjectId}/reports", Method.Post, InvocationContext.AuthenticationCredentialsProviders);
         reportRequest.AddJsonBody(new
@@ -497,7 +519,7 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
             schema = new
             {
                 unit = "words",
-                currency = "USD",
+                currency =  options.Currency ?? "USD",
                 format = "json",
                 baseRates = new
                 {
@@ -507,35 +529,35 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
                 individualRates = (options.LanguageIds?.Any() == true || options.UserIds?.Any() == true)
                     ? new[]
                     {
-                    new
-                    {
-                        languageIds = options.LanguageIds,
-                        userIds = options.UserIds,
-                        fullTranslation = options.IndividualFullTranslations ?? 0.10f,
-                        proofread = options.IndividualProofRead ?? 0.05f
-                    }
+                            new
+                            {
+                                languageIds = options.LanguageIds,
+                                userIds = options.UserIds,
+                                fullTranslation = options.IndividualFullTranslations ?? 0.10f,
+                                proofread = options.IndividualProofRead ?? 0.05f
+                            }
                     }
                     : null,
                 netRateSchemes = new
                 {
                     tmMatch = new[]
                     {
-                    new { matchType = "perfect", price = options.TmMatchType == "perfect" ? (options.TmPrice ?? 0.02f) : 0.0f },
-                    new { matchType = "100",     price = options.TmMatchType == "100"     ? (options.TmPrice ?? 0.02f) : 0.0f },
-                    new { matchType = "99-82",   price = options.TmMatchType == "99-82"   ? (options.TmPrice ?? 0.02f) : 0.0f },
-                    new { matchType = "81-60",   price = options.TmMatchType == "81-60"   ? (options.TmPrice ?? 0.02f) : 0.0f }
-                },
+                            new { matchType = "perfect", price = options.TmMatchType == "perfect" ? (options.TmPrice ?? 0.02f) : 0.0f },
+                            new { matchType = "100",     price = options.TmMatchType == "100"     ? (options.TmPrice ?? 0.02f) : 0.0f },
+                            new { matchType = "99-82",   price = options.TmMatchType == "99-82"   ? (options.TmPrice ?? 0.02f) : 0.0f },
+                            new { matchType = "81-60",   price = options.TmMatchType == "81-60"   ? (options.TmPrice ?? 0.02f) : 0.0f }
+                        },
                     mtMatch = new[]
                     {
-                    new { matchType = "100",   price = options.MtMatchType == "100"   ? (options.MtPrice ?? 0.01f) : 0.0f },
-                    new { matchType = "99-82", price = options.MtMatchType == "99-82" ? (options.MtPrice ?? 0.01f) : 0.0f },
-                    new { matchType = "81-60", price = options.MtMatchType == "81-60" ? (options.MtPrice ?? 0.01f) : 0.0f }
-                },
+                            new { matchType = "100",   price = options.MtMatchType == "100"   ? (options.MtPrice ?? 0.01f) : 0.0f },
+                            new { matchType = "99-82", price = options.MtMatchType == "99-82" ? (options.MtPrice ?? 0.01f) : 0.0f },
+                            new { matchType = "81-60", price = options.MtMatchType == "81-60" ? (options.MtPrice ?? 0.01f) : 0.0f }
+                        },
                     suggestionMatch = new[]
                     {
-                    new { matchType = "100",   price = options.SuggestMatchType == "100"   ? (options.SuggestPrice ?? 0.03f) : 0.0f },
-                    new { matchType = "99-82", price = options.SuggestMatchType == "99-82" ? (options.SuggestPrice ?? 0.03f) : 0.0f }
-                }
+                            new { matchType = "100",   price = options.SuggestMatchType == "100"   ? (options.SuggestPrice ?? 0.03f) : 0.0f },
+                            new { matchType = "99-82", price = options.SuggestMatchType == "99-82" ? (options.SuggestPrice ?? 0.03f) : 0.0f }
+                        }
                 },
                 dateFrom = options.FromDate?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss+00:00"),
                 dateTo = options.ToDate?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss+00:00"),
@@ -548,7 +570,7 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
             client.ExecuteWithErrorHandling<GenerateReportResponse>(reportRequest)
         );
 
-        Task.Delay(5000).Wait();
+        await Task.Delay(5000);
 
         var dlRequest = new CrowdinRestRequest($"/projects/{project.ProjectId}/reports/{genResp.Data.Identifier}/download", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
         var dlResp = await ExceptionWrapper.ExecuteWithErrorHandling(() =>
@@ -559,20 +581,67 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
             throw new PluginApplicationException("Report is still being generated, please try again later.");
 
         using var file = await ExceptionWrapper.ExecuteWithErrorHandling(() => FileDownloader.DownloadFileBytes(dlResp.Data.Url));
-        using var ms = new MemoryStream();
-        await file.FileStream.CopyToAsync(ms);
-        ms.Position = 0;
-        var root = (await JsonDocument.ParseAsync(ms)).RootElement;
+        using var memoryStream = new MemoryStream();
+        await file.FileStream.CopyToAsync(memoryStream);
+        memoryStream.Position = 0;
+        var jsonDocument = await JsonDocument.ParseAsync(memoryStream);
+        var root = jsonDocument.RootElement;
 
-        return new TranslationCostReportResponse
+        var translationCostsArr = ParseBreakdownObject(root.GetProperty("translationCosts"));
+        var savingsArr = ParseBreakdownObject(root.GetProperty("savings"));
+        var weightedArr = ParseBreakdownObject(root.GetProperty("weightedUnits"));
+        var preTransArr = ParseBreakdownObject(root.GetProperty("preTranslated"));
+
+        var totalWordsDecimal = root.GetProperty("preTranslated").GetProperty("total").GetDecimal();
+        var weightedWordsDecimal = root.GetProperty("weightedUnits").GetProperty("total").GetDecimal();
+
+        var response = new TranslationCostReportResponse
         {
-            TotalWords = root.GetProperty("preTranslated").GetProperty("total").GetInt32(),
-            WeightedWords = root.GetProperty("weightedUnits").GetProperty("total").GetDecimal(),
+            TotalWords = (int)totalWordsDecimal,
+            WeightedWords = weightedWordsDecimal,
             TaskName = root.GetProperty("name").GetString() ?? string.Empty,
             TranslationCost = root.GetProperty("totalCosts").GetDecimal(),
             ProofreadingCost = root.GetProperty("approvalCosts").GetProperty("total").GetDecimal(),
-            EstimatedTMSavingsTotal = root.GetProperty("savings").GetProperty("total").GetDecimal()
+            EstimatedTMSavingsTotal = root.GetProperty("savings").GetProperty("total").GetDecimal(),
+            Currency = root.GetProperty("currency").GetString(),
+
+            TranslationCosts = translationCostsArr,
+            Savings = savingsArr,
+            WeightedUnits = weightedArr,
+            PreTranslated = preTransArr
         };
+
+        return response;
+    }
+
+    private ColumnValue[] ParseBreakdownObject(JsonElement element)
+    {
+        var list = new List<ColumnValue>();
+
+        foreach (var prop in element.EnumerateObject())
+        {
+            if (prop.Value.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var inner in prop.Value.EnumerateObject())
+                {
+                    list.Add(new ColumnValue
+                    {
+                        Name = $"{prop.Name}.{inner.Name}",
+                        Value = inner.Value.GetDecimal()
+                    });
+                }
+            }
+            else if (prop.Value.ValueKind == JsonValueKind.Number)
+            {
+                list.Add(new ColumnValue
+                {
+                    Name = prop.Name,
+                    Value = prop.Value.GetDecimal()
+                });
+            }
+        }
+
+        return list.ToArray();
     }
 
 }

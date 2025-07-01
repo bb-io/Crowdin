@@ -12,13 +12,16 @@ namespace Apps.Crowdin.Models.Request.Project
         [Display("Base rates proofread")]
         public float? BaseProofRead { get; set; } = 0.0f;
 
+        [Display("Currency")]
+        public string? Currency { get; set; }
+
         [Display("Language IDs")]
         [DataSource(typeof(LanguagesDataHandler))]
-        public IEnumerable<string> LanguageIds { get; set; }
+        public IEnumerable<string>? LanguageIds { get; set; }
 
         [Display("User IDs")]
         [DataSource(typeof(ProjectMemberDataSourceHandler))]
-        public IEnumerable<string> UserIds { get; set; }
+        public IEnumerable<string>? UserIds { get; set; }
 
         [Display("Individual rates full translations")]
         public float? IndividualFullTranslations { get; set; } = 0.10f;
@@ -27,19 +30,19 @@ namespace Apps.Crowdin.Models.Request.Project
         public float? IndividualProofRead { get; set; } = 0.0f;
 
         [Display("TM match type")]
-        public string TmMatchType { get; set; } = "100";
+        public string? TmMatchType { get; set; } = "100";
 
         [Display("TM price")]
         public float? TmPrice { get; set; } = 0.0f;
 
         [Display("MT match type")]
-        public string MtMatchType { get; set; } = "100";
+        public string? MtMatchType { get; set; } = "100";
 
         [Display("MT price")]
         public float? MtPrice { get; set; } = 0.0f;
 
         [Display("Suggestion match type")]
-        public string SuggestMatchType { get; set; } = "100";
+        public string? SuggestMatchType { get; set; } = "100";
 
         [Display("Suggestion price")]
         public float? SuggestPrice { get; set; } = 0.0f;
