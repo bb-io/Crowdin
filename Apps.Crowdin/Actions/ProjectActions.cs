@@ -734,37 +734,37 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
                     proofread = options.BaseProofRead ?? 0.05f
                 },
                 individualRates = (options.LanguageIds?.Any() == true || options.UserIds?.Any() == true)
-                    ? new[]
-                    {
-                            new
-                            {
-                                languageIds = options.LanguageIds,
-                                userIds = options.UserIds,
-                                fullTranslation = options.IndividualFullTranslations ?? 0.10f,
-                                proofread = options.IndividualProofRead ?? 0.05f
-                            }
-                    }
-                    : null,
+                ? new[]
+                  {
+                      new
+                      {
+                          languageIds     = options.LanguageIds,
+                          userIds         = options.UserIds,
+                          fullTranslation = options.IndividualFullTranslations ?? 0.10f,
+                          proofread       = options.IndividualProofRead       ?? 0.05f
+                      }
+                  }
+                : Array.Empty<object>(),
                 netRateSchemes = new
                 {
                     tmMatch = new[]
-                    {
-                            new { matchType = "perfect", price = options.TmMatchType == "perfect" ? (options.TmPrice ?? 0.02f) : 0.0f },
-                            new { matchType = "100",     price = options.TmMatchType == "100"     ? (options.TmPrice ?? 0.02f) : 0.0f },
-                            new { matchType = "99-82",   price = options.TmMatchType == "99-82"   ? (options.TmPrice ?? 0.02f) : 0.0f },
-                            new { matchType = "81-60",   price = options.TmMatchType == "81-60"   ? (options.TmPrice ?? 0.02f) : 0.0f }
-                        },
+                {
+                    new { matchType = "perfect", price = options.TmMatchType   == "perfect" ? (options.TmPrice ?? 0.02f) : 0.0f },
+                    new { matchType = "100",     price = options.TmMatchType   == "100"     ? (options.TmPrice ?? 0.02f) : 0.0f },
+                    new { matchType = "99-82",   price = options.TmMatchType   == "99-82"   ? (options.TmPrice ?? 0.02f) : 0.0f },
+                    new { matchType = "81-60",   price = options.TmMatchType   == "81-60"   ? (options.TmPrice ?? 0.02f) : 0.0f }
+                },
                     mtMatch = new[]
-                    {
-                            new { matchType = "100",   price = options.MtMatchType == "100"   ? (options.MtPrice ?? 0.01f) : 0.0f },
-                            new { matchType = "99-82", price = options.MtMatchType == "99-82" ? (options.MtPrice ?? 0.01f) : 0.0f },
-                            new { matchType = "81-60", price = options.MtMatchType == "81-60" ? (options.MtPrice ?? 0.01f) : 0.0f }
-                        },
+                {
+                    new { matchType = "100",   price = options.MtMatchType   == "100"   ? (options.MtPrice ?? 0.01f) : 0.0f },
+                    new { matchType = "99-82", price = options.MtMatchType   == "99-82" ? (options.MtPrice ?? 0.01f) : 0.0f },
+                    new { matchType = "81-60", price = options.MtMatchType   == "81-60" ? (options.MtPrice ?? 0.01f) : 0.0f }
+                },
                     suggestionMatch = new[]
-                    {
-                            new { matchType = "100",   price = options.SuggestMatchType == "100"   ? (options.SuggestPrice ?? 0.03f) : 0.0f },
-                            new { matchType = "99-82", price = options.SuggestMatchType == "99-82" ? (options.SuggestPrice ?? 0.03f) : 0.0f }
-                        }
+                {
+                    new { matchType = "100",   price = options.SuggestMatchType == "100"   ? (options.SuggestPrice ?? 0.03f) : 0.0f },
+                    new { matchType = "99-82", price = options.SuggestMatchType == "99-82" ? (options.SuggestPrice ?? 0.03f) : 0.0f }
+                }
                 },
                 taskId = parsedTaskId
             }

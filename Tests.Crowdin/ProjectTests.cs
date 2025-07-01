@@ -89,7 +89,8 @@ namespace Tests.Crowdin
                 ProjectId = "783572"
             }, new GenerateEstimateCostReportOptions
             {
-                LanguageIds = new[] { "en", "en-BZ" },
+                LanguageIds = new[] { "en" },
+                Currency = "EUR",
             });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented);
