@@ -211,7 +211,7 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
             name = "translation-costs-pe",
             schema = new
             {
-                unit = options.Unit,
+                unit = options.Unit ?? "words",
                 currency = options.Currency ?? "USD",
                 format = "json",
                 baseRates = new
@@ -545,7 +545,7 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
             name = "costs-estimation-pe",
             schema = new
             {
-                unit = options.Unit,
+                unit = options.Unit ?? "words",
                 currency = options.Currency ?? "USD",
                 format = "json",
 
@@ -725,7 +725,7 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
             name = "translation-costs-pe",
             schema = new
             {
-                unit = options.Unit,
+                unit = options.Unit ?? "words",
                 currency = options.Currency ?? "USD",
                 format = "json",
                 baseRates = new
