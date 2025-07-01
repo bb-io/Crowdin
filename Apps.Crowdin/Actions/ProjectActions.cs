@@ -14,6 +14,7 @@ using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Blackbird.Applications.Sdk.Utils.Utilities;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Crowdin.Api.Clients;
 using Crowdin.Api.ProjectsGroups;
 using Crowdin.Api.Translations;
 using RestSharp;
@@ -204,7 +205,7 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
        [ActionParameter] GenerateTranslationCostReportOptions options)
     {
         var reportRequest = new CrowdinRestRequest($"/projects/{project.ProjectId}/reports", Method.Post, InvocationContext.AuthenticationCredentialsProviders);
-        var action = new CrowdinRestClient();
+        var client = new CrowdinRestClient();
         reportRequest.AddJsonBody(new
         {
             name = "translation-costs-pe",
@@ -258,10 +259,40 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
         });
 
         var generateReport = await ExceptionWrapper.ExecuteWithErrorHandling(
-            () => action.ExecuteWithErrorHandling<GenerateReportResponse>(reportRequest)
+            () => client.ExecuteWithErrorHandling<GenerateReportResponse>(reportRequest)
         );
 
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        var reportId = generateReport.Data.Identifier;
+
+        const int maxRetries = 20;
+        const int delaySeconds = 5;
+        string status = null;
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            var statusRequest = new CrowdinRestRequest(
+                $"/projects/{project.ProjectId}/reports/{reportId}",
+                Method.Get,
+                InvocationContext.AuthenticationCredentialsProviders
+            );
+
+            var statusResp = await ExceptionWrapper.ExecuteWithErrorHandling(() =>
+                client.ExecuteWithErrorHandling<ReportStatusResponse>(statusRequest)
+            );
+
+            status = statusResp.Data.Status;
+
+            if (status == "finished")
+                break;
+
+            if (status == "failed")
+                throw new PluginApplicationException("Report generation failed on the server side.");
+
+            await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+        }
+
+        if (status != "finished")
+            throw new PluginApplicationException("Timed out waiting for report to finish. Please try again later.");
 
 
         var downloadRequest = new CrowdinRestRequest(
@@ -270,7 +301,7 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
             InvocationContext.AuthenticationCredentialsProviders
         );
         var downloadResponse = await ExceptionWrapper.ExecuteWithErrorHandling(
-            () => action.ExecuteWithErrorHandling<GetReportResponse>(downloadRequest)
+            () => client.ExecuteWithErrorHandling<GetReportResponse>(downloadRequest)
         );
 
         if (downloadResponse.Data.Url is null)
@@ -374,7 +405,37 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
             () => client.ExecuteWithErrorHandling<GenerateReportResponse>(reportRequest)
         );
 
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        var reportId = genResp.Data.Identifier;
+
+        const int maxRetries = 20;
+        const int delaySeconds = 5;
+        string status = null;
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            var statusRequest = new CrowdinRestRequest(
+                $"/projects/{project.ProjectId}/reports/{reportId}",
+                Method.Get,
+                InvocationContext.AuthenticationCredentialsProviders
+            );
+
+            var statusResp = await ExceptionWrapper.ExecuteWithErrorHandling(() =>
+                client.ExecuteWithErrorHandling<ReportStatusResponse>(statusRequest)
+            );
+
+            status = statusResp.Data.Status;
+
+            if (status == "finished")
+                break;
+
+            if (status == "failed")
+                throw new PluginApplicationException("Report generation failed on the server side.");
+
+            await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+        }
+
+        if (status != "finished")
+            throw new PluginApplicationException("Timed out waiting for report to finish. Please try again later.");
 
         var downloadRequest = new CrowdinRestRequest(
             $"/projects/{project.ProjectId}/reports/{genResp.Data.Identifier}/download",
@@ -532,7 +593,37 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
             () => client.ExecuteWithErrorHandling<GenerateReportResponse>(reportRequest)
         );
 
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        var reportId = genResp.Data.Identifier;
+
+        const int maxRetries = 20;
+        const int delaySeconds = 5;
+        string status = null;
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            var statusRequest = new CrowdinRestRequest(
+                $"/projects/{project.ProjectId}/reports/{reportId}",
+                Method.Get,
+                InvocationContext.AuthenticationCredentialsProviders
+            );
+
+            var statusResp = await ExceptionWrapper.ExecuteWithErrorHandling(() =>
+                client.ExecuteWithErrorHandling<ReportStatusResponse>(statusRequest)
+            );
+
+            status = statusResp.Data.Status;
+
+            if (status == "finished")
+                break;
+
+            if (status == "failed")
+                throw new PluginApplicationException("Report generation failed on the server side.");
+
+            await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+        }
+
+        if (status != "finished")
+            throw new PluginApplicationException("Timed out waiting for report to finish. Please try again later.");
 
         var downloadRequest = new CrowdinRestRequest(
             $"/projects/{project.ProjectId}/reports/{genResp.Data.Identifier}/download",
@@ -684,7 +775,38 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
             client.ExecuteWithErrorHandling<GenerateReportResponse>(reportRequest)
         );
 
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        var reportId = genResp.Data.Identifier;
+
+        const int maxRetries = 20;
+        const int delaySeconds = 5; 
+        string status = null;
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            var statusRequest = new CrowdinRestRequest(
+                $"/projects/{project.ProjectId}/reports/{reportId}",
+                Method.Get,
+                InvocationContext.AuthenticationCredentialsProviders
+            );
+
+            var statusResp = await ExceptionWrapper.ExecuteWithErrorHandling(() =>
+                client.ExecuteWithErrorHandling<ReportStatusResponse>(statusRequest)
+            );
+
+            status = statusResp.Data.Status;
+
+            if (status == "finished")
+                break;
+
+            if (status == "failed")
+                throw new PluginApplicationException("Report generation failed on the server side.");
+
+            await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+        }
+
+        if (status != "finished")
+            throw new PluginApplicationException("Timed out waiting for report to finish. Please try again later.");
+
 
         var dlRequest = new CrowdinRestRequest($"/projects/{project.ProjectId}/reports/{genResp.Data.Identifier}/download", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
         var dlResp = await ExceptionWrapper.ExecuteWithErrorHandling(() =>

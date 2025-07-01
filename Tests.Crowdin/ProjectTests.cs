@@ -150,8 +150,6 @@ namespace Tests.Crowdin
             });
 
 
-            Console.WriteLine($"{result.TaskName} - {result.TotalWords} - ");
-
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);
             Assert.IsNotNull(result);
