@@ -115,9 +115,7 @@ namespace Tests.Crowdin
             }, new GenerateEstimateCostReportByTaskOptions
             {
                 TaskId = "1",
-                BaseFullTranslations = 0.10f,
-                BaseProofRead = 0.5f,
-                LanguageIds = new[] { "en", "en-BZ" },
+                //LanguageIds = new[] { "en", "en-BZ" },
             });
 
 

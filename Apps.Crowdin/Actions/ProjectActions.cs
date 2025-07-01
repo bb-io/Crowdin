@@ -261,7 +261,7 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
             () => action.ExecuteWithErrorHandling<GenerateReportResponse>(reportRequest)
         );
 
-        Task.Delay(5000).Wait();
+        await Task.Delay(TimeSpan.FromSeconds(5));
 
 
         var downloadRequest = new CrowdinRestRequest(
@@ -361,9 +361,6 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
                 languageIds = options.LanguageIds
             }
         };
-
-        var requestBodyJson = System.Text.Json.JsonSerializer.Serialize(requestBody, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-        Console.WriteLine($"Request body: {requestBodyJson}");
 
         var reportRequest = new CrowdinRestRequest(
             $"/projects/{project.ProjectId}/reports",
@@ -536,6 +533,7 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
         );
 
         await Task.Delay(TimeSpan.FromSeconds(5));
+
         var downloadRequest = new CrowdinRestRequest(
             $"/projects/{project.ProjectId}/reports/{genResp.Data.Identifier}/download",
             Method.Get,
@@ -686,7 +684,7 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
             client.ExecuteWithErrorHandling<GenerateReportResponse>(reportRequest)
         );
 
-        await Task.Delay(5000);
+        await Task.Delay(TimeSpan.FromSeconds(5));
 
         var dlRequest = new CrowdinRestRequest($"/projects/{project.ProjectId}/reports/{genResp.Data.Identifier}/download", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
         var dlResp = await ExceptionWrapper.ExecuteWithErrorHandling(() =>
