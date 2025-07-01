@@ -1,5 +1,7 @@
 ﻿using Apps.Crowdin.DataSourceHandlers;
+using Apps.Crowdin.DataSourceHandlers.EnumHandlers;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Crowdin.Models.Request.Project
@@ -13,7 +15,12 @@ namespace Apps.Crowdin.Models.Request.Project
         public float? BaseProofRead { get; set; } = 0.0f;
 
         [Display("Currency")]
+        [StaticDataSource(typeof(CurrencyDataHandler))]
         public string? Currency { get; set; }
+
+        [Display("Unit")]
+        [StaticDataSource(typeof(ReportFormatUnitDataHandler))]
+        public string? Unit { get; set; } = "words";
 
         [Display("Language IDs")]
         [DataSource(typeof(LanguagesDataHandler))]
@@ -47,7 +54,10 @@ namespace Apps.Crowdin.Models.Request.Project
         [Display("Suggestion price")]
         public float? SuggestPrice { get; set; } = 0.0f;
 
+        [Display("From date")]
         public DateTime? FromDate { get; set; }
+
+        [Display("To date")]
         public DateTime? ToDate { get; set; }
     }
 }

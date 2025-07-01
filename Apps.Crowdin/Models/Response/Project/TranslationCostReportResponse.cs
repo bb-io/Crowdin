@@ -97,9 +97,9 @@ namespace Apps.Crowdin.Models.Response.Project
     public class ColumnValue
     {
         [Display("Name")]
-        public string Name { get; set; } = string.Empty;
+        public string Key { get; set; } = string.Empty;
 
         [Display("Value")]
-        public decimal Value { get; set; }
+        public object Value { get; set; } = null!;
     }
 }

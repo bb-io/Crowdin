@@ -60,7 +60,6 @@ namespace Tests.Crowdin
                 Assert.IsNotNull(result);
             }
         }
-        //GenerateTranslateCostReport
 
 
         [TestMethod]
@@ -99,8 +98,8 @@ namespace Tests.Crowdin
                 ToDate = new DateTime(2025, 6, 11, 23, 59, 59, DateTimeKind.Utc)
             });
 
-
-            Console.WriteLine($"{result.TaskName} - {result.TotalWords} - ");
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented);
+            Console.WriteLine(json);
             Assert.IsNotNull(result);
 
         }
@@ -117,16 +116,13 @@ namespace Tests.Crowdin
             {
                 TaskId = "1",
                 BaseFullTranslations = 0.10f,
-                BaseProofRead = 0.05f,
+                BaseProofRead = 0.5f,
                 LanguageIds = new[] { "en", "en-BZ" },
-                TmMatchType = "perfect",
-                TmPrice = 0.02f,
-                FromDate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                ToDate = new DateTime(2025, 6, 11, 23, 59, 59, DateTimeKind.Utc)
             });
 
 
-            Console.WriteLine($"{result.TaskName} - {result.TotalWords} - ");
+          var json = Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented);
+            Console.WriteLine(json);
             Assert.IsNotNull(result);
 
         }

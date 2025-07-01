@@ -12,7 +12,7 @@ public static class ExceptionWrapper
     ];
 
     public static async Task<T> ExecuteWithErrorHandling<T>(Func<Task<T>> func)
-    {
+   {
         try
         {
             return await func.Invoke();
