@@ -60,7 +60,6 @@ namespace Tests.Crowdin
                 Assert.IsNotNull(result);
             }
         }
-        //GenerateTranslateCostReport
 
 
         [TestMethod]
@@ -72,21 +71,11 @@ namespace Tests.Crowdin
             {
                 ProjectId = "783572"
             }, new GenerateTranslationCostReportOptions {
-                BaseFullTranslations = 0.10f,
-                BaseProofRead = 0.05f,
-                TmMatchType = "perfect",
-                TmPrice = 0.0f,
-                MtMatchType = "100",
-                MtPrice = 0.0f,
-                SuggestMatchType = "100",
-                SuggestPrice = 0.0f,
-                FromDate = DateTime.UtcNow.AddDays(-30).ToUniversalTime(),
-                ToDate = DateTime.UtcNow.ToUniversalTime()
-            });
 
-           
-                Console.WriteLine($"{result.TaskName} - {result.TotalWords} - ");
-                Assert.IsNotNull(result);
+            });
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented);
+            Console.WriteLine(json);
+            Assert.IsNotNull(result);
 
         }
 
@@ -100,17 +89,64 @@ namespace Tests.Crowdin
                 ProjectId = "783572"
             }, new GenerateEstimateCostReportOptions
             {
-                BaseFullTranslations = 0.10f,
-                BaseProofRead = 0.05f,
-                LanguageIds = new[] { "en", "en-BZ" },
-                TmMatchType = "perfect",
-                TmPrice = 0.02f,
-                FromDate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                ToDate = new DateTime(2025, 6, 11, 23, 59, 59, DateTimeKind.Utc)
+                LanguageIds = new[] { "en" },
+                Currency = "EUR",
+            });
+
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented);
+            Console.WriteLine(json);
+            Assert.IsNotNull(result);
+
+        }
+
+        [TestMethod]
+        public async Task GenerateTaksCostReport_ShoudBeSuccess()
+        {
+            var action = new ProjectActions(InvocationContext, FileManager);
+
+            var result = await action.GenerateCostReportByTask(new ProjectRequest
+            {
+                ProjectId = "783572"
+            }, new GenerateEstimateCostReportByTaskOptions
+            {
+                TaskId = "1",
+                //LanguageIds = new[] { "en", "en-BZ" },
             });
 
 
-            Console.WriteLine($"{result.TaskName} - {result.TotalWords} - ");
+          var json = Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented);
+            Console.WriteLine(json);
+            Assert.IsNotNull(result);
+
+        }
+
+
+        [TestMethod]
+        public async Task GenerateTaskTranslationReport_ShoudBeSuccess()
+        {
+            var action = new ProjectActions(InvocationContext, FileManager);
+
+            var result = await action.GenerateTranslateCostReportByTask(new ProjectRequest
+            {
+                ProjectId = "783572"
+            }, new GenerateTranslationCostReportByTaskOptions
+            {
+                TaskId = "1",
+                //BaseFullTranslations = 0.10f,
+                //BaseProofRead = 0.05f,
+                //TmMatchType = "perfect",
+                //TmPrice = 0.0f,
+                //MtMatchType = "100",
+                //MtPrice = 0.0f,
+                //SuggestMatchType = "100",
+                //SuggestPrice = 0.0f,
+                //FromDate = DateTime.UtcNow.AddDays(-30).ToUniversalTime(),
+                //ToDate = DateTime.UtcNow.ToUniversalTime()
+            });
+
+
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented);
+            Console.WriteLine(json);
             Assert.IsNotNull(result);
 
         }
