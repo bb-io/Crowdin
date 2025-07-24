@@ -69,7 +69,7 @@ namespace Tests.Crowdin
 
             var result = await action.GenerateTranslateCostReport(new ProjectRequest
             {
-                ProjectId = "783572"
+                ProjectId = "2"
             }, new GenerateTranslationCostReportOptions {
 
             });
@@ -86,10 +86,9 @@ namespace Tests.Crowdin
 
             var result = await action.GenerateCostReport(new ProjectRequest
             {
-                ProjectId = "783572"
+                ProjectId = "2"
             }, new GenerateEstimateCostReportOptions
             {
-                LanguageIds = new[] { "en" },
                 Currency = "EUR",
             });
 
@@ -106,10 +105,10 @@ namespace Tests.Crowdin
 
             var result = await action.GenerateCostReportByTask(new ProjectRequest
             {
-                ProjectId = "783572"
+                ProjectId = "2"
             }, new GenerateEstimateCostReportByTaskOptions
             {
-                TaskId = "1",
+                TaskId = "4944",
                 //LanguageIds = new[] { "en", "en-BZ" },
             });
 
@@ -128,10 +127,10 @@ namespace Tests.Crowdin
 
             var result = await action.GenerateTranslateCostReportByTask(new ProjectRequest
             {
-                ProjectId = "783572"
+                ProjectId = "2"
             }, new GenerateTranslationCostReportByTaskOptions
             {
-                TaskId = "1",
+                TaskId = "4944",
                 //BaseFullTranslations = 0.10f,
                 //BaseProofRead = 0.05f,
                 //TmMatchType = "perfect",

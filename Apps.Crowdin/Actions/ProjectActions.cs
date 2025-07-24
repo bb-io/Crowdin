@@ -1,5 +1,7 @@
 ﻿using Apps.Crowdin.Api.RestSharp;
 using Apps.Crowdin.Api.RestSharp.Basic;
+using Apps.Crowdin.Api.RestSharp.Enterprise;
+using Apps.Crowdin.Constants;
 using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Project;
@@ -12,6 +14,7 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Blackbird.Applications.Sdk.Utils.Parsers;
+using Blackbird.Applications.Sdk.Utils.RestSharp;
 using Blackbird.Applications.Sdk.Utils.Utilities;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Crowdin.Api.Clients;
@@ -205,7 +208,10 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
        [ActionParameter] GenerateTranslationCostReportOptions options)
     {
         var reportRequest = new CrowdinRestRequest($"/projects/{project.ProjectId}/reports", Method.Post, InvocationContext.AuthenticationCredentialsProviders);
-        var client = new CrowdinRestClient();
+        var plan = InvocationContext.AuthenticationCredentialsProviders.GetCrowdinPlan();
+        BlackBirdRestClient client = plan == Plans.Enterprise
+            ? new CrowdinEnterpriseRestClient(InvocationContext.AuthenticationCredentialsProviders)
+            : new CrowdinRestClient();
         reportRequest.AddJsonBody(new
         {
             name = "translation-costs-pe",
@@ -400,7 +406,10 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
         );
         reportRequest.AddJsonBody(requestBody);
 
-        var client = new CrowdinRestClient();
+        var plan = InvocationContext.AuthenticationCredentialsProviders.GetCrowdinPlan();
+        BlackBirdRestClient client = plan == Plans.Enterprise
+            ? new CrowdinEnterpriseRestClient(InvocationContext.AuthenticationCredentialsProviders)
+            : new CrowdinRestClient();
         var genResp = await ExceptionWrapper.ExecuteWithErrorHandling(
             () => client.ExecuteWithErrorHandling<GenerateReportResponse>(reportRequest)
         );
@@ -581,6 +590,12 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
             }
         };
 
+
+        var plan = InvocationContext.AuthenticationCredentialsProviders.GetCrowdinPlan();
+        BlackBirdRestClient client = plan == Plans.Enterprise
+            ? new CrowdinEnterpriseRestClient(InvocationContext.AuthenticationCredentialsProviders)
+            : new CrowdinRestClient();
+
         var reportRequest = new CrowdinRestRequest(
             $"/projects/{project.ProjectId}/reports",
             Method.Post,
@@ -588,7 +603,6 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
         );
         reportRequest.AddJsonBody(requestBody);
 
-        var client = new CrowdinRestClient();
         var genResp = await ExceptionWrapper.ExecuteWithErrorHandling(
             () => client.ExecuteWithErrorHandling<GenerateReportResponse>(reportRequest)
         );
@@ -770,7 +784,10 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
             }
         });
 
-        var client = new CrowdinRestClient();
+        var plan = InvocationContext.AuthenticationCredentialsProviders.GetCrowdinPlan();
+        BlackBirdRestClient client = plan == Plans.Enterprise
+            ? new CrowdinEnterpriseRestClient(InvocationContext.AuthenticationCredentialsProviders)
+            : new CrowdinRestClient();
         var genResp = await ExceptionWrapper.ExecuteWithErrorHandling(() =>
             client.ExecuteWithErrorHandling<GenerateReportResponse>(reportRequest)
         );
