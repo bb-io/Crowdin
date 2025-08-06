@@ -358,6 +358,49 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         return new GetFileProgressResponse(progressEntities);
     }
 
+    [Action("Get file progress", Description = "Gets file progress for Basic plan")]
+    public async Task<GetFileProgressResponse> GetFileProgressBasic(
+    [ActionParameter] ProjectRequest project,
+    [ActionParameter] FileRequest file)
+    {
+        if (!int.TryParse(project.ProjectId, out var intProjectId))
+            throw new PluginMisconfigurationException($"Invalid Project ID: {project.ProjectId} must be a numeric value. Please check the input project ID");
+
+        if (!int.TryParse(file.FileId, out var intFileId))
+            throw new PluginMisconfigurationException($"Invalid File ID: {file.FileId} must be a numeric value. Please check the input file ID");
+
+        var basicRestClient = new CrowdinRestClient();
+
+        var request = new CrowdinRestRequest(
+            $"/projects/{intProjectId}/files/{intFileId}/languages/progress",
+            Method.Get,
+            invocationContext.AuthenticationCredentialsProviders);
+
+        var response = await basicRestClient.ExecuteWithErrorHandling(request);
+
+        var progressDto = JsonConvert.DeserializeObject<LanguageProgressResponseDto>(response.Content);
+
+        var progressEntities = progressDto.Data.Select(wrapper =>
+        {
+            var item = wrapper.Data;
+            return new FileLanguageProgressEntity
+            {
+                LanguageId = item.LanguageId,
+                LanguageName = item.Language?.Name,
+                TranslationProgress = item.TranslationProgress,
+                ApprovalProgress = item.ApprovalProgress,
+                TotalWords = item.Words?.Total ?? 0,
+                TranslatedWords = item.Words?.Translated ?? 0,
+                ApprovedWords = item.Words?.Approved ?? 0,
+                TotalPhrases = item.Phrases?.Total ?? 0,
+                TranslatedPhrases = item.Phrases?.Translated ?? 0,
+                ApprovedPhrases = item.Phrases?.Approved ?? 0
+            };
+        });
+
+        return new GetFileProgressResponse(progressEntities);
+    }
+
     [Action("Add spreadsheet file", Description = "Add a new spreadsheet (.csv or .xlsx) to Crowdin with optional spreadsheet settings")]
     public async Task<FileEntity> AddSpreadsheetFile(
     [ActionParameter] ProjectRequest project,
