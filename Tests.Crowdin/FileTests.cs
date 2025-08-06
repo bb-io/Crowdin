@@ -122,7 +122,7 @@ namespace Tests.Crowdin
 
 
         [TestMethod]
-        public async Task GetFileProgress_ReturnsSuccess()
+        public async Task GetFileEnterpriseProgress_ReturnsSuccess()
         {
             var action = new FileActions(InvocationContext, FileManager);
             var input1 = new ProjectRequest { ProjectId = "614573" };
@@ -131,6 +131,24 @@ namespace Tests.Crowdin
             var progress=await action.GetFileProgress(input1, input2);
 
             foreach(var item in progress.Progress){
+                Console.WriteLine($"{item.LanguageId} - {item.LanguageName} - {item.TranslationProgress} - {item.ApprovalProgress}");
+                Assert.IsTrue(true);
+            }
+
+        }
+
+
+        [TestMethod]
+        public async Task GetFileBasicProgress_ReturnsSuccess()
+        {
+            var action = new FileActions(InvocationContext, FileManager);
+            var input1 = new ProjectRequest { ProjectId = "783572" };
+            var input2 = new FileRequest { FileId = "143" };
+
+            var progress = await action.GetFileProgressBasic(input1, input2);
+
+            foreach (var item in progress.Progress)
+            {
                 Console.WriteLine($"{item.LanguageId} - {item.LanguageName} - {item.TranslationProgress} - {item.ApprovalProgress}");
                 Assert.IsTrue(true);
             }
