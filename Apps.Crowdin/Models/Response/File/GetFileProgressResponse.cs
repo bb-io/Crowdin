@@ -60,13 +60,13 @@ namespace Apps.Crowdin.Models.Response.File
         [Display("Approved words")]
         public int ApprovedWords { get; set; }
 
-        [Display("Total phares")]
+        [Display("Total phrases")]
         public int TotalPhrases { get; set; }
 
-        [Display("Translated phares")]
+        [Display("Translated phrases")]
         public int TranslatedPhrases { get; set; }
 
-        [Display("Approved phares")]
+        [Display("Approved phrases")]
         public int ApprovedPhrases { get; set; }
     }
 

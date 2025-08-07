@@ -23,6 +23,9 @@ using Apps.Crowdin.Api.RestSharp.Enterprise;
 using Apps.Crowdin.Api.RestSharp;
 using OfficeOpenXml;
 using Apps.Crowdin.Api.RestSharp.Basic;
+using Apps.Crowdin.Constants;
+using Apps.Crowdin.Factories;
+using Blackbird.Applications.Sdk.Utils.RestSharp;
 
 namespace Apps.Crowdin.Actions;
 
@@ -315,10 +318,10 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         await SdkClient.SourceFiles.DeleteFile(intProjectId, intFileId));
     }
 
-    [Action("[Enterprise] Get file progress", Description = "Gets file progress")]
+    [Action("Get file progress", Description = "Gets file progress")]
     public async Task<GetFileProgressResponse> GetFileProgress(
-        [ActionParameter] ProjectRequest project,
-        [ActionParameter] FileRequest file)
+      [ActionParameter] ProjectRequest project,
+      [ActionParameter] FileRequest file)
     {
         if (!int.TryParse(project.ProjectId, out var intProjectId))
             throw new PluginMisconfigurationException($"Invalid Project ID: {project.ProjectId} must be a numeric value. Please check the input project ID");
@@ -326,57 +329,17 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         if (!int.TryParse(file.FileId, out var intFileId))
             throw new PluginMisconfigurationException($"Invalid File ID: {file.FileId} must be a numeric value. Please check the input file ID");
 
-        var enterpriseRestClient = new CrowdinEnterpriseRestClient(invocationContext.AuthenticationCredentialsProviders);
-
-        var request = new CrowdinRestRequest(
-        $"/projects/{intProjectId}/files/{intFileId}/languages/progress",
-        Method.Get,
-        invocationContext.AuthenticationCredentialsProviders);
-
-        var response = await enterpriseRestClient.ExecuteWithErrorHandling(request);
-
-        var progressDto = JsonConvert.DeserializeObject<LanguageProgressResponseDto>(response.Content);
-
-        var progressEntities = progressDto.Data.Select(wrapper =>
-        {
-            var item = wrapper.Data; 
-            return new FileLanguageProgressEntity
-            {
-                LanguageId = item.LanguageId,
-                LanguageName = item.Language?.Name,
-                TranslationProgress = item.TranslationProgress,
-                ApprovalProgress = item.ApprovalProgress,
-                TotalWords = item.Words?.Total ?? 0,
-                TranslatedWords = item.Words?.Translated ?? 0,
-                ApprovedWords = item.Words?.Approved ?? 0,
-                TotalPhrases = item.Phrases?.Total ?? 0,
-                TranslatedPhrases = item.Phrases?.Translated ?? 0,
-                ApprovedPhrases = item.Phrases?.Approved ?? 0
-            };
-        });
-
-        return new GetFileProgressResponse(progressEntities);
-    }
-
-    [Action("Get file progress", Description = "Gets file progress for Basic plan")]
-    public async Task<GetFileProgressResponse> GetFileProgressBasic(
-    [ActionParameter] ProjectRequest project,
-    [ActionParameter] FileRequest file)
-    {
-        if (!int.TryParse(project.ProjectId, out var intProjectId))
-            throw new PluginMisconfigurationException($"Invalid Project ID: {project.ProjectId} must be a numeric value. Please check the input project ID");
-
-        if (!int.TryParse(file.FileId, out var intFileId))
-            throw new PluginMisconfigurationException($"Invalid File ID: {file.FileId} must be a numeric value. Please check the input file ID");
-
-        var basicRestClient = new CrowdinRestClient();
+        var plan = InvocationContext.AuthenticationCredentialsProviders.GetCrowdinPlan();
+        BlackBirdRestClient restClient = plan == Plans.Enterprise
+            ? new CrowdinEnterpriseRestClient(invocationContext.AuthenticationCredentialsProviders)
+            : new CrowdinRestClient();
 
         var request = new CrowdinRestRequest(
             $"/projects/{intProjectId}/files/{intFileId}/languages/progress",
             Method.Get,
             invocationContext.AuthenticationCredentialsProviders);
 
-        var response = await basicRestClient.ExecuteWithErrorHandling(request);
+        var response = await restClient.ExecuteWithErrorHandling(request);
 
         var progressDto = JsonConvert.DeserializeObject<LanguageProgressResponseDto>(response.Content);
 
