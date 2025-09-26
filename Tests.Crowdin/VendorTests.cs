@@ -18,7 +18,7 @@ public class VendorTests : TestBase
 		var result = await actions.ListVendors(request);
 
 		// Assert
-		foreach (var vendor in result.Data)
+		foreach (var vendor in result)
 		{
             Console.WriteLine($"{vendor.Vendor.Id} - {vendor.Vendor.Name} - {vendor.Vendor.Status}");
 		}
@@ -36,7 +36,7 @@ public class VendorTests : TestBase
         var result = await actions.ListVendors(request);
 
         // Assert
-        foreach (var vendor in result.Data)
+        foreach (var vendor in result)
         {
             Console.WriteLine($"{vendor.Vendor.Id} - {vendor.Vendor.Name} - {vendor.Vendor.Status}");
         }
@@ -54,7 +54,7 @@ public class VendorTests : TestBase
         var result = await actions.ListVendors(request);
 
         // Assert
-        foreach (var vendor in result.Data)
+        foreach (var vendor in result)
         {
             Console.WriteLine($"{vendor.Vendor.Id} - {vendor.Vendor.Name} - {vendor.Vendor.Status}");
         }
@@ -72,7 +72,7 @@ public class VendorTests : TestBase
         var result = await actions.ListVendors(request);
 
         // Assert
-        foreach (var vendor in result.Data)
+        foreach (var vendor in result)
         {
             Console.WriteLine($"{vendor.Vendor.Id} - {vendor.Vendor.Name} - {vendor.Vendor.Status}");
         }

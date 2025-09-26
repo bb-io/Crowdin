@@ -20,11 +20,11 @@ public class VendorActions(InvocationContext invocationContext) : AppInvocable(i
     public async Task<GetVendorResponse?> GetVendor([ActionParameter] GetVendorRequest request)
     {
         var vendors = await ListVendors(request);
-        return vendors.Data.FirstOrDefault();
+        return vendors.FirstOrDefault();
     }
 
     [Action("[Enterprise] Search vendors", Description = "Get the list of the vendors you already invited to your organization")]
-    public async Task<ListDataResponse<GetVendorResponse>> ListVendors([ActionParameter] GetVendorRequest request)
+    public async Task<List<GetVendorResponse>> ListVendors([ActionParameter] GetVendorRequest request)
     {
         CheckAccessToEnterpriseAction();
 
@@ -47,7 +47,7 @@ public class VendorActions(InvocationContext invocationContext) : AppInvocable(i
 
         var vendors = items.AsEnumerable();
         ApplyFilters(request, vendors);
-        return new ListDataResponse<GetVendorResponse> { Data = vendors.ToList() };
+        return vendors.ToList();
     }
 
     private static void ApplyFilters(GetVendorRequest request, IEnumerable<GetVendorResponse> vendors)
