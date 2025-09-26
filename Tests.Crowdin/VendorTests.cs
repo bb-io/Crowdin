@@ -30,7 +30,7 @@ public class VendorTests : TestBase
     {
         // Arrange
         var actions = new VendorActions(InvocationContext);
-        var request = new GetVendorRequest { NameContains = "Localize" };
+        var request = new GetVendorRequest { NameContains = "l" };
 
         // Act
         var result = await actions.ListVendors(request);
@@ -66,7 +66,7 @@ public class VendorTests : TestBase
     {
         // Arrange
         var actions = new VendorActions(InvocationContext);
-        var request = new GetVendorRequest { Status = "confirmed" };
+        var request = new GetVendorRequest { Status = "pending" };
 
         // Act
         var result = await actions.ListVendors(request);
@@ -77,5 +77,65 @@ public class VendorTests : TestBase
             Console.WriteLine($"{vendor.Vendor.Id} - {vendor.Vendor.Name} - {vendor.Vendor.Status}");
         }
         Assert.IsNotNull(result);
+    }
+
+    [TestMethod]
+    public async Task GetVendor_WithoutFilters_ReturnsVendor()
+    {
+        // Arrange
+        var actions = new VendorActions(InvocationContext);
+        var request = new GetVendorRequest { };
+
+        // Act
+        var result = await actions.GetVendor(request);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Console.WriteLine($"{result.Vendor.Id} - {result.Vendor.Name} - {result.Vendor.Status}");
+    }
+
+    [TestMethod]
+    public async Task GetVendor_WithNameFilter_ReturnsVendor()
+    {
+        // Arrange
+        var actions = new VendorActions(InvocationContext);
+        var request = new GetVendorRequest { NameContains = "l" };
+
+        // Act
+        var result = await actions.GetVendor(request);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Console.WriteLine($"{result.Vendor.Id} - {result.Vendor.Name} - {result.Vendor.Status}");
+    }
+
+    [TestMethod]
+    public async Task GetVendor_WithNameAndDescriptionFilter_ReturnsVendor()
+    {
+        // Arrange
+        var actions = new VendorActions(InvocationContext);
+        var request = new GetVendorRequest { NameContains = "l", DescriptionContains = "company" };
+
+        // Act
+        var result = await actions.GetVendor(request);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Console.WriteLine($"{result.Vendor.Id} - {result.Vendor.Name} - {result.Vendor.Status}");
+    }
+    
+    [TestMethod]
+    public async Task GetVendor_WithStatusFilter_ReturnsVendor()
+    {
+        // Arrange
+        var actions = new VendorActions(InvocationContext);
+        var request = new GetVendorRequest { Status = "confirmed" };
+
+        // Act
+        var result = await actions.GetVendor(request);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Console.WriteLine($"{result.Vendor.Id} - {result.Vendor.Name} - {result.Vendor.Status}");
     }
 }
