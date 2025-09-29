@@ -12,6 +12,6 @@ public class VendorEntity
         Id = vendor.Id;
         Name = vendor.Name;
         Description = string.IsNullOrWhiteSpace(vendor.Description) ? null : vendor.Description;
-        Status = vendor.Status.ToString().ToLower();
+        Status = vendor.Status.ToString();
     }
 }
