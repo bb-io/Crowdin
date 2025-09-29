@@ -1,5 +1,5 @@
-﻿using Blackbird.Applications.Sdk.Common;
-using Crowdin.Api.Tasks;
+﻿using Crowdin.Api.Tasks;
+using Blackbird.Applications.Sdk.Common;
 
 namespace Apps.Crowdin.Models.Entities;
 
@@ -21,6 +21,8 @@ public class TaskEntity
     public string Description { get; set; }
 
     public string Vendor { get; set; }
+
+    public IEnumerable<string> Assignees { get; set; }
 
     [Display("File IDs")]
     public IEnumerable<string> FileIds { get; set; }
@@ -44,6 +46,7 @@ public class TaskEntity
         Status = taskResource.Status.ToString();
         Title = taskResource.Title;
         Description = taskResource.Description;
+        Assignees = taskResource.Assignees.Select(x => x.FullName);
         Vendor = taskResource.Vendor;
         FileIds = taskResource.FileIds.Select(x => x.ToString());
         SourceLanguageId = taskResource.SourceLanguageId;

@@ -50,7 +50,8 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
                 DirectoryId = intDirectoryId,
                 Filter = input.Filter,
                 Limit = lim,
-                Offset = offset
+                Offset = offset,
+                Recursion = input.Recursive ?? false
             };
 
             return ExceptionWrapper.ExecuteWithErrorHandling(() =>
