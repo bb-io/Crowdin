@@ -151,6 +151,10 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 - **Invite user** Add a new user
 - **Delete user** Delete specific user
 
+### Vendors
+- **Search vendors** Get the list of the vendors you already invited to your organization 
+- **Find vendor** Get the first vendor you already invited to your organization that matches the search criteria
+
 ## Events
 
 ### Comment 
