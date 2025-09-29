@@ -18,9 +18,9 @@ public class VendorTests : TestBase
 		var result = await actions.ListVendors(request);
 
 		// Assert
-		foreach (var vendor in result)
+		foreach (var vendor in result.Vendors)
 		{
-            Console.WriteLine($"{vendor.Vendor.Id} - {vendor.Vendor.Name} - {vendor.Vendor.Status}");
+            Console.WriteLine($"{vendor.Id} - {vendor.Name} - {vendor.Status}");
 		}
 		Assert.IsNotNull(result);
     }
@@ -36,9 +36,9 @@ public class VendorTests : TestBase
         var result = await actions.ListVendors(request);
 
         // Assert
-        foreach (var vendor in result)
+        foreach (var vendor in result.Vendors)
         {
-            Console.WriteLine($"{vendor.Vendor.Id} - {vendor.Vendor.Name} - {vendor.Vendor.Status}");
+            Console.WriteLine($"{vendor.Id} - {vendor.Name} - {vendor.Status}");
         }
         Assert.IsNotNull(result);
     }
@@ -54,9 +54,9 @@ public class VendorTests : TestBase
         var result = await actions.ListVendors(request);
 
         // Assert
-        foreach (var vendor in result)
+        foreach (var vendor in result.Vendors)
         {
-            Console.WriteLine($"{vendor.Vendor.Id} - {vendor.Vendor.Name} - {vendor.Vendor.Status}");
+            Console.WriteLine($"{vendor.Id} - {vendor.Name} - {vendor.Status}");
         }
         Assert.IsNotNull(result);
     }
@@ -72,9 +72,9 @@ public class VendorTests : TestBase
         var result = await actions.ListVendors(request);
 
         // Assert
-        foreach (var vendor in result)
+        foreach (var vendor in result.Vendors)
         {
-            Console.WriteLine($"{vendor.Vendor.Id} - {vendor.Vendor.Name} - {vendor.Vendor.Status}");
+            Console.WriteLine($"{vendor.Id} - {vendor.Name} - {vendor.Status}");
         }
         Assert.IsNotNull(result);
     }

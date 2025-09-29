@@ -1,15 +1,12 @@
-﻿using Apps.Crowdin.Api.RestSharp;
-using Apps.Crowdin.Api.RestSharp.Enterprise;
-using Apps.Crowdin.Invocables;
+﻿using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Request.Vendors;
-using Apps.Crowdin.Models.Response;
 using Apps.Crowdin.Models.Response.Vendors;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Crowdin.Api;
-using RestSharp;
+using Crowdin.Api.Vendors;
 
 namespace Apps.Crowdin.Actions;
 
@@ -20,45 +17,37 @@ public class VendorActions(InvocationContext invocationContext) : AppInvocable(i
     public async Task<GetVendorResponse?> GetVendor([ActionParameter] GetVendorRequest request)
     {
         var vendors = await ListVendors(request);
-        return vendors.FirstOrDefault();
+        return new GetVendorResponse { Vendor = vendors.Vendors.FirstOrDefault() };
     }
 
     [Action("[Enterprise] Search vendors", Description = "Get the list of the vendors you already invited to your organization")]
-    public async Task<List<GetVendorResponse>> ListVendors([ActionParameter] GetVendorRequest request)
+    public async Task<ListVendorsResponse> ListVendors([ActionParameter] GetVendorRequest request)
     {
         CheckAccessToEnterpriseAction();
 
-        var client = new CrowdinEnterpriseRestClient(Creds);
+        var response = await Paginator.Paginate(ListVendorsAsync);
+        var vendors = response.Select(x => new VendorEntity(x)).AsEnumerable();
 
-        var items = await Paginator.Paginate(async (limit, offset) =>
-        {
-            var vendorsRequest = new CrowdinRestRequest(
-                $"/vendors?limit={limit}&offset={offset}",
-                Method.Get,
-                InvocationContext.AuthenticationCredentialsProviders
-            );
-
-            var page = await ExceptionWrapper.ExecuteWithErrorHandling(
-                () => client.ExecuteWithErrorHandling<ListDataResponse<GetVendorResponse>>(vendorsRequest)
-            );
-
-            return new ResponseList<GetVendorResponse> { Data = page.Data.ToList() };
-        });
-
-        var vendors = items.AsEnumerable();
-        ApplyFilters(request, vendors);
-        return vendors.ToList();
+        var filtered = ApplyFilters(request, vendors);
+        return new(filtered);
     }
 
-    private static void ApplyFilters(GetVendorRequest request, IEnumerable<GetVendorResponse> vendors)
+    private static VendorEntity[] ApplyFilters(GetVendorRequest request, IEnumerable<VendorEntity> vendors)
     {
         if (!string.IsNullOrEmpty(request.Status))
-            vendors = vendors.Where(v => v.Vendor.Status.ToString().Equals(request.Status, StringComparison.CurrentCultureIgnoreCase));
+            vendors = vendors.Where(v => v.Status.ToString().Equals(request.Status, StringComparison.CurrentCultureIgnoreCase));
 
         if (!string.IsNullOrEmpty(request.NameContains))
-            vendors = vendors.Where(v => v.Vendor.Name.Contains(request.NameContains, StringComparison.OrdinalIgnoreCase));
+            vendors = vendors.Where(v => v.Name.Contains(request.NameContains, StringComparison.OrdinalIgnoreCase));
 
         if (!string.IsNullOrEmpty(request.DescriptionContains))
-            vendors = vendors.Where(v => v.Vendor.Description?.Contains(request.DescriptionContains, StringComparison.OrdinalIgnoreCase) == true);
+            vendors = vendors.Where(v => v.Description?.Contains(request.DescriptionContains, StringComparison.OrdinalIgnoreCase) == true);
+
+        return vendors.ToArray();
+    }
+
+    private Task<ResponseList<Vendor>> ListVendorsAsync(int limit = 25, int offset = 0)
+    {
+        return ExceptionWrapper.ExecuteWithErrorHandling(() => SdkClient.Vendors.ListVendors(limit, offset));
     }
 }
