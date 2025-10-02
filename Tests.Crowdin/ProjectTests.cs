@@ -53,10 +53,10 @@ namespace Tests.Crowdin
             var handler = new ProjectDataHandler(InvocationContext);  
 
             var result = await handler.GetDataAsync(new DataSourceContext { SearchString =""}, CancellationToken.None);
-
+            Console.WriteLine(result.Count());
             foreach (var item in result)
             {
-                Console.WriteLine($"{item.DisplayName} - {item.Value} - ");
+                Console.WriteLine($"{item.DisplayName} - {item.Value}");
                 Assert.IsNotNull(result);
             }
         }
