@@ -93,10 +93,11 @@ public class FileTests : TestBase
     public async Task ListFile_ReturnsSuccess()
     {
         var action = new FileActions(InvocationContext, FileManager);
-        var input1 = new ProjectRequest { ProjectId = "788306" };
-        var input2 = new ListFilesRequest {  };
+        var input1 = new ProjectRequest { ProjectId = "783490" };
+        var input2 = new ListFilesRequest { Recursive=true, DirectoryId= "161787" };
 
         var response = await action.ListFiles(input1, input2);
+        Console.WriteLine(response.Files.Count());
         foreach (var file in response.Files)
         {
             Console.WriteLine($"{file.Id} - {file.Name}");

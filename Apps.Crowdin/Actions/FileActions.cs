@@ -50,9 +50,10 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
                 DirectoryId = intDirectoryId,
                 Filter = input.Filter,
                 Limit = lim,
-                Offset = offset,
-                Recursion = input.Recursive ?? false
+                Offset = offset
             };
+
+            request.Recursion = input.Recursive == true ? "true" : null;
 
             return ExceptionWrapper.ExecuteWithErrorHandling(() =>
                 SdkClient.SourceFiles.ListFiles<FileCollectionResource>(intProjectId!.Value, request));
