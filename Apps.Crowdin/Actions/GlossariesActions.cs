@@ -15,7 +15,7 @@ using ImportGlossaryRequest = Crowdin.Api.Glossaries.ImportGlossaryRequest;
 
 namespace Apps.Crowdin.Actions;
 
-[ActionList]
+[ActionList("Glossaries")]
 public class GlossariesActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : AppInvocable(invocationContext)
 {
     [Action("Export glossary", Description = "Export glossary as TBX file")]

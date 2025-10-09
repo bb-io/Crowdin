@@ -10,7 +10,7 @@ using Crowdin.Api.Vendors;
 
 namespace Apps.Crowdin.Actions;
 
-[ActionList]
+[ActionList("Vendors")]
 public class VendorActions(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
     [Action("[Enterprise] Find vendor", Description = "Gets the first vendor you already invited to your organization that matches the search criteria")]

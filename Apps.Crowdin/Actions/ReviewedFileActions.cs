@@ -15,7 +15,7 @@ using Blackbird.Applications.Sdk.Utils.Utilities;
 
 namespace Apps.Crowdin.Actions;
 
-[ActionList]
+[ActionList("Reviewed files")]
 public class ReviewedFileActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : AppInvocable(invocationContext)
 {
     [Action("Search reviewed source files builds", Description = "List all reviewed source files builds of specific project")]
