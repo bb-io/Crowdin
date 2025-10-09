@@ -12,7 +12,7 @@ using Crowdin.Api.SourceStrings;
 
 namespace Apps.Crowdin.Actions;
 
-[ActionList]
+[ActionList("Source strings")]
 public class SourceStringAction(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
     [Action("Search strings", Description = "List all project source strings")]

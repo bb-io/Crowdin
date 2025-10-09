@@ -14,7 +14,7 @@ using RestSharp;
 
 namespace Apps.Crowdin.Actions;
 
-[ActionList]
+[ActionList("Workflows")]
 public class WorkflowActions(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
     [Action("[Enterprise] Search workflow steps", Description = "Search all workflow steps of project")]

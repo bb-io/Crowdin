@@ -12,7 +12,7 @@ using Crowdin.Api.Teams;
 
 namespace Apps.Crowdin.Actions;
 
-[ActionList]
+[ActionList("Teams")]
 public class TeamActions(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
     [Action("[Enterprise] Search teams", Description = "List all teams")]

@@ -29,7 +29,7 @@ using Blackbird.Applications.Sdk.Utils.RestSharp;
 
 namespace Apps.Crowdin.Actions;
 
-[ActionList]
+[ActionList("Files")]
 public class FileActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : AppInvocable(invocationContext)
 {

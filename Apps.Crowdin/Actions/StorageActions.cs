@@ -12,7 +12,7 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Crowdin.Actions;
 
-[ActionList]
+[ActionList("Storages")]
 public class StorageActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : AppInvocable(invocationContext)
 {

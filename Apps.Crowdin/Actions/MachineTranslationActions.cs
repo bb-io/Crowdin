@@ -12,7 +12,7 @@ using Crowdin.Api.MachineTranslationEngines;
 
 namespace Apps.Crowdin.Actions;
 
-[ActionList]
+[ActionList("Machine translation")]
 public class MachineTranslationActions(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
     [Action("Search machine translation engines", Description = "List all machine translation engines")]

@@ -12,7 +12,7 @@ using Blackbird.Applications.Sdk.Utils.Parsers;
 
 namespace Apps.Crowdin.Actions;
 
-[ActionList]
+[ActionList("Project groups")]
 public class ProjectGroupActions(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
     [Action("[Enterprise] Search project groups", Description = "List all project groups")]

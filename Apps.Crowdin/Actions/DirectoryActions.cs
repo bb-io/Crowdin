@@ -13,7 +13,7 @@ using Directory = Crowdin.Api.SourceFiles.Directory;
 
 namespace Apps.Crowdin.Actions;
 
-[ActionList]
+[ActionList("Directories")]
 public class DirectoryActions(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
     [Action("Search directories", Description = "List all directories")]

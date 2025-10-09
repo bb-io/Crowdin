@@ -15,7 +15,7 @@ using Blackbird.Applications.Sdk.Utils.Parsers;
 
 namespace Apps.Crowdin.Actions;
 
-[ActionList]
+[ActionList("Users")]
 public class UserActions(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
     [Action("Search project members", Description = "Get all matching project members")]

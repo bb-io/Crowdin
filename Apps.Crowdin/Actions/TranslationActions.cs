@@ -25,7 +25,7 @@ using Apps.Crowdin.Models.Request.File;
 
 namespace Apps.Crowdin.Actions;
 
-[ActionList]
+[ActionList("Translation")]
 public class TranslationActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : AppInvocable(invocationContext)
 {

@@ -25,7 +25,7 @@ using System.Text.Json;
 
 namespace Apps.Crowdin.Actions;
 
-[ActionList]
+[ActionList("Projects")]
 public class ProjectActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : AppInvocable(invocationContext)
 {

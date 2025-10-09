@@ -19,7 +19,7 @@ using Crowdin.Api.ProjectsGroups;
 
 namespace Apps.Crowdin.Actions;
 
-[ActionList]
+[ActionList("Tasks")]
 public class TaskActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : AppInvocable(invocationContext)
 {

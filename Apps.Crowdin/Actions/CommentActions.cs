@@ -13,7 +13,7 @@ using Crowdin.Api.StringComments;
 
 namespace Apps.Crowdin.Actions;
 
-[ActionList]
+[ActionList("Comments")]
 public class CommentActions(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
     [Action("Search comments", Description = "List string comments for a project")]
