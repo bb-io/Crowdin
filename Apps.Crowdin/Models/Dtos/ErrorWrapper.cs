@@ -1,8 +1,9 @@
 ﻿using Newtonsoft.Json;
 
 namespace Apps.Crowdin.Models.Dtos;
+
 public class ErrorWrapper
 {
     [JsonProperty("error")]
-    public ErrorDto Error { get; set; } = new();
+    public ErrorsDto Error { get; set; } = new();
 }

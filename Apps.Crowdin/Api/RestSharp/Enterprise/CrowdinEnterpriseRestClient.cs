@@ -1,5 +1,5 @@
 ﻿using Apps.Crowdin.Constants;
-using Apps.Crowdin.Models.Dtos;
+using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
@@ -7,7 +7,6 @@ using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Blackbird.Applications.Sdk.Utils.RestSharp;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using RestSharp;
 
 namespace Apps.Crowdin.Api.RestSharp.Enterprise;
@@ -80,13 +79,7 @@ public class CrowdinEnterpriseRestClient(IEnumerable<AuthenticationCredentialsPr
 
         if (response.ContentType?.Contains("application/json") == true || (response.Content.TrimStart().StartsWith("{") || response.Content.TrimStart().StartsWith("[")))
         {
-            var error = JsonConvert.DeserializeObject<ErrorResponse>(response.Content!)!;
-            var firstError = error.Errors.FirstOrDefault()?.Error;
-            var firstDetail = firstError?.Errors.FirstOrDefault();
-
-            throw new PluginApplicationException(
-                $"Key: {firstError?.Key}; Code: {firstDetail?.Code}; Message: {firstDetail?.Message}"
-            );
+            throw ErrorHelper.ProcessJsonError(response);
         }
         else if (response.ContentType?.Contains("text/html", StringComparison.OrdinalIgnoreCase) == true || response.Content.StartsWith("<"))
         {

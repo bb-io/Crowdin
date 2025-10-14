@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 
 namespace Apps.Crowdin.Models.Dtos;
+
 public class ErrorDetail
 {
     [JsonProperty("code")]
