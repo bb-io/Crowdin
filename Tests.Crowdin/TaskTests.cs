@@ -1,8 +1,10 @@
-﻿using Tests.Crowdin.Base;
+﻿using Newtonsoft.Json;
+using Tests.Crowdin.Base;
 using Apps.Crowdin.Actions;
 using Apps.Crowdin.Models.Request.Task;
-using Apps.Crowdin.Models.Request.Users;
 using Apps.Crowdin.Models.Request.Project;
+using Apps.Crowdin.Models.Request.Users;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Tests.Crowdin;
 
@@ -10,21 +12,103 @@ namespace Tests.Crowdin;
 public class TaskTests : TestBase
 {
     [TestMethod]
-    public async Task CreateTask_ReturnSucces()
+    public async Task AddVendorWorkflowTask_ReturnsSuccess()
     {
+        // Arrange
         var action = new TaskActions(InvocationContext, FileManager);
+        var project = new ProjectRequest { ProjectId = "1" };
+        var input = new AddNewVendorTaskRequest
+        {
+            WorkflowStepId = "7",
+            Title = "Hello from tests3111",
+            LanguageId = "uk",
+            FileIds = ["1"],
+            Status = "in_progress",
+            Deadline = DateTime.Now + TimeSpan.FromDays(2)
+        };
 
-        var input1 = new AssigneesRequest { ProjectId = "750225" };
-        var input2 = new AddNewTaskRequest { Type = "Translate", Title = "Hello", LanguageId = "nl", FileIds = ["16"], Status = "todo" };
+        // Act
+        var result = await action.AddVendorWorkflowTask(project, input);
 
-        var result = await action.AddTask(input1, input2);
-
+        // Assert
         Assert.IsNotNull(result);
+        Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
     }
 
+    [TestMethod]
+    public async Task AddVendorWorkflowTask_IncorrectTargetLanguage_ThrowsMisconfigException()
+    {
+        // Arrange
+        var action = new TaskActions(InvocationContext, FileManager);
+        var project = new ProjectRequest { ProjectId = "1" };
+        var input = new AddNewVendorTaskRequest
+        {
+            WorkflowStepId = "7",
+            Title = "Hello from tests3111",
+            LanguageId = "es",
+            FileIds = ["1"],
+            Status = "in_progress",
+            Deadline = DateTime.Now + TimeSpan.FromDays(2)
+        };
+
+        // Act & Assert
+        await Assert.ThrowsExceptionAsync<PluginMisconfigurationException>(async () => await action.AddVendorWorkflowTask(project, input));
+    }
 
     [TestMethod]
-    public async Task ListTask_ReturnSucces()
+    public async Task AddTask_ReturnsSuccess()
+    {
+        // Arrange
+        var action = new TaskActions(InvocationContext, FileManager);
+        var project = new AssigneesRequest 
+        { 
+            ProjectId = "1", 
+            Assignees = ["9"] 
+        };
+        var input = new AddNewTaskRequest
+        {
+            Title = "Hello from tests3111",
+            LanguageId = "uk",
+            FileIds = ["1"],
+            Status = "Todo",
+            Type = "Proofread",
+            Deadline = DateTime.UtcNow + TimeSpan.FromDays(3),
+        };
+
+        // Act
+        var result = await action.AddTask(project, input);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
+    }
+
+    [TestMethod]
+    public async Task AddTask_IncorrectDeadline_ThrowsMisconfigException()
+    {
+        // Arrange
+        var action = new TaskActions(InvocationContext, FileManager);
+        var project = new AssigneesRequest
+        {
+            ProjectId = "1",
+            Assignees = ["9"]
+        };
+        var input = new AddNewTaskRequest
+        {
+            Title = "Hello from tests3111",
+            LanguageId = "uk",
+            FileIds = ["1"],
+            Status = "Todo",
+            Type = "Proofread",
+            Deadline = DateTime.UtcNow - TimeSpan.FromDays(3),
+        };
+
+        // Act & Assert
+        await Assert.ThrowsExceptionAsync<PluginMisconfigurationException>(async () => await action.AddTask(project, input));
+    }
+
+    [TestMethod]
+    public async Task ListTask_ReturnsSuccess()
     {
         var action = new TaskActions(InvocationContext, FileManager);
 
@@ -39,9 +123,8 @@ public class TaskTests : TestBase
         }
     }
 
-
     [TestMethod]
-    public async Task GetTask_ReturnSucces()
+    public async Task GetTask_ReturnsSuccess()
     {
         var action = new TaskActions(InvocationContext, FileManager);
 
@@ -58,9 +141,8 @@ public class TaskTests : TestBase
         Assert.IsNotNull(result);
     }
 
-
     [TestMethod]
-    public async Task UpdateTask_ReturnSucces()
+    public async Task UpdateTask_ReturnsSuccess()
     {
         var action = new TaskActions(InvocationContext, FileManager);
 
@@ -80,6 +162,4 @@ public class TaskTests : TestBase
         Assert.AreEqual(input_1, check.Title);
         Assert.IsNotNull(result);
     }
-
-
 }

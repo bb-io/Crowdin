@@ -9,8 +9,6 @@ public class TaskTypeHandler : IStaticDataSourceItemHandler
     {
         { "Translate", "Translate" },
         { "Proofread", "Proofread" },
-        { "TranslateByVendor", "Translate by vendor" },
-        { "ProofreadByVendor", "Proofread by vendor" },
     };
     
     public IEnumerable<DataSourceItem> GetData()

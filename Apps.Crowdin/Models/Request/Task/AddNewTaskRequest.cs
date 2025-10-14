@@ -20,13 +20,10 @@ public class AddNewTaskRequest
     [StaticDataSource(typeof(TaskTypeHandler))]
     public string Type { get; set; }
 
-    [StaticDataSource(typeof(TaskStatusHandler))]
+    [StaticDataSource(typeof(AddTaskStatusHandler))]
     public string? Status { get; set; }
 
     public string? Description { get; set; }
-    
-    [StaticDataSource(typeof(VendorDataHandler))]
-    public string? Vendor { get; set; }
 
     [Display("Split files")]
     public bool? SplitFiles { get; set; }

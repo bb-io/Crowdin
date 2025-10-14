@@ -4,9 +4,9 @@ namespace Apps.Crowdin.Models.Dtos;
 
 public class ErrorDto
 {
-    [JsonProperty("message")]
-    public string Message { get; set; } = string.Empty;
+    [JsonProperty("key")]
+    public string Key { get; set; } = string.Empty;
 
-    [JsonProperty("code")]
-    public string Code { get; set; } = string.Empty;
+    [JsonProperty("errors")]
+    public List<ErrorDetail> Errors { get; set; } = new();
 }

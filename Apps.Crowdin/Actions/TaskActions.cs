@@ -1,21 +1,27 @@
-﻿using Apps.Crowdin.Invocables;
+﻿using Apps.Crowdin.Api.RestSharp;
+using Apps.Crowdin.Api.RestSharp.Enterprise;
+using Apps.Crowdin.Extensions;
+using Apps.Crowdin.Invocables;
+using Apps.Crowdin.Models.Dtos;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.Task;
+using Apps.Crowdin.Models.Request.Users;
+using Apps.Crowdin.Models.Response;
 using Apps.Crowdin.Models.Response.File;
 using Apps.Crowdin.Models.Response.Task;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
-using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Blackbird.Applications.Sdk.Utils.Utilities;
-using Crowdin.Api.Tasks;
-using TaskStatus = Crowdin.Api.Tasks.TaskStatus;
-using Apps.Crowdin.Models.Request.Users;
-using Blackbird.Applications.Sdk.Common.Exceptions;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Crowdin.Api.ProjectsGroups;
+using Crowdin.Api.Tasks;
+using RestSharp;
+using TaskStatus = Crowdin.Api.Tasks.TaskStatus;
 
 namespace Apps.Crowdin.Actions;
 
@@ -51,37 +57,60 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         return new(response);
     }
 
+    [Action("[Enterprise] Add vendor task", Description = "Add new vendor task for a specific workflow")]
+    public async Task<TaskEntity> AddVendorWorkflowTask(
+        [ActionParameter] ProjectRequest project,
+        [ActionParameter] AddNewVendorTaskRequest input)
+    {
+        CheckAccessToEnterpriseAction();
+        ValidateDeadline(input.Deadline);
+
+        int projectId = (int)IntParser.Parse(project.ProjectId, nameof(project.ProjectId))!;
+
+        if (input.FileIds.Any(f => !int.TryParse(f, out _)))
+        {
+            var invalid = input.FileIds.First(f => !int.TryParse(f, out _));
+            throw new PluginMisconfigurationException(
+                $"Invalid File ID: {invalid} must be a numeric value. Please check the input file ID"
+            );
+        }
+
+        await ValidateTargetLanguage(projectId, input.LanguageId);
+
+        var client = new CrowdinEnterpriseRestClient(Creds);
+        var request = new CrowdinRestRequest($"projects/{projectId}/tasks", Method.Post, Creds);
+
+        var body = new Dictionary<string, object>
+        {
+            ["workflowStepId"] = IntParser.Parse(input.WorkflowStepId, nameof(input.WorkflowStepId))!,
+            ["title"] = input.Title,
+            ["languageId"] = input.LanguageId,
+            ["fileIds"] = input.FileIds.Select(int.Parse).ToList(),
+        };
+
+        body.AddIfNotNullOrEmpty("description", input.Description);
+        body.AddIfNotNullOrEmpty("status", input.Status);
+        body.AddIfHasValue("deadline", input.Deadline);
+        body.AddIfHasValue("dateFrom", input.DateFrom);
+        body.AddIfHasValue("dateTo", input.DateTo);
+
+        request.AddBody(body);
+
+        var response = await client.ExecuteWithErrorHandling<DataResponse<TaskResourceDto>>(request);
+        return new TaskEntity(response.Data);
+    }
+
     [Action("Add task", Description = "Add new task")]
     public async Task<TaskEntity> AddTask(
         [ActionParameter] AssigneesRequest project,
         [ActionParameter] AddNewTaskRequest input)
     {
-        var vendorTaskTypes = new[] { "TranslateByVendor", "ProofreadByVendor" };
-        if (vendorTaskTypes.Contains(input.Type) && input.Vendor is null)
-        {
-            throw new PluginMisconfigurationException("You should specify vendor for such task type");
-        }
+        ValidateDeadline(input.Deadline);
+        int projectId = (int)IntParser.Parse(project.ProjectId, nameof(project.ProjectId))!;
 
-        if (input.Vendor is not null && !vendorTaskTypes.Contains(input.Type))
-        {
-            throw new PluginMisconfigurationException(
-                "Task with the chosen type can't contain vendor. If you want to specify a vendor, please change type to 'Translate by vendor' or 'Proofread by vendor'");
-        }
+        await ValidateTargetLanguage(projectId, input.LanguageId);
 
-        if (!int.TryParse(project.ProjectId, out var intProjectId))
-            throw new PluginMisconfigurationException($"Invalid Project ID: {project.ProjectId} must be a numeric value. Please check the input project ID");
-
-        var projectInfo = await ExceptionWrapper.ExecuteWithErrorHandling(() =>
-        SdkClient.ProjectsGroups.GetProject<ProjectBase>(intProjectId));
-
-        if (projectInfo?.TargetLanguageIds == null
-        || !projectInfo.TargetLanguageIds.Contains(input.LanguageId))
-        {
-            throw new PluginMisconfigurationException(
-                $"The input language is not set in the target project. Please check the supported target languages of your project" );
-        }
-
-        var request = new CrowdinTaskCreateForm()
+        var request = new TaskCreateForm()
         {
             Title = input.Title,
             LanguageId = input.LanguageId,
@@ -113,11 +142,11 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
             DateFrom = input.DateFrom,
             DateTo = input.DateTo,
             IncludePreTranslatedStringsOnly = input.IncludePreTranslatedStringsOnly,
-            Vendor = input.Vendor
         };
 
         var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-        await SdkClient.Tasks.AddTask(intProjectId, request));
+            await SdkClient.Tasks.AddTask(projectId, request)
+        );
         return new(response);
     }
 
@@ -169,7 +198,6 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
             await SdkClient.Tasks.DeleteTask(intProjectId!.Value, intTaskId!.Value));
     }
-
 
     [Action("Update task", Description = "Partially update specific task via JSON Patch (RFC 6902)")]
     public async Task<TaskEntity> UpdateTask(
@@ -302,10 +330,6 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         return new TaskEntity(response);
     }
 
-
-
-
-
     [Action("Download task strings as XLIFF", Description = "Download specific task strings as XLIFF")]
     public async Task<DownloadFileResponse> DownloadTaskStrings(
         [ActionParameter] ProjectRequest project,
@@ -334,5 +358,23 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         var file = await fileManagementClient.UploadAsync(fileContent.FileStream, fileContent.ContentType,
             fileContent.Name);
         return new(file);
+    }
+
+    public static void ValidateDeadline(DateTime? deadline)
+    {
+        if (deadline.HasValue && deadline.Value <= DateTime.UtcNow)
+            throw new PluginMisconfigurationException("Deadline must be in the future");
+    }
+
+    public async Task ValidateTargetLanguage(int projectId, string languageId)
+    {
+        var projectInfo = await ExceptionWrapper.ExecuteWithErrorHandling(() =>
+            SdkClient.ProjectsGroups.GetProject<ProjectBase>(projectId)
+        );
+
+        if (projectInfo?.TargetLanguageIds == null || !projectInfo.TargetLanguageIds.Contains(languageId))
+            throw new PluginMisconfigurationException(
+                "The input language is not set in the target project. Please check the supported target languages of your project"
+            );
     }
 }

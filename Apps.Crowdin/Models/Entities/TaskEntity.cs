@@ -1,11 +1,12 @@
 ﻿using Crowdin.Api.Tasks;
 using Blackbird.Applications.Sdk.Common;
+using Apps.Crowdin.Models.Dtos;
 
 namespace Apps.Crowdin.Models.Entities;
 
 public class TaskEntity
 {
-    [Display("ID")]
+    [Display("Task ID")]
     public string Id { get; set; }
 
     [Display("Project ID")]
@@ -33,7 +34,7 @@ public class TaskEntity
     [Display("Target language ID")]
     public string TargetLanguageId { get; set; }
 
-    public DateTime Deadline { get; set; }
+    public DateTime? Deadline { get; set; }
 
     [Display("Created at")]
     public DateTime CreatedAt { get; set; }
@@ -53,5 +54,22 @@ public class TaskEntity
         TargetLanguageId = taskResource.TargetLanguageId;
         Deadline = taskResource.DeadLine.DateTime;
         CreatedAt = taskResource.CreatedAt.DateTime;
+    }
+
+    public TaskEntity(TaskResourceDto taskResource)
+    {
+        Id = taskResource.Id.ToString();
+        ProjectId = taskResource.ProjectId.ToString();
+        CreatorId = taskResource.CreatorId.ToString();
+        Status = taskResource.Status.ToString();
+        Title = taskResource.Title;
+        Description = taskResource.Description;
+        Assignees = taskResource.Assignees.Select(x => x.FullName);
+        Vendor = taskResource.Vendor;
+        FileIds = taskResource.FileIds.Select(x => x.ToString());
+        SourceLanguageId = taskResource.SourceLanguageId;
+        TargetLanguageId = taskResource.TargetLanguageId;
+        Deadline = taskResource.DeadLine;
+        CreatedAt = taskResource.CreatedAt;
     }
 }
