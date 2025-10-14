@@ -4,6 +4,6 @@ namespace Apps.Crowdin.Models.Dtos;
 
 public class ErrorResponse
 {
-    [JsonProperty("error")]
-    public ErrorDto Error { get; set; } = new();
+    [JsonProperty("errors")]
+    public List<ErrorWrapper> Errors { get; set; } = new();
 }

@@ -1,12 +1,10 @@
 using Apps.Crowdin.Api.RestSharp;
-using Apps.Crowdin.Api.RestSharp.Basic;
 using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Users;
 using Apps.Crowdin.Models.Response;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
-using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Crowdin.Api;
