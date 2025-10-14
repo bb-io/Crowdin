@@ -2,6 +2,7 @@
 using Apps.Crowdin.Models.Request.File;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.Translation;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Files;
 using Newtonsoft.Json;
 using Tests.Crowdin.Base;
@@ -42,7 +43,6 @@ public class FileTests : TestBase
         Assert.IsNotNull(result);
     }
 
-
     [TestMethod]
     public async Task AddSpreadsheetFileMultilanguage_ReturnsSuccess()
     {
@@ -75,7 +75,6 @@ public class FileTests : TestBase
         Assert.IsNotNull(result);
     }
 
-
     [TestMethod]
     public async Task AddFile_ReturnsSuccess()
     {
@@ -105,7 +104,6 @@ public class FileTests : TestBase
         }
     }
 
-
     [TestMethod]
     public async Task DeleteFile_ReturnsSuccess()
     {
@@ -117,7 +115,6 @@ public class FileTests : TestBase
         Assert.IsTrue(true);
 
     }
-
 
     [TestMethod]
     public async Task GetFileEnterpriseProgress_ReturnsSuccess()
@@ -170,7 +167,6 @@ public class FileTests : TestBase
 
     }
 
-
     [TestMethod]
     public async Task ExportProjectTranslation_ReturnsSuccess()
     {
@@ -183,7 +179,6 @@ public class FileTests : TestBase
         Console.WriteLine(response.Data.Url);
         Assert.IsNotNull(response);
     }
-
 
     [TestMethod]
     public async Task AddFileTranslation_ReturnsSuccess()
@@ -198,5 +193,38 @@ public class FileTests : TestBase
         Console.WriteLine(response);
         Assert.IsNotNull(response);
 
+    }
+
+    [TestMethod]
+    public async Task GetFileProgress_ExistingFile_ReturnsSuccess()
+    {
+        // Arrange
+        var actions = new FileActions(InvocationContext, FileManager);
+        var project = new ProjectRequest { ProjectId = "1" };
+        var fileRequest = new FileRequest { FileId = "1" };
+
+        // Act
+        var result = await actions.GetFileProgress(project, fileRequest);
+
+        // Assert
+        Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
+        Assert.IsNotNull(result);
+    }
+
+    [TestMethod]
+    public async Task GetFileProgress_NonExistingFile_ReturnsSuccess()
+    {
+        // Arrange
+        var actions = new FileActions(InvocationContext, FileManager);
+        var project = new ProjectRequest { ProjectId = "1" };
+        var fileRequest = new FileRequest { FileId = "111111111" };
+
+        // Act
+        var ex = await Assert.ThrowsExceptionAsync<PluginApplicationException>(
+            async () => await actions.GetFileProgress(project, fileRequest)
+        );
+
+        // Assert
+        StringAssert.Contains(ex.Message, "Code: 404; Message: File Not Found");
     }
 }
