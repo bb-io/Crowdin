@@ -20,7 +20,7 @@ public class AddNewTaskRequest
     [StaticDataSource(typeof(TaskTypeHandler))]
     public string Type { get; set; }
 
-    [StaticDataSource(typeof(TaskStatusHandler))]
+    [StaticDataSource(typeof(AddTaskStatusHandler))]
     public string? Status { get; set; }
 
     public string? Description { get; set; }
