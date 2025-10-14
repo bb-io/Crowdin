@@ -6,7 +6,7 @@ namespace Apps.Crowdin.Models.Entities;
 
 public class TaskEntity
 {
-    [Display("ID")]
+    [Display("Task ID")]
     public string Id { get; set; }
 
     [Display("Project ID")]
