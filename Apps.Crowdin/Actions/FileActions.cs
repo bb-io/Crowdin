@@ -54,12 +54,39 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             };
 
             request.Recursion = input.Recursive == true ? "true" : null;
-
             return ExceptionWrapper.ExecuteWithErrorHandling(() =>
                 SdkClient.SourceFiles.ListFiles<FileCollectionResource>(intProjectId!.Value, request));
         });
 
-        var files = items.Select(x => new FileEntity(x)).ToArray();
+        IEnumerable<FileCollectionResource> filtered = items;
+
+        if (!string.IsNullOrWhiteSpace(input.Status))
+        {
+            var status = input.Status.Trim();
+            filtered = filtered.Where(f =>
+                (status == "Active" && f.Status == FileStatus.Active) ||
+                (status == "NotImported" && f.Status == FileStatus.NotImported) ||
+                (status == "NotConfigured" && f.Status == FileStatus.NotConfigured));
+        }
+
+        if (!string.IsNullOrWhiteSpace(input.Priority))
+        {
+            var prio = input.Priority.Trim().ToLowerInvariant();
+            filtered = filtered.Where(f =>
+                (prio == "low" && f.Priority == Priority.Low) ||
+                (prio == "normal" && f.Priority == Priority.Normal) ||
+                (prio == "high" && f.Priority == Priority.High));
+        }
+
+        if (input.CreatedAfter is DateTime ca) filtered = filtered.Where(f => f.CreatedAt >= AsUtcOffset(ca));
+        if (input.CreatedBefore is DateTime cb) filtered = filtered.Where(f => f.CreatedAt <= AsUtcOffset(cb));
+
+        if (input.UpdatedAfter is DateTime ua)
+            filtered = filtered.Where(f => f.UpdatedAt.HasValue && f.UpdatedAt.Value >= AsUtcOffset(ua));
+        if (input.UpdatedBefore is DateTime ub)
+            filtered = filtered.Where(f => f.UpdatedAt.HasValue && f.UpdatedAt.Value <= AsUtcOffset(ub));
+
+        var files = filtered.Select(x => new FileEntity(x)).ToArray();
         return new(files);
     }
 
@@ -542,6 +569,13 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
 
     }
 
+    private static DateTimeOffset AsUtcOffset(DateTime dt)
+    {
+        var d = dt.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(dt, DateTimeKind.Local)
+            : dt;
+        return new DateTimeOffset(d.ToUniversalTime(), TimeSpan.Zero);
+    }
 
     private FileUpdateOption? ToOptionEnum(string? option)
     {
