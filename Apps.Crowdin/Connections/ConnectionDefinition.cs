@@ -10,21 +10,14 @@ public class ConnectionDefinition : IConnectionDefinition
 {
     public IEnumerable<ConnectionPropertyGroup> ConnectionPropertyGroups => new List<ConnectionPropertyGroup>
     {
-        //new()
-        //{
-        //    Name = ConnectionNames.OAuth,
-        //    DisplayName= "OAuth",
-        //    AuthenticationType = ConnectionAuthenticationType.OAuth2,
-        //    ConnectionProperties = new List<ConnectionProperty>()
-        //},
         new()
         {
-            Name =  ConnectionNames.Other,
-            DisplayName= "Other properties",
-            AuthenticationType = ConnectionAuthenticationType.Undefined,
+            Name = ConnectionNames.OAuth,
+            DisplayName= "OAuth",
+            AuthenticationType = ConnectionAuthenticationType.OAuth2,
             ConnectionProperties = new List<ConnectionProperty>
             {
-                new(CredsNames.CrowdinPlan)
+             new(CredsNames.CrowdinPlan)
                 {
                     DisplayName = "Crowdin plan",
                     Description = "The plan of the Crowdin account. It could be either Basic or Enterprise. " +
@@ -34,9 +27,9 @@ public class ConnectionDefinition : IConnectionDefinition
                         new(Plans.Basic, "(Basic) Crowdin"),
                         new(Plans.Enterprise, "(Enterprise) Crowdin Enterprise")
                     ]
-                }
+             }
             }
-        },
+        }
     };
 
     public IEnumerable<AuthenticationCredentialsProvider> CreateAuthorizationCredentialsProviders(
