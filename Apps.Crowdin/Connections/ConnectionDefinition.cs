@@ -10,13 +10,13 @@ public class ConnectionDefinition : IConnectionDefinition
 {
     public IEnumerable<ConnectionPropertyGroup> ConnectionPropertyGroups => new List<ConnectionPropertyGroup>
     {
-        new()
-        {
-            Name = ConnectionNames.OAuth,
-            DisplayName= "OAuth",
-            AuthenticationType = ConnectionAuthenticationType.OAuth2,
-            ConnectionProperties = new List<ConnectionProperty>()
-        },
+        //new()
+        //{
+        //    Name = ConnectionNames.OAuth,
+        //    DisplayName= "OAuth",
+        //    AuthenticationType = ConnectionAuthenticationType.OAuth2,
+        //    ConnectionProperties = new List<ConnectionProperty>()
+        //},
         new()
         {
             Name =  ConnectionNames.Other,
