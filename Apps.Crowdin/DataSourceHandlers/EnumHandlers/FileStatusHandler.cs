@@ -11,7 +11,7 @@ namespace Apps.Crowdin.DataSourceHandlers.EnumHandlers
             {
                 new DataSourceItem("Active", "Active"),
                 new DataSourceItem("NotImported", "Not imported"),
-                new DataSourceItem("not_configured", "Not configured")
+                new DataSourceItem("NotConfigured", "Not configured")
             };
         }
     }
