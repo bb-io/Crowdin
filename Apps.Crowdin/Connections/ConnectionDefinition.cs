@@ -12,13 +12,15 @@ public class ConnectionDefinition : IConnectionDefinition
     {
         new()
         {
-            Name = "OAuth",
+            Name = ConnectionNames.OAuth,
+            DisplayName= "OAuth",
             AuthenticationType = ConnectionAuthenticationType.OAuth2,
             ConnectionProperties = new List<ConnectionProperty>()
         },
         new()
         {
-            Name = "Other properties",
+            Name =  ConnectionNames.Other,
+            DisplayName= "Other properties",
             AuthenticationType = ConnectionAuthenticationType.Undefined,
             ConnectionProperties = new List<ConnectionProperty>
             {
