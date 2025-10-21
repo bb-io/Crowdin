@@ -62,11 +62,11 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
 
         if (!string.IsNullOrWhiteSpace(input.Status))
         {
-            var status = input.Status.Trim().ToLowerInvariant();
+            var status = input.Status.Trim();
             filtered = filtered.Where(f =>
-                (status == "active" && f.Status == FileStatus.Active) ||
-                (status == "not_imported" && f.Status == FileStatus.NotImported) ||
-                (status == "not_configured" && f.Status == FileStatus.NotConfigured));
+                (status == "Active" && f.Status == FileStatus.Active) ||
+                (status == "NotImported" && f.Status == FileStatus.NotImported) ||
+                (status == "NotConfigured" && f.Status == FileStatus.NotConfigured));
         }
 
         if (!string.IsNullOrWhiteSpace(input.Priority))

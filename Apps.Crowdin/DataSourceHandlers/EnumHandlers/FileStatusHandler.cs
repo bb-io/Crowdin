@@ -9,8 +9,8 @@ namespace Apps.Crowdin.DataSourceHandlers.EnumHandlers
         {
             return new List<DataSourceItem>
             {
-                new DataSourceItem("active", "Active"),
-                new DataSourceItem("not_imported", "Not imported"),
+                new DataSourceItem("Active", "Active"),
+                new DataSourceItem("NotImported", "Not imported"),
                 new DataSourceItem("not_configured", "Not configured")
             };
         }

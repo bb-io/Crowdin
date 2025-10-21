@@ -92,8 +92,8 @@ public class FileTests : TestBase
     public async Task ListFile_ReturnsSuccess()
     {
         var action = new FileActions(InvocationContext, FileManager);
-        var input1 = new ProjectRequest { ProjectId = "783490" };
-        var input2 = new ListFilesRequest { Recursive=true, DirectoryId= "161787" };
+        var input1 = new ProjectRequest { ProjectId = "783572" };
+        var input2 = new ListFilesRequest { Recursive=true, CreatedAfter = DateTime.UtcNow.AddDays(-200), Priority="high" };
 
         var response = await action.ListFiles(input1, input2);
         Console.WriteLine(response.Files.Count());
@@ -102,6 +102,9 @@ public class FileTests : TestBase
             Console.WriteLine($"{file.Id} - {file.Name}");
             Assert.IsNotNull(response);
         }
+        var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Formatting.Indented);
+        Console.WriteLine(json);
+        
     }
 
     [TestMethod]
