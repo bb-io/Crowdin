@@ -103,14 +103,17 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             throw new PluginMisconfigurationException(
                 $"Invalid File ID: {fileRequest.FileId} must be a numeric value. Please check the input file ID");
 
-        var crowdinClient = new CrowdinRestClient();
+        var plan = InvocationContext.AuthenticationCredentialsProviders.GetCrowdinPlan();
+        BlackBirdRestClient restClient = plan == Plans.Enterprise
+            ? new CrowdinEnterpriseRestClient(invocationContext.AuthenticationCredentialsProviders)
+            : new CrowdinRestClient();
         var request = new CrowdinRestRequest(
                 $"/projects/{intProjectId}/files/{intFileId}",
                 Method.Get,
                 invocationContext.AuthenticationCredentialsProviders);
 
         var file = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-            await crowdinClient.ExecuteWithErrorHandling<FileResponseDto>(request));
+            await restClient.ExecuteWithErrorHandling<FileResponseDto>(request));
 
         if (file == null || file.Data == null)
             throw new PluginApplicationException("Crowdin response is null. Please try again");

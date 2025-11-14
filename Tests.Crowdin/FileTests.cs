@@ -93,7 +93,7 @@ public class FileTests : TestBase
     {
         var action = new FileActions(InvocationContext, FileManager);
         var input1 = new ProjectRequest { ProjectId = "783572" };
-        var input2 = new ListFilesRequest { Recursive=true, CreatedAfter = DateTime.UtcNow.AddDays(-200), Priority="high" };
+        var input2 = new ListFilesRequest { Recursive=true, CreatedBefore = DateTime.UtcNow.AddDays(-100) };
 
         var response = await action.ListFiles(input1, input2);
         Console.WriteLine(response.Files.Count());
@@ -139,8 +139,8 @@ public class FileTests : TestBase
     public async Task GetFile_ReturnsSuccess()
     {
         var action = new FileActions(InvocationContext, FileManager);
-        var input1 = new ProjectRequest { ProjectId = "614573" };
-        var input2 = new FileRequest { FileId = "95064" };
+        var input1 = new ProjectRequest { ProjectId = "134" };
+        var input2 = new FileRequest { FileId = "10616" };
 
         //var input1 = new ProjectRequest { ProjectId = "596457" };
         //var input2 = new FileRequest { FileId = "149138" };
