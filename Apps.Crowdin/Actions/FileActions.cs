@@ -1,6 +1,7 @@
-﻿using System.IO.Pipelines;
-using System.Net.Mime;
-using Apps.Crowdin.Api;
+﻿using Apps.Crowdin.Api.RestSharp;
+using Apps.Crowdin.Api.RestSharp.Basic;
+using Apps.Crowdin.Api.RestSharp.Enterprise;
+using Apps.Crowdin.Constants;
 using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.File;
@@ -9,23 +10,18 @@ using Apps.Crowdin.Models.Response.File;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
-using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Parsers;
+using Blackbird.Applications.Sdk.Utils.RestSharp;
 using Blackbird.Applications.Sdk.Utils.Utilities;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Crowdin.Api;
 using Crowdin.Api.SourceFiles;
-using RestSharp;
 using Newtonsoft.Json;
-using Apps.Crowdin.Api.RestSharp.Enterprise;
-using Apps.Crowdin.Api.RestSharp;
 using OfficeOpenXml;
-using Apps.Crowdin.Api.RestSharp.Basic;
-using Apps.Crowdin.Constants;
-using Apps.Crowdin.Factories;
-using Blackbird.Applications.Sdk.Utils.RestSharp;
+using RestSharp;
+using System.Net.Mime;
 
 namespace Apps.Crowdin.Actions;
 
@@ -103,14 +99,17 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             throw new PluginMisconfigurationException(
                 $"Invalid File ID: {fileRequest.FileId} must be a numeric value. Please check the input file ID");
 
-        var crowdinClient = new CrowdinRestClient();
+        var plan = InvocationContext.AuthenticationCredentialsProviders.GetCrowdinPlan();
+        BlackBirdRestClient restClient = plan == Plans.Enterprise
+            ? new CrowdinEnterpriseRestClient(invocationContext.AuthenticationCredentialsProviders)
+            : new CrowdinRestClient();
         var request = new CrowdinRestRequest(
                 $"/projects/{intProjectId}/files/{intFileId}",
                 Method.Get,
                 invocationContext.AuthenticationCredentialsProviders);
 
         var file = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-            await crowdinClient.ExecuteWithErrorHandling<FileResponseDto>(request));
+            await restClient.ExecuteWithErrorHandling<FileResponseDto>(request));
 
         if (file == null || file.Data == null)
             throw new PluginApplicationException("Crowdin response is null. Please try again");
@@ -326,7 +325,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         if (existingFile != null)
         {
             return await UpdateFile(project, new() { FileId = existingFile.Id }, new() { File = input.File },
-                new() { UpdateOption = input.UpdateOption ?? string.Empty});
+                new() { UpdateOption = input.UpdateOption ?? string.Empty });
         }
 
         return await AddFile(project, input);
