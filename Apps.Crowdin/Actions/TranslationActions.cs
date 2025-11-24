@@ -22,6 +22,8 @@ using Apps.Crowdin.Api.RestSharp.Enterprise;
 using Apps.Crowdin.Api.RestSharp;
 using Newtonsoft.Json;
 using Apps.Crowdin.Models.Request.File;
+using Apps.Crowdin.Api.RestSharp.Basic;
+using Blackbird.Applications.Sdk.Utils.RestSharp;
 
 namespace Apps.Crowdin.Actions;
 
@@ -339,7 +341,10 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
 
         var endpoint = $"/projects/{intProjectId}/translations/exports";
 
-        var enterpriseRestClient = new CrowdinEnterpriseRestClient(invocationContext.AuthenticationCredentialsProviders);
+        var plan = InvocationContext.AuthenticationCredentialsProviders.GetCrowdinPlan();
+        BlackBirdRestClient restClient = plan == Plans.Enterprise
+            ? new CrowdinEnterpriseRestClient(invocationContext.AuthenticationCredentialsProviders)
+            : new CrowdinRestClient();
 
         var request = new CrowdinRestRequest(endpoint, Method.Post, invocationContext.AuthenticationCredentialsProviders);
         request.AddJsonBody(new
@@ -349,7 +354,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
             format = files.Format
         });
      
-        var response = await enterpriseRestClient.ExecuteWithErrorHandling(request);
+        var response = await restClient.ExecuteWithErrorHandling(request);
         var dto = JsonConvert.DeserializeObject<ExportProjectTranslationResponse>(response.Content);
         return dto;
     }
