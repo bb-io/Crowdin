@@ -25,6 +25,10 @@ public class TmSegmentRecordEntity
     [Display("Created at")]
     public DateTime CreatedAt { get; set; }
 
+    public TmSegmentRecordEntity()
+    {
+    }
+
     public TmSegmentRecordEntity(TmSegmentRecord record)
     {
         Id = record.Id.ToString();
