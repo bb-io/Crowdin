@@ -32,7 +32,7 @@ namespace Tests.Crowdin
             var action = new Apps.Crowdin.Actions.TranslationMemoryActions(InvocationContext, FileManager);
             var request = new Apps.Crowdin.Models.Request.TranslationMemory.TranslationMemoryRequest
             {
-                TranslationMemoryId = "25"
+                TranslationMemoryId = "10"
             };
 
             var response = await action.GetTranslationMemory(request);
@@ -47,7 +47,7 @@ namespace Tests.Crowdin
             var action = new Apps.Crowdin.Actions.TranslationMemoryActions(InvocationContext, FileManager);
             var request = new Apps.Crowdin.Models.Request.TranslationMemory.AddTranslationMemoryRequest
             {
-                Name = "Test TM from API",
+                Name = "Test TM from API 2",
                 LanguageId = "en",
             };
 
@@ -135,9 +135,9 @@ namespace Tests.Crowdin
             var req3 = new Apps.Crowdin.Models.Request.TranslationMemory.EditTmSegmentRequest
             {
                 LanguageId= "en",
-                Operation = "remove",
-                RecordId = "1540",
-                //Text = "Testing segment add"
+                Operation = "add",
+                //RecordId = "1540",
+                Text = "Testing segment add [2]"
             };
 
             var response = await action.EditTmSegment(req1, req2, req3);

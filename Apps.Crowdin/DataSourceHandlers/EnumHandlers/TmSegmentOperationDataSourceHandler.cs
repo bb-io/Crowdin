@@ -1,10 +1,11 @@
-﻿using Blackbird.Applications.Sdk.Common.Dynamic;
+﻿using Blackbird.Applications.Sdk.Common.Dictionaries;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Crowdin.DataSourceHandlers.EnumHandlers
 {
-    public class TmSegmentOperationDataSourceHandler : IDataSourceItemHandler
+    public class TmSegmentOperationDataSourceHandler : IStaticDataSourceItemHandler
     {
-        public IEnumerable<DataSourceItem> GetData(DataSourceContext context)
+        public IEnumerable<DataSourceItem> GetData()
         {
             return new[]
             {

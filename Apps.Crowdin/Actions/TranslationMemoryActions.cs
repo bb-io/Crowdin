@@ -214,7 +214,7 @@ public class TranslationMemoryActions(InvocationContext invocationContext, IFile
 
                 return new TmSegmentEntity
                 {
-                    Id = seg.Id,
+                    Id = seg.Id.ToString(),
                     Records = recordEntities
                 };
             })
@@ -398,7 +398,7 @@ public class TranslationMemoryActions(InvocationContext invocationContext, IFile
 
         return new TmSegmentEntity
         {
-            Id = segmentDto.Data.Id,
+            Id = segmentDto.Data.Id.ToString(),
             Records = recordEntities
         };
     }

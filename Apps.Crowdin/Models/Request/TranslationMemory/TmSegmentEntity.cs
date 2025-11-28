@@ -7,7 +7,7 @@ namespace Apps.Crowdin.Models.Request.TranslationMemory
     public class TmSegmentEntity
     {
         [Display("Segment ID")]
-        public long Id { get; set; }
+        public string Id { get; set; }
 
         [Display("Records")]
         public IEnumerable<TmSegmentRecordEntity> Records { get; set; }
@@ -19,7 +19,7 @@ namespace Apps.Crowdin.Models.Request.TranslationMemory
 
         public TmSegmentEntity(TmSegmentResource source, IEnumerable<TmSegmentRecordEntity>? recordsOverride = null)
         {
-            Id = source.Id;
+            Id = source.Id.ToString();
             Records = recordsOverride
                       ?? (source.Records?.Select(r => new TmSegmentRecordEntity(r))
                           ?? Enumerable.Empty<TmSegmentRecordEntity>());
