@@ -24,4 +24,11 @@ public class TranslationMemoryStatusResponse
         Status = response.Status.ToString();
         CreatedAt = response.CreatedAt.DateTime;
     }
+    public TranslationMemoryStatusResponse(TmImportStatus response)
+    {
+        Identifier = response.Identifier;
+        Status = response.Status.ToString();
+        CreatedAt = response.CreatedAt.DateTime;
+    }
+
 }
