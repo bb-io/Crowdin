@@ -48,4 +48,33 @@ public class TMExportPollingList(InvocationContext invocationContext) : AppInvoc
             }
         };
     }
+
+    [PollingEvent("On TM import status changed", Description = "Triggered when the status of Translation Memory import changes to one of the specified statuses")]
+    public async Task<PollingEventResponse<PollingMemory, TranslationMemoryStatusResponse>> OnTmImportStatusChanged(
+       PollingEventRequest<PollingMemory> request,
+       [PollingEventParameter] TranslationMemoryImportStatusChangedRequest tmImportStatusChangedRequest)
+    {
+        var tmImportStatusResponse = await SdkClient.TranslationMemory.CheckTmImportStatus(
+          Convert.ToInt32(tmImportStatusChangedRequest.TranslationMemoryId),
+          tmImportStatusChangedRequest.ImportId);
+
+        var allowedStatuses = tmImportStatusChangedRequest.GetCrowdinOperationStatuses();
+        var hasRightStatus = allowedStatuses.Any(x => x == tmImportStatusResponse.Status);
+
+        var previouslyTriggered = request.Memory?.Triggered ?? false;
+        var triggeredNow = hasRightStatus && !previouslyTriggered;
+
+        return new()
+        {
+            FlyBird = triggeredNow,
+            Result = triggeredNow
+                ? new TranslationMemoryStatusResponse(tmImportStatusResponse)
+                : null,
+            Memory = new()
+            {
+                LastPollingTime = DateTime.UtcNow,
+                Triggered = triggeredNow || previouslyTriggered
+            }
+        };
+    }
 }

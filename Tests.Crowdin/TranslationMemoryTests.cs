@@ -137,7 +137,7 @@ namespace Tests.Crowdin
                 LanguageId= "en",
                 Operation = "add",
                 //RecordId = "1540",
-                Text = "Testing segment add [2]"
+                Text = ""
             };
 
             var response = await action.EditTmSegment(req1, req2, req3);
