@@ -21,9 +21,12 @@ namespace Tests.Crowdin
                 },
                 new Apps.Crowdin.Polling.Models.Requests.TranslationMemoryImportStatusChangedRequest
                 {
-                    TranslationMemoryId = "10",
-                    ImportId = "0bb5e79d-890e-464f-8b11-8411b8bb3f9c",
-                    Statuses = new List<string> { "finished", "failed" }
+                    //TranslationMemoryId = "10",
+                    //ImportId = "0bb5e79d-890e-464f-8b11-8411b8bb3f9c",
+                    //Statuses = new List<string> { "finished", "failed" } 
+                    TranslationMemoryId = "666940",
+                    ImportId = "c8d6a817-d0a9-4c97-81d7-4087fbdb2464",
+                    Statuses = new List<string> { "finished"}
                 });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(result);
