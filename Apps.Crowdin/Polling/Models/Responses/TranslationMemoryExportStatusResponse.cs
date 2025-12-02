@@ -1,9 +1,5 @@
-﻿using Apps.Crowdin.Polling.Models.Requests;
-using Apps.Crowdin.Utils;
-using Blackbird.Applications.Sdk.Common;
+﻿using Blackbird.Applications.Sdk.Common;
 using Crowdin.Api.TranslationMemory;
-using Crowdin.Api.Translations;
-using Newtonsoft.Json;
 
 namespace Apps.Crowdin.Polling.Models.Responses;
 
@@ -31,4 +27,10 @@ public class TranslationMemoryStatusResponse
         CreatedAt = response.CreatedAt.DateTime;
     }
 
+    public TranslationMemoryStatusResponse(TmImportStatusApiModel response)
+    {
+        Identifier = response.Identifier;
+        Status = response.Status;
+        CreatedAt = response.CreatedAt.UtcDateTime;
+    }
 }

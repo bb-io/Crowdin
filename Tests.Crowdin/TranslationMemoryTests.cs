@@ -21,6 +21,11 @@ namespace Tests.Crowdin
 
             var response = await action.ListTranslationMemories(request);
 
+            foreach (var tm in response.TranslationMemories)
+            {
+                Console.WriteLine($"TM ID: {tm.Id}, Name: {tm.Name}");
+            }
+
             Assert.IsNotNull(response);
             Assert.IsNotNull(response.TranslationMemories);
             Assert.IsTrue(response.TranslationMemories.Length > 0, "Expected at least one translation memory.");

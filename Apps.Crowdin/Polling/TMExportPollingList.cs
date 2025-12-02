@@ -1,11 +1,21 @@
-﻿using Apps.Crowdin.Invocables;
+﻿using Apps.Crowdin.Api.RestSharp;
+using Apps.Crowdin.Api.RestSharp.Basic;
+using Apps.Crowdin.Api.RestSharp.Enterprise;
+using Apps.Crowdin.Constants;
+using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Polling.Models;
 using Apps.Crowdin.Polling.Models.Requests;
 using Apps.Crowdin.Polling.Models.Responses;
+using Apps.Crowdin.Utils;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Polling;
+using Blackbird.Applications.Sdk.Utils.RestSharp;
 using Crowdin.Api;
+using Crowdin.Api.Clients;
+using Crowdin.Api.TranslationMemory;
 using Crowdin.Api.Translations;
+using RestSharp;
 
 namespace Apps.Crowdin.Polling;
 
@@ -54,12 +64,17 @@ public class TMExportPollingList(InvocationContext invocationContext) : AppInvoc
        PollingEventRequest<PollingMemory> request,
        [PollingEventParameter] TranslationMemoryImportStatusChangedRequest tmImportStatusChangedRequest)
     {
-        var tmImportStatusResponse = await SdkClient.TranslationMemory.CheckTmImportStatus(
-          Convert.ToInt32(tmImportStatusChangedRequest.TranslationMemoryId),
-          tmImportStatusChangedRequest.ImportId);
+        var tmId = Convert.ToInt32(tmImportStatusChangedRequest.TranslationMemoryId);
 
-        var allowedStatuses = tmImportStatusChangedRequest.GetCrowdinOperationStatuses();
-        var hasRightStatus = allowedStatuses.Any(x => x == tmImportStatusResponse.Status);
+        var importStatus = await GetTmImportStatusAsync(tmId, tmImportStatusChangedRequest.ImportId);
+
+        var currentStatus = NormalizeStatus(importStatus.Status);
+
+        var allowedStatuses = (tmImportStatusChangedRequest.Statuses ?? new())
+            .Select(NormalizeStatus)
+            .ToHashSet();
+
+        var hasRightStatus = allowedStatuses.Contains(currentStatus);
 
         var previouslyTriggered = request.Memory?.Triggered ?? false;
         var triggeredNow = hasRightStatus && !previouslyTriggered;
@@ -68,7 +83,7 @@ public class TMExportPollingList(InvocationContext invocationContext) : AppInvoc
         {
             FlyBird = triggeredNow,
             Result = triggeredNow
-                ? new TranslationMemoryStatusResponse(tmImportStatusResponse)
+                ? new TranslationMemoryStatusResponse(importStatus)
                 : null,
             Memory = new()
             {
@@ -76,5 +91,29 @@ public class TMExportPollingList(InvocationContext invocationContext) : AppInvoc
                 Triggered = triggeredNow || previouslyTriggered
             }
         };
+    }
+
+    private static string NormalizeStatus(string status)
+    {
+        return status
+            .Trim()
+            .Replace("_", "", StringComparison.OrdinalIgnoreCase)
+            .ToLowerInvariant();
+    }
+
+    private async Task<TmImportStatusApiModel> GetTmImportStatusAsync(int tmId, string importId)
+    {
+        var plan = InvocationContext.AuthenticationCredentialsProviders.GetCrowdinPlan();
+        BlackBirdRestClient restClient = plan == Plans.Enterprise
+           ? new CrowdinEnterpriseRestClient(invocationContext.AuthenticationCredentialsProviders)
+           : new CrowdinRestClient();
+
+        var request = new CrowdinRestRequest($"/tms/{tmId}/imports/{importId}", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
+
+        var response = await restClient.ExecuteWithErrorHandling<TmImportStatusApiEnvelope>(request);
+        if (response?.Data == null)
+            throw new PluginApplicationException("Empty response from Crowdin when checking TM import status");
+
+        return response.Data;
     }
 }
