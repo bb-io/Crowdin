@@ -12,7 +12,7 @@ using RestSharp;
 namespace Apps.Crowdin.Api;
 
 public class CrowdinClient(CrowdinCredentials credentials, AuthenticationCredentialsProvider[] creds)
-    : CrowdinApiClient(credentials,new HttpClient { Timeout=TimeSpan.FromMinutes(5)})
+    : CrowdinApiClient(credentials,new HttpClient { Timeout=TimeSpan.FromMinutes(10)})
 {
     public async Task<ExportGlossaryModel> ExportGlossaryAsync(int glossaryId, string format)
     {
