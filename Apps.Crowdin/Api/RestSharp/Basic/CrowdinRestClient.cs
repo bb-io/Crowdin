@@ -7,7 +7,7 @@ using RestSharp;
 
 namespace Apps.Crowdin.Api.RestSharp.Basic;
 
-public class CrowdinRestClient() : BlackBirdRestClient(new RestClientOptions { BaseUrl = new("https://api.crowdin.com/api/v2"), Timeout= TimeSpan.FromSeconds(180)})
+public class CrowdinRestClient() : BlackBirdRestClient(new RestClientOptions { BaseUrl = new("https://api.crowdin.com/api/v2"), Timeout= TimeSpan.FromSeconds(600)})
 {
     private const int MaxRetries = 3;
     private const int DelayBetweenRetriesMs = 2000;
