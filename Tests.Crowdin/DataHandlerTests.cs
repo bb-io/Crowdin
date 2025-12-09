@@ -44,7 +44,7 @@ namespace Tests.Crowdin
                 InvocationContext,
                 new ProjectRequest
                 {
-                    ProjectId = "783572"
+                    ProjectId = "1"
                 });
             var response = await handler.GetDataAsync(
                 new DataSourceContext

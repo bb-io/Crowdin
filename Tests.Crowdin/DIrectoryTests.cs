@@ -35,5 +35,26 @@ namespace Tests.Crowdin
 
             Console.WriteLine(response.Name);
         }
+
+        [TestMethod]
+        public async Task GetDirectoryProgress_IsSucces()
+        {
+            var action = new DirectoryActions(InvocationContext);
+
+            var project = new ProjectRequest
+            {
+                ProjectId = "1",
+            };
+
+            var request = new DirectoryRequest
+            {
+                DirectoryId = "413"
+            };
+
+            var response = await action.GetDirectoryProgress(project, request);
+
+            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(response));
+            Assert.IsNotNull(response);
+        }
     }
-}//
+}
