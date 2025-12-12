@@ -15,19 +15,19 @@ namespace Apps.Crowdin.Polling.Models.Responses
     public class ListResponse<T>
     {
         [JsonProperty("data")]
-        public List<CrowdinData<T>> Data { get; set; } = new();
+        public List<ResponseData<T>> Data { get; set; } = new();
 
         [JsonProperty("pagination")]
-        public CrowdinPagination? Pagination { get; set; }
+        public Pagination? Pagination { get; set; }
     }
 
-    public class CrowdinData<T>
+    public class ResponseData<T>
     {
         [JsonProperty("data")]
         public T Data { get; set; } = default!;
     }
 
-    public class CrowdinPagination
+    public class Pagination
     {
         [JsonProperty("offset")]
         public int Offset { get; set; }

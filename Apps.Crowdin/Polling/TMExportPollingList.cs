@@ -94,7 +94,7 @@ public class TMExportPollingList(InvocationContext invocationContext) : AppInvoc
         };
     }
 
-    [PollingEvent("All tasks have reached a status",
+    [PollingEvent("On all tasks have reached a status",
         Description = "Triggered when all matching tasks are in one of the specified statuses (default: done).")]
     public async Task<PollingEventResponse<TasksPollingMemory, AllTasksReachedStatusResponse>> OnAllTasksReachedStatus(
         PollingEventRequest<TasksPollingMemory> request,
