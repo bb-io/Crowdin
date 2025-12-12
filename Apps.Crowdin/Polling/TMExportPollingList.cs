@@ -16,6 +16,7 @@ using Crowdin.Api.Clients;
 using Crowdin.Api.TranslationMemory;
 using Crowdin.Api.Translations;
 using RestSharp;
+using System.Globalization;
 
 namespace Apps.Crowdin.Polling;
 
@@ -92,6 +93,164 @@ public class TMExportPollingList(InvocationContext invocationContext) : AppInvoc
             }
         };
     }
+
+    [PollingEvent("On all tasks have reached a status",
+        Description = "Triggered when all matching tasks are in one of the specified statuses (default: done).")]
+    public async Task<PollingEventResponse<TasksPollingMemory, AllTasksReachedStatusResponse>> OnAllTasksReachedStatus(
+        PollingEventRequest<TasksPollingMemory> request,
+        [PollingEventParameter] AllTasksReachedStatusRequest input)
+    {
+        if (string.IsNullOrWhiteSpace(input.ProjectId))
+            throw new PluginMisconfigurationException("Project ID is required.");
+
+        var isFirstRun = request.Memory is null;
+
+        var memory = request.Memory ?? new TasksPollingMemory
+        {
+            LastPollingTime = DateTime.UtcNow,
+            Triggered = false
+        };
+
+        var desiredStatuses = (input.Status?.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray()
+                               ?? new[] { "done" })
+            .Select(x => x.Trim())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var now = DateTime.UtcNow;
+
+        if (!isFirstRun)
+        {
+            var updatedSinceLastPoll = await ListTasksUpdatedSinceAsync(
+                input,
+                memory.LastPollingTime,
+                limit: 50);
+
+            if (updatedSinceLastPoll.Count == 0)
+            {
+                return new()
+                {
+                    FlyBird = false,
+                    Memory = new TasksPollingMemory
+                    {
+                        LastPollingTime = now,
+                        Triggered = memory.Triggered
+                    }
+                };
+            }
+        }
+
+        var allMatchingTasks = await ListAllMatchingTasksAsync(input, limit: 50);
+
+        if (!string.IsNullOrWhiteSpace(input.TitleContains))
+        {
+            var needle = input.TitleContains.Trim();
+            allMatchingTasks = allMatchingTasks
+                .Where(t => (t.Title ?? "").Contains(needle, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        var allReady = allMatchingTasks.Any() &&
+                       allMatchingTasks.All(t => t.Status != null && desiredStatuses.Contains(t.Status));
+
+        var triggered = allReady && !memory.Triggered;
+
+        return new()
+        {
+            FlyBird = triggered,
+            Result = triggered
+                ? new AllTasksReachedStatusResponse
+                {
+                    Tasks = allMatchingTasks,
+                    TaskIds = allMatchingTasks.Select(t => t.Id.ToString(CultureInfo.InvariantCulture)).ToList()
+                }
+                : null,
+            Memory = new TasksPollingMemory
+            {
+                LastPollingTime = now,
+                Triggered = triggered || memory.Triggered
+            }
+        };
+    }
+
+    private async Task<List<TaskResource>> ListTasksUpdatedSinceAsync(
+          AllTasksReachedStatusRequest input,
+          DateTimeOffset since,
+          int limit)
+    {
+        var result = new List<TaskResource>();
+        var offset = 0;
+
+        while (true)
+        {
+            var page = await ListTasksPageAsync(input, limit, offset);
+
+            if (page.Count == 0)
+                break;
+
+            foreach (var task in page)
+            {
+                var updatedAt = task.UpdatedAt ?? DateTimeOffset.MinValue;
+
+                if (updatedAt > since)
+                    result.Add(task);
+                else
+                    return result;
+            }
+
+            offset += limit;
+        }
+
+        return result;
+    }
+
+    private async Task<List<TaskResource>> ListAllMatchingTasksAsync(AllTasksReachedStatusRequest input, int limit)
+    {
+        var result = new List<TaskResource>();
+        var offset = 0;
+
+        while (true)
+        {
+            var page = await ListTasksPageAsync(input, limit, offset);
+            if (page.Count == 0)
+                break;
+
+            result.AddRange(page);
+            offset += limit;
+        }
+
+        return result;
+    }
+
+    private async Task<List<TaskResource>> ListTasksPageAsync(AllTasksReachedStatusRequest input, int limit, int offset)
+    {
+        if (string.IsNullOrWhiteSpace(input.ProjectId))
+            throw new PluginMisconfigurationException("Project ID is required.");
+
+        var plan = InvocationContext.AuthenticationCredentialsProviders.GetCrowdinPlan();
+        BlackBirdRestClient restClient = plan == Plans.Enterprise
+            ? new CrowdinEnterpriseRestClient(InvocationContext.AuthenticationCredentialsProviders)
+            : new CrowdinRestClient();
+
+        var req = new CrowdinRestRequest(
+            $"/projects/{input.ProjectId}/tasks",
+            Method.Get,
+            InvocationContext.AuthenticationCredentialsProviders);
+
+        req.AddQueryParameter("limit", limit);
+        req.AddQueryParameter("offset", offset);
+
+        req.AddQueryParameter("orderBy", "updatedAt desc");
+
+        if (input.Status != null)
+        {
+            foreach (var s in input.Status.Where(x => !string.IsNullOrWhiteSpace(x)))
+                req.AddQueryParameter("status", s.Trim());
+        }
+
+        var response = await restClient.ExecuteWithErrorHandling<ListResponse<TaskResource>>(req);
+        return response.Data.Select(x => x.Data).ToList();
+    }
+
 
     private static string NormalizeStatus(string status)
     {
