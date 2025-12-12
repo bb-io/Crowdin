@@ -85,8 +85,22 @@ public class FileTests : TestBase
        var response = await action.AddFile(input1, input2);
         Console.WriteLine(response.Id);
         Assert.IsNotNull(response);
-
     }
+
+    //AddOrUpdateFile
+
+    [TestMethod]
+    public async Task AddOrUpdateFile_ReturnsSuccess()
+    {
+        var action = new FileActions(InvocationContext, FileManager);
+        var input1 = new ProjectRequest { ProjectId = "3" };
+        var input2 = new AddOrUpdateFileRequest { File = new FileReference { Name = "Testing - PDF not searchable.pdf" } };
+
+        var response = await action.AddOrUpdateFile(input1, input2);
+        Console.WriteLine(response.Id);
+        Assert.IsNotNull(response);
+    }
+
 
     [TestMethod]
     public async Task ListFile_ReturnsSuccess()

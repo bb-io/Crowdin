@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Apps.Crowdin.Polling.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,6 +28,32 @@ namespace Tests.Crowdin
                     TranslationMemoryId = "666940",
                     ImportId = "c8d6a817-d0a9-4c97-81d7-4087fbdb2464",
                     Statuses = new List<string> { "finished"}
+                });
+
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(result);
+            Console.WriteLine(json);
+            Assert.IsNotNull(json);
+        }
+
+        [TestMethod]
+        public async Task OnAllTasksReachedStatus_IsSuccess()
+        {
+            var polling = new Apps.Crowdin.Polling.TMExportPollingList(InvocationContext);
+
+            var result = await polling.OnAllTasksReachedStatus(
+                new Blackbird.Applications.Sdk.Common.Polling.PollingEventRequest<TasksPollingMemory>
+                {
+                    Memory = new TasksPollingMemory
+                    {
+                        LastPollingTime = DateTime.UtcNow.AddHours(-1),
+                        Triggered = false
+                    }
+                },
+                new Apps.Crowdin.Polling.Models.Requests.AllTasksReachedStatusRequest
+                {
+                    ProjectId = "3",
+                    Status = new List<string> { "done" },
+                    TitleContains = "Testing"
                 });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(result);
