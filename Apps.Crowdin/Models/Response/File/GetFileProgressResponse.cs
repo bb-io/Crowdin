@@ -73,16 +73,16 @@ namespace Apps.Crowdin.Models.Response.File
     public class StatsDto
     {
         [JsonProperty("total")]
-        public int Total { get; set; }
+        public int? Total { get; set; }
 
         [JsonProperty("translated")]
-        public int Translated { get; set; }
+        public int? Translated { get; set; }
 
         [JsonProperty("preTranslateAppliedTo")]
-        public int PreTranslateAppliedTo { get; set; }
+        public int? PreTranslateAppliedTo { get; set; }
 
         [JsonProperty("approved")]
-        public int Approved { get; set; }
+        public int? Approved { get; set; }
     }
     public class LanguageDto
     {
