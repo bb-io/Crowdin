@@ -43,18 +43,18 @@ namespace Tests.Crowdin
             var result = await polling.OnAllTasksReachedStatus(
                 new Blackbird.Applications.Sdk.Common.Polling.PollingEventRequest<TasksPollingMemory>
                 {
-                    Memory = new TasksPollingMemory
-                    {
-                        LastPollingTime = DateTime.UtcNow.AddHours(-1),
-                        Triggered = false
-                    }
+                    //Memory = new TasksPollingMemory
+                    //{
+                    //    LastPollingTime = DateTime.UtcNow.AddHours(-1),
+                    //    Triggered = false
+                    //}
                 },
                 new Apps.Crowdin.Polling.Models.Requests.AllTasksReachedStatusRequest
                 {
                     ProjectId = "3",
                     Status = new List<string> { "done" },
-                    TitleContains = "Testing"
-                });
+                    TitleContains = "Translate"
+                });          
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(result);
             Console.WriteLine(json);

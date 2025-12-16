@@ -113,17 +113,32 @@ public class TMExportPollingList(InvocationContext invocationContext) : AppInvoc
 
         var desiredStatuses = (input.Status?.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray()
                                ?? new[] { "done" })
-            .Select(x => x.Trim())
+            .Select(NormalizeStatus)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var now = DateTime.UtcNow;
 
+        var listInput = new AllTasksReachedStatusRequest
+        {
+            ProjectId = input.ProjectId,
+            TitleContains = input.TitleContains,
+            Status = null
+        };
+
         if (!isFirstRun)
         {
             var updatedSinceLastPoll = await ListTasksUpdatedSinceAsync(
-                input,
+                listInput,
                 memory.LastPollingTime,
                 limit: 50);
+
+            if (!string.IsNullOrWhiteSpace(input.TitleContains))
+            {
+                var needle = input.TitleContains.Trim();
+                updatedSinceLastPoll = updatedSinceLastPoll
+                    .Where(t => (t.Title ?? "").Contains(needle, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
 
             if (updatedSinceLastPoll.Count == 0)
             {
@@ -139,7 +154,7 @@ public class TMExportPollingList(InvocationContext invocationContext) : AppInvoc
             }
         }
 
-        var allMatchingTasks = await ListAllMatchingTasksAsync(input, limit: 50);
+        var allMatchingTasks = await ListAllMatchingTasksAsync(listInput, limit: 50);
 
         if (!string.IsNullOrWhiteSpace(input.TitleContains))
         {
@@ -150,7 +165,9 @@ public class TMExportPollingList(InvocationContext invocationContext) : AppInvoc
         }
 
         var allReady = allMatchingTasks.Any() &&
-                       allMatchingTasks.All(t => t.Status != null && desiredStatuses.Contains(t.Status));
+                       allMatchingTasks.All(t =>
+                           !string.IsNullOrWhiteSpace(t.Status) &&
+                           desiredStatuses.Contains(NormalizeStatus(t.Status)));
 
         var triggered = allReady && !memory.Triggered;
 
@@ -161,7 +178,9 @@ public class TMExportPollingList(InvocationContext invocationContext) : AppInvoc
                 ? new AllTasksReachedStatusResponse
                 {
                     Tasks = allMatchingTasks,
-                    TaskIds = allMatchingTasks.Select(t => t.Id.ToString(CultureInfo.InvariantCulture)).ToList()
+                    TaskIds = allMatchingTasks
+                        .Select(t => t.Id.ToString(CultureInfo.InvariantCulture))
+                        .ToList()
                 }
                 : null,
             Memory = new TasksPollingMemory
@@ -238,14 +257,7 @@ public class TMExportPollingList(InvocationContext invocationContext) : AppInvoc
 
         req.AddQueryParameter("limit", limit);
         req.AddQueryParameter("offset", offset);
-
         req.AddQueryParameter("orderBy", "updatedAt desc");
-
-        if (input.Status != null)
-        {
-            foreach (var s in input.Status.Where(x => !string.IsNullOrWhiteSpace(x)))
-                req.AddQueryParameter("status", s.Trim());
-        }
 
         var response = await restClient.ExecuteWithErrorHandling<ListResponse<TaskResource>>(req);
         return response.Data.Select(x => x.Data).ToList();
