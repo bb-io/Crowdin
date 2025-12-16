@@ -40,21 +40,31 @@ namespace Tests.Crowdin
         {
             var polling = new Apps.Crowdin.Polling.TMExportPollingList(InvocationContext);
 
+            //var result = await polling.OnAllTasksReachedStatus(
+            //    new Blackbird.Applications.Sdk.Common.Polling.PollingEventRequest<TasksPollingMemory>
+            //    {
+            //        Memory = new TasksPollingMemory
+            //        {
+            //            LastPollingTime = DateTime.UtcNow.AddHours(-1),
+            //            Triggered = false
+            //        }
+            //    },
+            //    new Apps.Crowdin.Polling.Models.Requests.AllTasksReachedStatusRequest
+            //    {
+            //        ProjectId = "3",
+            //        Status = new List<string> { "done" },
+            //        TitleContains = "Translate"
+            //    });
             var result = await polling.OnAllTasksReachedStatus(
                 new Blackbird.Applications.Sdk.Common.Polling.PollingEventRequest<TasksPollingMemory>
                 {
-                    //Memory = new TasksPollingMemory
-                    //{
-                    //    LastPollingTime = DateTime.UtcNow.AddHours(-1),
-                    //    Triggered = false
-                    //}
                 },
                 new Apps.Crowdin.Polling.Models.Requests.AllTasksReachedStatusRequest
                 {
-                    ProjectId = "3",
+                    ProjectId = "108",
                     Status = new List<string> { "done" },
-                    TitleContains = "Translate"
-                });          
+                    TitleContains = "Blog_Posts_2025_12_level-up-msp-client-conversations"
+                });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(result);
             Console.WriteLine(json);
