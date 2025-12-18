@@ -26,7 +26,7 @@ public class OAuth2TokenService(InvocationContext invocationContext)
             { "code", code },
         };
 
-        return GetToken(parameters, cancellationToken);
+        return GetToken(parameters, cancellationToken, "request token");
     }
 
     public Task<Dictionary<string, string>> RefreshToken(Dictionary<string, string> values,
@@ -40,7 +40,7 @@ public class OAuth2TokenService(InvocationContext invocationContext)
             { "refresh_token", values["refresh_token"] },
         };
 
-        return GetToken(parameters, cancellationToken);
+        return GetToken(parameters, cancellationToken, "refresh token");
     }
 
     public Task RevokeToken(Dictionary<string, string> values)
@@ -52,21 +52,31 @@ public class OAuth2TokenService(InvocationContext invocationContext)
 
     #region Utils
 
-    private async Task<Dictionary<string, string>> GetToken(Dictionary<string, string> parameters,
-        CancellationToken token)
+    private async Task<Dictionary<string, string>> GetToken(
+        Dictionary<string, string> parameters,
+        CancellationToken token, 
+        string operationName)
     {
-        var responseContent = await ExecuteTokenRequest(parameters, token);
+        try
+        {
+            var responseContent = await ExecuteTokenRequest(parameters, token);
 
-        var resultDictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseContent)
-                                   ?.ToDictionary(r => r.Key, r => r.Value?.ToString())
-                               ?? throw new InvalidOperationException(
-                                   $"Invalid response content: {responseContent}");
+            var resultDictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseContent)
+                                       ?.ToDictionary(r => r.Key, r => r.Value?.ToString())
+                                   ?? throw new InvalidOperationException($"Invalid response content: {responseContent}");
 
-        var expiresIn = int.Parse(resultDictionary["expires_in"]);
-        var expiresAt = DateTime.UtcNow.AddSeconds(expiresIn);
-        resultDictionary.Add(ExpiresAtKeyName, expiresAt.ToString());
+            var expiresIn = int.Parse(resultDictionary["expires_in"]);
+            var expiresAt = DateTime.UtcNow.AddSeconds(expiresIn);
+            resultDictionary.Add(ExpiresAtKeyName, expiresAt.ToString());
 
-        return resultDictionary;
+            return resultDictionary;
+        }
+        catch (Exception ex)
+        {
+            string msg = $"[Crowdin] GetToken failed during {operationName}. Message: {ex.Message} {ex.StackTrace}";
+            InvocationContext.Logger?.LogError(msg, null);
+            throw;
+        }
     }
 
     private async Task<string> ExecuteTokenRequest(Dictionary<string, string> parameters,
