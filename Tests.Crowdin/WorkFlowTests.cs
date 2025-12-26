@@ -26,5 +26,16 @@ namespace Tests.Crowdin
             }
 
         }
+
+        [TestMethod]
+        public async Task FindWorkflowStep_ReturnsSuccess()
+        {
+            var projectRequest = new ProjectRequest { ProjectId = "120" };
+            var action = new WorkflowActions(InvocationContext);
+            var result = await action.FindWorkflowStep(projectRequest, 
+                new Apps.Crowdin.Models.Request.Workflow.FindWorkflowStepRequest { Type= "Proofreading" });
+
+            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(result));
+        }
     }
 }
