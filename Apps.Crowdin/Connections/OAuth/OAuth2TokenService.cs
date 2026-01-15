@@ -59,7 +59,15 @@ public class OAuth2TokenService(InvocationContext invocationContext)
     {
         try
         {
+            InvocationContext.Logger?.LogInformation(
+                $"[Crowdin][OAuth] {operationName} request params: {JsonConvert.SerializeObject(parameters)}",
+                null);
+
             var responseContent = await ExecuteTokenRequest(parameters, token);
+
+            InvocationContext.Logger?.LogInformation(
+                $"[Crowdin][OAuth] {operationName} response body: {JsonConvert.SerializeObject(responseContent)}",
+                null);
 
             var resultDictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseContent)
                                        ?.ToDictionary(r => r.Key, r => r.Value?.ToString())
