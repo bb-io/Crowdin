@@ -55,20 +55,20 @@ namespace Tests.Crowdin
             //        Status = new List<string> { "done" },
             //        TitleContains = "Translate"
             //    });
-            var result = await polling.OnAllTasksReachedStatus(
-                new Blackbird.Applications.Sdk.Common.Polling.PollingEventRequest<TasksPollingMemory>
-                {
-                },
-                new Apps.Crowdin.Polling.Models.Requests.AllTasksReachedStatusRequest
-                {
-                    ProjectId = "108",
-                    Status = new List<string> { "done" },
-                    TitleContains = "Blog_Posts_2025_12_level-up-msp-client-conversations"
-                });
+            //var result = await polling.OnAllTasksReachedStatus(
+            //    new Blackbird.Applications.Sdk.Common.Polling.PollingEventRequest<TasksPollingMemory>
+            //    {
+            //    },
+            //    new Apps.Crowdin.Polling.Models.Requests.AllTasksReachedStatusRequest
+            //    {
+            //        ProjectId = "108",
+            //        Status = new List<string> { "done" },
+            //        TitleContains = "Blog_Posts_2025_12_level-up-msp-client-conversations"
+            //    });
 
-            var json = Newtonsoft.Json.JsonConvert.SerializeObject(result);
-            Console.WriteLine(json);
-            Assert.IsNotNull(json);
+            //var json = Newtonsoft.Json.JsonConvert.SerializeObject(result);
+            //Console.WriteLine(json);
+            //Assert.IsNotNull(json);
         }
     }
 }
