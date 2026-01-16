@@ -45,7 +45,7 @@ using System.Globalization;
 namespace Apps.Crowdin.Webhooks.Lists;
 
 [WebhookList]
-public class ProjectWebhookList
+public class ProjectWebhookList(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
     #region File
 
@@ -344,74 +344,70 @@ public class ProjectWebhookList
         return result;
     }
 
-    //[Webhook("On all tasks have reached a status (webhook)", typeof(TaskStatusChangedHandler), Description = "Triggered when all matching tasks in a project are in one of the specified statuses (default: done).")]
-    //public async Task<WebhookResponse<AllTasksReachedStatusResponse>> OnAllTasksReachedStatusWebhook(
-    //    WebhookRequest webhookRequest,
-    //    [WebhookParameter] AllTasksReachedStatusRequest input)
-    //{
-    //    if (string.IsNullOrWhiteSpace(input.ProjectId))
-    //        throw new PluginMisconfigurationException("Project ID is required.");
+    [Webhook("On all tasks have reached a status (webhook)", typeof(AllTasksReachedStatusHandler), Description = "Triggered when all matching tasks in a project are in one of the specified statuses (default: done).")]
+    public async Task<WebhookResponse<AllTasksReachedStatusResponse>> OnAllTasksReachedStatusWebhook(
+        WebhookRequest webhookRequest, [WebhookParameter(true)] ProjectWebhookInput input,
+        [WebhookParameter] AllTasksReachedStatusRequest options)
+    {
+        if (string.IsNullOrWhiteSpace(input.ProjectId))
+            throw new PluginMisconfigurationException("Project ID is required.");
 
-    //    var desiredStatuses = (input.Status?.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray() ?? new[] { "done" })
-    //        .Select(NormalizeStatus)
-    //        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var desiredStatuses = (options.Status?.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray() ?? new[] { "done" })
+            .Select(NormalizeStatus)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-    //    var parsed = await HandleWehookRequest<TaskStatusChangedWrapper, TaskStatusChangedWebhookResponse>(webhookRequest);
-    //    var task = parsed.Result;
+        var parsed = await HandleWehookRequest<TaskStatusChangedWrapper, TaskStatusChangedWebhookResponse>(webhookRequest);
+        var task = parsed.Result;
 
-    //    if (task is null)
-    //        return PreflightResponse<AllTasksReachedStatusResponse>();
+        if (task is null)
+            return PreflightResponse<AllTasksReachedStatusResponse>();
 
-    //    if (!string.Equals(task.ProjectId, input.ProjectId, StringComparison.Ordinal))
-    //        return PreflightResponse<AllTasksReachedStatusResponse>();
+        if (!string.Equals(task.ProjectId, input.ProjectId, StringComparison.Ordinal))
+            return PreflightResponse<AllTasksReachedStatusResponse>();
 
-    //    if (!string.IsNullOrWhiteSpace(input.TitleContains))
-    //    {
-    //        var needle = input.TitleContains.Trim();
-    //        if (!((task.Title ?? string.Empty).Contains(needle, StringComparison.OrdinalIgnoreCase)))
-    //            return PreflightResponse<AllTasksReachedStatusResponse>();
-    //    }
+        if (!string.IsNullOrWhiteSpace(options.TitleContains))
+        {
+            var needle = options.TitleContains.Trim();
+            if (!((task.Title ?? string.Empty).Contains(needle, StringComparison.OrdinalIgnoreCase)))
+                return PreflightResponse<AllTasksReachedStatusResponse>();
+        }
 
-    //    if (string.IsNullOrWhiteSpace(task.Status) || !desiredStatuses.Contains(NormalizeStatus(task.Status)))
-    //        return PreflightResponse<AllTasksReachedStatusResponse>();
+        if (string.IsNullOrWhiteSpace(task.Status) || !desiredStatuses.Contains(NormalizeStatus(task.Status)))
+            return PreflightResponse<AllTasksReachedStatusResponse>();
 
-    //    var listInput = new AllTasksReachedStatusRequest
-    //    {
-    //        ProjectId = input.ProjectId,
-    //        TitleContains = input.TitleContains,
-    //        Status = null
-    //    };
+        var allTasks = await ListAllProjectTasksAsync(input.ProjectId, limit: 50);
 
-    //    var allMatchingTasks = await ListAllMatchingTasksAsync(listInput, limit: 50);
+        IEnumerable<TaskResource> allMatchingTasks = allTasks;
 
-    //    if (!string.IsNullOrWhiteSpace(input.TitleContains))
-    //    {
-    //        var needle = input.TitleContains.Trim();
-    //        allMatchingTasks = allMatchingTasks
-    //            .Where(t => (t.Title ?? string.Empty).Contains(needle, StringComparison.OrdinalIgnoreCase))
-    //            .ToList();
-    //    }
+        if (!string.IsNullOrWhiteSpace(options.TitleContains))
+        {
+            var needle = options.TitleContains.Trim();
+            allMatchingTasks = allMatchingTasks
+                .Where(t => (t.Title ?? string.Empty).Contains(needle, StringComparison.OrdinalIgnoreCase));
+        }
 
-    //    var allReady =
-    //        allMatchingTasks.Any() &&
-    //        allMatchingTasks.All(t =>
-    //            !string.IsNullOrWhiteSpace(t.Status) &&
-    //            desiredStatuses.Contains(NormalizeStatus(t.Status)));
+        var allMatchingTasksList = allMatchingTasks.ToList();
 
-    //    if (!allReady)
-    //        return PreflightResponse<AllTasksReachedStatusResponse>();
+        var allReady =
+            allMatchingTasksList.Any() &&
+            allMatchingTasksList.All(t =>
+                !string.IsNullOrWhiteSpace(t.Status) &&
+                desiredStatuses.Contains(NormalizeStatus(t.Status)));
 
-    //    return new WebhookResponse<AllTasksReachedStatusResponse>
-    //    {
-    //        Result = new AllTasksReachedStatusResponse
-    //        {
-    //            Tasks = allMatchingTasks,
-    //            TaskIds = allMatchingTasks
-    //                .Select(t => t.Id.ToString(CultureInfo.InvariantCulture))
-    //                .ToList()
-    //        }
-    //    };
-    //}
+        if (!allReady)
+            return PreflightResponse<AllTasksReachedStatusResponse>();
+
+        return new WebhookResponse<AllTasksReachedStatusResponse>
+        {
+            Result = new AllTasksReachedStatusResponse
+            {
+                Tasks = allMatchingTasksList,
+                TaskIds = allMatchingTasksList
+                    .Select(t => t.Id.ToString(CultureInfo.InvariantCulture))
+                    .ToList()
+            }
+        };
+    }
 
     #endregion
 
@@ -477,52 +473,52 @@ public class ProjectWebhookList
         };
     }
 
-    //private async Task<List<TaskResource>> ListAllMatchingTasksAsync(AllTasksReachedStatusRequest input, int limit)
-    //{
-    //    var result = new List<TaskResource>();
-    //    var offset = 0;
+    private async Task<List<TaskResource>> ListAllProjectTasksAsync(string projectId, int limit)
+    {
+        var result = new List<TaskResource>();
+        var offset = 0;
 
-    //    while (true)
-    //    {
-    //        var page = await ListTasksPageAsync(input, limit, offset);
-    //        if (page.Count == 0)
-    //            break;
+        while (true)
+        {
+            var page = await ListTasksPageAsync(projectId, limit, offset);
+            if (page.Count == 0)
+                break;
 
-    //        result.AddRange(page);
-    //        offset += limit;
-    //    }
+            result.AddRange(page);
+            offset += limit;
+        }
 
-    //    return result;
-    //}
+        return result;
+    }
 
-    //private async Task<List<TaskResource>> ListTasksPageAsync(AllTasksReachedStatusRequest input, int limit, int offset)
-    //{
-    //    if (string.IsNullOrWhiteSpace(input.ProjectId))
-    //        throw new PluginMisconfigurationException("Project ID is required.");
+    private async Task<List<TaskResource>> ListTasksPageAsync(string projectId, int limit, int offset)
+    {
+        if (string.IsNullOrWhiteSpace(projectId))
+            throw new PluginMisconfigurationException("Project ID is required.");
 
-    //    var plan = InvocationContext.AuthenticationCredentialsProviders.GetCrowdinPlan();
-    //    BlackBirdRestClient restClient = plan == Plans.Enterprise
-    //        ? new CrowdinEnterpriseRestClient(InvocationContext.AuthenticationCredentialsProviders)
-    //        : new CrowdinRestClient();
+        var plan = invocationContext.AuthenticationCredentialsProviders.GetCrowdinPlan();
+        BlackBirdRestClient restClient = plan == Plans.Enterprise
+            ? new CrowdinEnterpriseRestClient(InvocationContext.AuthenticationCredentialsProviders)
+            : new CrowdinRestClient();
 
-    //    var req = new CrowdinRestRequest(
-    //        $"/projects/{input.ProjectId}/tasks",
-    //        Method.Get,
-    //        InvocationContext.AuthenticationCredentialsProviders);
+        var req = new CrowdinRestRequest(
+            $"/projects/{projectId}/tasks",
+            Method.Get,
+            InvocationContext.AuthenticationCredentialsProviders);
 
-    //    req.AddQueryParameter("limit", limit);
-    //    req.AddQueryParameter("offset", offset);
-    //    req.AddQueryParameter("orderBy", "updatedAt desc");
+        req.AddQueryParameter("limit", limit);
+        req.AddQueryParameter("offset", offset);
+        req.AddQueryParameter("orderBy", "updatedAt desc");
 
-    //    var response = await restClient.ExecuteWithErrorHandling<ListResponse<TaskResource>>(req);
-    //    return response.Data.Select(x => x.Data).ToList();
-    //}
+        var response = await restClient.ExecuteWithErrorHandling<ListResponse<TaskResource>>(req);
+        return response.Data.Select(x => x.Data).ToList();
+    }
 
-    //private static string NormalizeStatus(string status)
-    //{
-    //    return status
-    //        .Trim()
-    //        .Replace("_", "", StringComparison.OrdinalIgnoreCase)
-    //        .ToLowerInvariant();
-    //}
+    private static string NormalizeStatus(string status)
+    {
+        return status
+            .Trim()
+            .Replace("_", "", StringComparison.OrdinalIgnoreCase)
+            .ToLowerInvariant();
+    }
 }
