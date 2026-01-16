@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Apps.Crowdin.Webhooks.Bridge.Models
 {
@@ -44,7 +45,7 @@ namespace Apps.Crowdin.Webhooks.Bridge.Models
         public string ContentType { get; set; } = string.Empty;
 
         [JsonProperty("headers")]
-        public Dictionary<string, string> Headers { get; set; } = new Dictionary<string, string>();
+        public JToken Headers { get; set; } = new JArray();
 
 
         [JsonProperty("createdAt")]
