@@ -62,17 +62,6 @@ namespace Apps.Crowdin.Webhooks.Bridge
             var listReq = new CrowdinRestRequest($"/projects/{_projectId}/webhooks", Method.Get, credentials);
             var listResp = await _restClient.ExecuteAsync(listReq);
 
-            await WebhookLogger.LogAsync(new
-            {
-                stage = "Subscribe: LIST /webhooks",
-                projectId = _projectId,
-                url = _bridgeServiceUrl,
-                status = (int)listResp.StatusCode,
-                body = listResp.Content,
-                headers = listResp.Headers
-            });
-
-
             if (!listResp.IsSuccessStatusCode)
                 throw new Exception($"Crowdin LIST webhooks failed: {(int)listResp.StatusCode}. Body: {listResp.Content}");
 
@@ -102,17 +91,6 @@ namespace Apps.Crowdin.Webhooks.Bridge
 
             var addResp = await _restClient.ExecuteAsync(addReq);
 
-            await WebhookLogger.LogAsync(new
-            {
-                stage = "Subscribe: POST /webhooks",
-                projectId = _projectId,
-                url = _bridgeServiceUrl,
-                requestBody = webhookRequest,
-                status = (int)addResp.StatusCode,
-                body = addResp.Content,
-                headers = addResp.Headers
-            });
-
             if (!addResp.IsSuccessStatusCode)
                 throw new Exception($"Crowdin ADD webhook failed: {(int)addResp.StatusCode}. Body: {addResp.Content}");
         }
@@ -131,16 +109,6 @@ namespace Apps.Crowdin.Webhooks.Bridge
             var listReq = new CrowdinRestRequest($"/projects/{_projectId}/webhooks", Method.Get, credentials);
             var listResp = await _restClient.ExecuteAsync(listReq);
 
-            await WebhookLogger.LogAsync(new
-            {
-                stage = "Unsubscribe: LIST /webhooks",
-                projectId = _projectId,
-                url = _bridgeServiceUrl,
-                status = (int)listResp.StatusCode,
-                body = listResp.Content,
-                headers = listResp.Headers
-            });
-
             if (!listResp.IsSuccessStatusCode)
                 throw new Exception($"Crowdin LIST webhooks failed: {(int)listResp.StatusCode}. Body: {listResp.Content}");
 
@@ -155,23 +123,11 @@ namespace Apps.Crowdin.Webhooks.Bridge
             if (toDelete.Count == 0)
                 return;
 
-
-
             foreach (var hook in toDelete)
             {
                 var delReq = new CrowdinRestRequest($"/projects/{_projectId}/webhooks/{hook.Id}", Method.Delete, credentials);
 
                 var delResp = await _restClient.ExecuteAsync(delReq);
-                await WebhookLogger.LogAsync(new
-                {
-                    stage = "Unsubscribe: DELETE /webhooks/{id}",
-                    projectId = _projectId,
-                    url = _bridgeServiceUrl,
-                    hookId = hook.Id,
-                    status = (int)delResp.StatusCode,
-                    body = delResp.Content,
-                    headers = delResp.Headers
-                });
 
                 if (!delResp.IsSuccessStatusCode)
                     throw new Exception($"Crowdin DELETE webhook failed: {(int)delResp.StatusCode}. Body: {delResp.Content}");
@@ -193,23 +149,3 @@ namespace Apps.Crowdin.Webhooks.Bridge
         }
     }
 }
-
-public static class WebhookLogger
-{
-    private static readonly HttpClient Http = new HttpClient();
-    private const string WebhookUrl = "https://webhook.site/7e672b84-78da-4771-80d5-7e72acb1ab59";
-
-    public static async Task LogAsync(object data)
-    {
-        try
-        {
-            var json = Newtonsoft.Json.JsonConvert.SerializeObject(data);
-            using var content = new StringContent(json);
-            await Http.PostAsync(WebhookUrl, content);
-        }
-        catch
-        {
-        }
-    }
-}
-
