@@ -1,9 +1,16 @@
-﻿using Apps.Crowdin.Invocables;
+﻿using Apps.Crowdin.Api.RestSharp;
+using Apps.Crowdin.Api.RestSharp.Basic;
+using Apps.Crowdin.Api.RestSharp.Enterprise;
+using Apps.Crowdin.Constants;
+using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Request.File;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.SourceString;
 using Apps.Crowdin.Models.Request.Suggestions;
 using Apps.Crowdin.Models.Request.Task;
+using Apps.Crowdin.Polling.Models.Requests;
+using Apps.Crowdin.Polling.Models.Responses;
+using Apps.Crowdin.Utils;
 using Apps.Crowdin.Webhooks.Handlers.Project.File;
 using Apps.Crowdin.Webhooks.Handlers.Project.Project;
 using Apps.Crowdin.Webhooks.Handlers.Project.String;
@@ -29,9 +36,13 @@ using Apps.Crowdin.Webhooks.Models.Payload.Task.Wrapper;
 using Apps.Crowdin.Webhooks.Models.Payload.Translation.Response;
 using Apps.Crowdin.Webhooks.Models.Payload.Translation.Wrappers;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Webhooks;
+using Blackbird.Applications.Sdk.Utils.RestSharp;
 using Newtonsoft.Json;
+using RestSharp;
+using System.Globalization;
 
 namespace Apps.Crowdin.Webhooks.Lists;
 
@@ -335,6 +346,77 @@ public class ProjectWebhookList(InvocationContext invocationContext) : BaseInvoc
         return result;
     }
 
+    [Webhook("On all tasks have reached a status (webhook)",
+        typeof(TaskStatusChangedHandler),
+        Description = "Triggered when all matching tasks in a project are in one of the specified statuses (default: done).")]
+    public async Task<WebhookResponse<AllTasksReachedStatusResponse>> OnAllTasksReachedStatusWebhook(
+        WebhookRequest webhookRequest,
+        [WebhookParameter] AllTasksReachedStatusRequest input)
+    {
+        if (string.IsNullOrWhiteSpace(input.ProjectId))
+            throw new PluginMisconfigurationException("Project ID is required.");
+
+        var desiredStatuses = (input.Status?.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray() ?? new[] { "done" })
+            .Select(NormalizeStatus)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var parsed = await HandleWehookRequest<TaskStatusChangedWrapper, TaskStatusChangedWebhookResponse>(webhookRequest);
+        var task = parsed.Result;
+
+        if (task is null)
+            return PreflightResponse<AllTasksReachedStatusResponse>();
+
+        if (!string.Equals(task.ProjectId, input.ProjectId, StringComparison.Ordinal))
+            return PreflightResponse<AllTasksReachedStatusResponse>();
+
+        if (!string.IsNullOrWhiteSpace(input.TitleContains))
+        {
+            var needle = input.TitleContains.Trim();
+            if (!((task.Title ?? string.Empty).Contains(needle, StringComparison.OrdinalIgnoreCase)))
+                return PreflightResponse<AllTasksReachedStatusResponse>();
+        }
+
+        if (string.IsNullOrWhiteSpace(task.Status) || !desiredStatuses.Contains(NormalizeStatus(task.Status)))
+            return PreflightResponse<AllTasksReachedStatusResponse>();
+
+        var listInput = new AllTasksReachedStatusRequest
+        {
+            ProjectId = input.ProjectId,
+            TitleContains = input.TitleContains,
+            Status = null
+        };
+
+        var allMatchingTasks = await ListAllMatchingTasksAsync(listInput, limit: 50);
+
+        if (!string.IsNullOrWhiteSpace(input.TitleContains))
+        {
+            var needle = input.TitleContains.Trim();
+            allMatchingTasks = allMatchingTasks
+                .Where(t => (t.Title ?? string.Empty).Contains(needle, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        var allReady =
+            allMatchingTasks.Any() &&
+            allMatchingTasks.All(t =>
+                !string.IsNullOrWhiteSpace(t.Status) &&
+                desiredStatuses.Contains(NormalizeStatus(t.Status)));
+
+        if (!allReady)
+            return PreflightResponse<AllTasksReachedStatusResponse>();
+
+        return new WebhookResponse<AllTasksReachedStatusResponse>
+        {
+            Result = new AllTasksReachedStatusResponse
+            {
+                Tasks = allMatchingTasks,
+                TaskIds = allMatchingTasks
+                    .Select(t => t.Id.ToString(CultureInfo.InvariantCulture))
+                    .ToList()
+            }
+        };
+    }
+
     #endregion
 
     #region Translation
@@ -397,5 +479,85 @@ public class ProjectWebhookList(InvocationContext invocationContext) : BaseInvoc
             ReceivedWebhookRequestType = WebhookRequestType.Preflight,
             Result = null
         };
+    }
+
+    private async Task<List<TaskResource>> ListTasksUpdatedSinceAsync(
+          AllTasksReachedStatusRequest input,
+          DateTimeOffset since,
+          int limit)
+    {
+        var result = new List<TaskResource>();
+        var offset = 0;
+
+        while (true)
+        {
+            var page = await ListTasksPageAsync(input, limit, offset);
+
+            if (page.Count == 0)
+                break;
+
+            foreach (var task in page)
+            {
+                var updatedAt = task.UpdatedAt ?? DateTimeOffset.MinValue;
+
+                if (updatedAt > since)
+                    result.Add(task);
+                else
+                    return result;
+            }
+
+            offset += limit;
+        }
+
+        return result;
+    }
+
+    private async Task<List<TaskResource>> ListAllMatchingTasksAsync(AllTasksReachedStatusRequest input, int limit)
+    {
+        var result = new List<TaskResource>();
+        var offset = 0;
+
+        while (true)
+        {
+            var page = await ListTasksPageAsync(input, limit, offset);
+            if (page.Count == 0)
+                break;
+
+            result.AddRange(page);
+            offset += limit;
+        }
+
+        return result;
+    }
+
+    private async Task<List<TaskResource>> ListTasksPageAsync(AllTasksReachedStatusRequest input, int limit, int offset)
+    {
+        if (string.IsNullOrWhiteSpace(input.ProjectId))
+            throw new PluginMisconfigurationException("Project ID is required.");
+
+        var plan = InvocationContext.AuthenticationCredentialsProviders.GetCrowdinPlan();
+        BlackBirdRestClient restClient = plan == Plans.Enterprise
+            ? new CrowdinEnterpriseRestClient(InvocationContext.AuthenticationCredentialsProviders)
+            : new CrowdinRestClient();
+
+        var req = new CrowdinRestRequest(
+            $"/projects/{input.ProjectId}/tasks",
+            Method.Get,
+            InvocationContext.AuthenticationCredentialsProviders);
+
+        req.AddQueryParameter("limit", limit);
+        req.AddQueryParameter("offset", offset);
+        req.AddQueryParameter("orderBy", "updatedAt desc");
+
+        var response = await restClient.ExecuteWithErrorHandling<ListResponse<TaskResource>>(req);
+        return response.Data.Select(x => x.Data).ToList();
+    }
+
+    private static string NormalizeStatus(string status)
+    {
+        return status
+            .Trim()
+            .Replace("_", "", StringComparison.OrdinalIgnoreCase)
+            .ToLowerInvariant();
     }
 }

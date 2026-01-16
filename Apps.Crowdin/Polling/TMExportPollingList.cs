@@ -263,7 +263,6 @@ public class TMExportPollingList(InvocationContext invocationContext) : AppInvoc
         return response.Data.Select(x => x.Data).ToList();
     }
 
-
     private static string NormalizeStatus(string status)
     {
         return status
