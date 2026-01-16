@@ -47,7 +47,7 @@ using System.Globalization;
 namespace Apps.Crowdin.Webhooks.Lists;
 
 [WebhookList]
-public class ProjectWebhookList(InvocationContext invocationContext) : BaseInvocable(invocationContext)
+public class ProjectWebhookList(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
     #region File
 
