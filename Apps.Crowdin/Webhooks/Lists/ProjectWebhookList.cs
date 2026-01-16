@@ -344,7 +344,7 @@ public class ProjectWebhookList(InvocationContext invocationContext) : AppInvoca
         return result;
     }
 
-    [Webhook("On all tasks have reached a status (webhook)", typeof(AllTasksReachedStatusHandler), Description = "Triggered when all matching tasks in a project are in one of the specified statuses (default: done).")]
+    [Webhook("On all tasks have reached a status", typeof(AllTasksReachedStatusHandler), Description = "Triggered when all matching tasks in a project are in one of the specified statuses (default: done).")]
     public async Task<WebhookResponse<AllTasksReachedStatusResponse>> OnAllTasksReachedStatusWebhook(
         WebhookRequest webhookRequest, [WebhookParameter(true)] ProjectWebhookInput input,
         [WebhookParameter] AllTasksReachedStatusRequest options)
