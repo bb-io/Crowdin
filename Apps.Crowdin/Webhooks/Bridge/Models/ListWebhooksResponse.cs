@@ -1,19 +1,20 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Apps.Crowdin.Webhooks.Bridge.Models
 {
     public class ListWebhooksResponse
     {
         [JsonProperty("data")]
-        public List<WebhookModel> Webhooks { get; set; } = new List<WebhookModel>();
+        public List<WebhookResponseItem> Data { get; set; } = new List<WebhookResponseItem>();
 
         [JsonProperty("pagination")]
         public PaginationModel Pagination { get; set; } = new PaginationModel();
+    }
+
+    public class WebhookResponseItem
+    {
+        [JsonProperty("data")]
+        public WebhookModel Data { get; set; } = new();
     }
 
     public class WebhookModel

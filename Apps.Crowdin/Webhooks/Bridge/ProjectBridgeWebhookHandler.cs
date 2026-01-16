@@ -14,6 +14,7 @@ using Blackbird.Applications.Sdk.Utils.Parsers;
 using Blackbird.Applications.Sdk.Utils.RestSharp;
 using Crowdin.Api.Webhooks;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 using RestSharp;
 using System.ComponentModel;
 using System.Text.Json;
@@ -58,9 +59,8 @@ namespace Apps.Crowdin.Webhooks.Bridge
             }
 
             var listReq = new CrowdinRestRequest($"/projects/{_projectId}/webhooks", Method.Get, credentials);
-            var listResp = await _restClient.ExecuteAsync<ListWebhooksResponse>(listReq);
-            var exists = listResp.Data?.Webhooks.Any(w =>
-                string.Equals(w.Url, _bridgeServiceUrl, StringComparison.OrdinalIgnoreCase)) ?? false;
+            var listResp = await _restClient.ExecuteWithErrorHandling<ListWebhooksResponse>(listReq);
+            var exists = listResp.Data.Any(x => string.Equals(x.Data.Url, _bridgeServiceUrl, StringComparison.OrdinalIgnoreCase));
 
             if (exists)
             { 
@@ -96,8 +96,9 @@ namespace Apps.Crowdin.Webhooks.Bridge
             }
 
             var listReq = new CrowdinRestRequest($"/projects/{_projectId}/webhooks", Method.Get, credentials);
-            var listResp = await _restClient.ExecuteAsync<ListWebhooksResponse>(listReq);
-            var toDelete = listResp.Data?.Webhooks
+            var listResp = await _restClient.ExecuteWithErrorHandling<ListWebhooksResponse>(listReq);
+            var toDelete = listResp.Data
+                .Select(x => x.Data)
                 .Where(w => string.Equals(w.Url, _bridgeServiceUrl, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
