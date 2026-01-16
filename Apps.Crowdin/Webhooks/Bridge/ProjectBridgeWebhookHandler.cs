@@ -1,5 +1,9 @@
 ﻿using Apps.Crowdin.Api.RestSharp;
 using Apps.Crowdin.Api.RestSharp.Basic;
+using Apps.Crowdin.Api.RestSharp.Enterprise;
+using Apps.Crowdin.Constants;
+using Apps.Crowdin.Invocables;
+using Apps.Crowdin.Utils;
 using Apps.Crowdin.Webhooks.Bridge.Models;
 using Apps.Crowdin.Webhooks.Models.Inputs;
 using Blackbird.Applications.Sdk.Common;
@@ -7,22 +11,25 @@ using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Webhooks;
 using Blackbird.Applications.Sdk.Utils.Parsers;
+using Blackbird.Applications.Sdk.Utils.RestSharp;
 using Crowdin.Api.Webhooks;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using RestSharp;
 using System.ComponentModel;
-using System.Text.Json;
+using System.Linq;
+using System.Text;
 using EventType = Crowdin.Api.Webhooks.EventType;
 
 namespace Apps.Crowdin.Webhooks.Bridge
 {
-    public abstract class ProjectBridgeWebhookHandler : BaseInvocable, IWebhookEventHandler
+    public abstract class ProjectBridgeWebhookHandler : AppInvocable, IWebhookEventHandler
     {
         protected abstract List<EventType> SubscriptionEvents { get; }
 
         private readonly int _projectId;
         private readonly string _bridgeServiceUrl;
-        private readonly CrowdinRestClient _restClient;
+        private readonly BlackBirdRestClient _restClient;
         private readonly bool _enableBatching;
 
         protected ProjectBridgeWebhookHandler(
@@ -34,7 +41,10 @@ namespace Apps.Crowdin.Webhooks.Bridge
             _projectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId))!.Value;
             _enableBatching = enableBatching;
             _bridgeServiceUrl = $"{invocationContext.UriInfo.BridgeServiceUrl.ToString().TrimEnd('/')}/webhooks/crowdin";
-            _restClient = new CrowdinRestClient();
+            var plan = invocationContext.AuthenticationCredentialsProviders.GetCrowdinPlan();
+            _restClient = plan == Plans.Enterprise
+                ? new CrowdinEnterpriseRestClient(invocationContext.AuthenticationCredentialsProviders)
+                : new CrowdinRestClient();
         }
 
 
@@ -50,18 +60,23 @@ namespace Apps.Crowdin.Webhooks.Bridge
             }
 
             var listReq = new CrowdinRestRequest($"/projects/{_projectId}/webhooks", Method.Get, credentials);
-            var listResp = await _restClient.ExecuteAsync<ListWebhooksResponse>(listReq);
-            var exists = listResp.Data?.Webhooks.Any(w =>
-                string.Equals(w.Url, _bridgeServiceUrl, StringComparison.OrdinalIgnoreCase)) ?? false;
+            var listResp = await _restClient.ExecuteAsync(listReq);
+
+            if (!listResp.IsSuccessStatusCode)
+                throw new Exception($"Crowdin LIST webhooks failed: {(int)listResp.StatusCode}. Body: {listResp.Content}");
+
+            var listParsed = JsonConvert.DeserializeObject<ListWebhooksResponse>(listResp.Content ?? "{}")
+                           ?? new ListWebhooksResponse();
+
+
+            var exists = listParsed.Data.Any(x => string.Equals(x.Data.Url, _bridgeServiceUrl, StringComparison.OrdinalIgnoreCase));
 
             if (exists)
             { 
                 return;
-            }    
-                
-
+            }   
+            
             var addReq = new CrowdinRestRequest($"/projects/{_projectId}/webhooks", Method.Post, credentials);
-            var eventStrings = SubscriptionEvents.Select(e => e.ToDescription()).ToList();
 
             var webhookRequest = new
             {
@@ -75,12 +90,9 @@ namespace Apps.Crowdin.Webhooks.Bridge
             addReq.AddJsonBody(webhookRequest);
 
             var addResp = await _restClient.ExecuteAsync(addReq);
-            var rawResponseJson = addResp.Content ?? "No response content";
 
-            if (!addResp.IsSuccessful)
-            {   
-                throw new Exception($"Failed to create Crowdin webhook. Status: {addResp.StatusCode}, Error: {addResp.ErrorMessage}");
-            }
+            if (!addResp.IsSuccessStatusCode)
+                throw new Exception($"Crowdin ADD webhook failed: {(int)addResp.StatusCode}. Body: {addResp.Content}");
         }
      
         public async Task UnsubscribeAsync(
@@ -95,17 +107,30 @@ namespace Apps.Crowdin.Webhooks.Bridge
             }
 
             var listReq = new CrowdinRestRequest($"/projects/{_projectId}/webhooks", Method.Get, credentials);
-            var listResp = await _restClient.ExecuteAsync<ListWebhooksResponse>(listReq);
-            var toDelete = listResp.Data?.Webhooks
+            var listResp = await _restClient.ExecuteAsync(listReq);
+
+            if (!listResp.IsSuccessStatusCode)
+                throw new Exception($"Crowdin LIST webhooks failed: {(int)listResp.StatusCode}. Body: {listResp.Content}");
+
+            var listParsed = JsonConvert.DeserializeObject<ListWebhooksResponse>(listResp.Content ?? "{}")
+                            ?? new ListWebhooksResponse();
+
+            var toDelete = listParsed.Data
+                .Select(x => x.Data)
                 .Where(w => string.Equals(w.Url, _bridgeServiceUrl, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
-            if (toDelete is null) return;
+            if (toDelete.Count == 0)
+                return;
 
             foreach (var hook in toDelete)
             {
                 var delReq = new CrowdinRestRequest($"/projects/{_projectId}/webhooks/{hook.Id}", Method.Delete, credentials);
-                await _restClient.ExecuteAsync(delReq);
+
+                var delResp = await _restClient.ExecuteAsync(delReq);
+
+                if (!delResp.IsSuccessStatusCode)
+                    throw new Exception($"Crowdin DELETE webhook failed: {(int)delResp.StatusCode}. Body: {delResp.Content}");
             }
         }
     }
@@ -124,4 +149,3 @@ namespace Apps.Crowdin.Webhooks.Bridge
         }
     }
 }
-

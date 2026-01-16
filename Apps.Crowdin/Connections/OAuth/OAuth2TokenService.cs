@@ -54,7 +54,7 @@ public class OAuth2TokenService(InvocationContext invocationContext)
 
     private async Task<Dictionary<string, string>> GetToken(
         Dictionary<string, string> parameters,
-        CancellationToken token, 
+        CancellationToken token,
         string operationName)
     {
         try
