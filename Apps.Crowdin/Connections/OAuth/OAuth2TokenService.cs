@@ -66,7 +66,7 @@ public class OAuth2TokenService(InvocationContext invocationContext)
                                    ?? throw new InvalidOperationException($"Invalid response content: {responseContent}");
 
             var expiresIn = int.Parse(resultDictionary["expires_in"]);
-            var expiresAt = DateTime.UtcNow.AddSeconds(expiresIn);
+            var expiresAt = DateTime.UtcNow.AddSeconds(expiresIn - 120);
             resultDictionary.Add(ExpiresAtKeyName, expiresAt.ToString());
 
             return resultDictionary;
