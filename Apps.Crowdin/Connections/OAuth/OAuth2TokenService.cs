@@ -1,5 +1,6 @@
 ﻿using Apps.Crowdin.Constants;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Authentication.OAuth2;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Newtonsoft.Json;
@@ -7,7 +8,7 @@ using Newtonsoft.Json;
 namespace Apps.Crowdin.Connections.OAuth;
 
 public class OAuth2TokenService(InvocationContext invocationContext)
-    : BaseInvocable(invocationContext), IOAuth2TokenService
+    : BaseInvocable(invocationContext), IOAuth2TokenService, ITokenRefreshable
 {
     private const string ExpiresAtKeyName = "expires_at";
 
@@ -92,6 +93,19 @@ public class OAuth2TokenService(InvocationContext invocationContext)
     public bool IsRefreshToken(Dictionary<string, string> values)
         => values.TryGetValue(ExpiresAtKeyName, out var expireValue) &&
            DateTime.UtcNow > DateTime.Parse(expireValue);
+
+    public int? GetRefreshTokenExprireInMinutes(Dictionary<string, string> values)
+    {
+        if (!values.TryGetValue(ExpiresAtKeyName, out var expireValue))
+            return null;
+
+        if (!DateTime.TryParse(expireValue, out var expireDate))
+            return null;
+
+        var difference = expireDate - DateTime.UtcNow;
+
+        return (int) difference.TotalMinutes - 1;
+    }
 
     #endregion
 }
