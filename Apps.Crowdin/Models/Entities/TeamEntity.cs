@@ -14,8 +14,8 @@ public class TeamEntity(Team team)
     public int TotalMembers { get; set; } = team.TotalMembers;
 
     [Display("Created at")]
-    public DateTimeOffset CreatedAt { get; set; } = team.CreatedAt;
+    public DateTime CreatedAt { get; set; } = team.CreatedAt.UtcDateTime;
 
     [Display("Updated at")]
-    public DateTimeOffset? UpdatedAt { get; set; } = team.CreatedAt;
+    public DateTime? UpdatedAt { get; set; } = team.CreatedAt.UtcDateTime;
 }
