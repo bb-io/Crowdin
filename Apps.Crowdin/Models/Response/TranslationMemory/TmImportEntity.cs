@@ -1,44 +1,28 @@
-﻿using Blackbird.Applications.Sdk.Common;
-using Crowdin.Api.TranslationMemory;
+﻿using Crowdin.Api.TranslationMemory;
+using Blackbird.Applications.Sdk.Common;
 
-namespace Apps.Crowdin.Models.Response.TranslationMemory
+namespace Apps.Crowdin.Models.Response.TranslationMemory;
+
+public class TmImportEntity(TmImportStatus status)
 {
-    public class TmImportEntity
-    {
-        [Display("Import ID")]
-        public string ImportId { get; set; } = default!;
+    [Display("Import ID")]
+    public string ImportId { get; set; } = status.Identifier;
 
-        [Display("Status")]
-        public string Status { get; set; } = default!;
+    [Display("Status")]
+    public string Status { get; set; } = status.Status.ToString();
 
-        [Display("Progress (%)")]
-        public int Progress { get; set; }
+    [Display("Progress (%)")]
+    public int Progress { get; set; } = status.Progress;
 
-        [Display("Created at")]
-        public DateTimeOffset CreatedAt { get; set; }
+    [Display("Created at")]
+    public DateTime CreatedAt { get; set; } = status.CreatedAt.UtcDateTime;
 
-        [Display("Started at")]
-        public DateTimeOffset? StartedAt { get; set; }
+    [Display("Started at")]
+    public DateTime? StartedAt { get; set; } = status.StartedAt?.UtcDateTime;
 
-        [Display("Finished at")]
-        public DateTimeOffset? FinishedAt { get; set; }
+    [Display("Finished at")]
+    public DateTime? FinishedAt { get; set; } = status.FinishedAt?.UtcDateTime;
 
-        [Display("Updated at")]
-        public DateTimeOffset? UpdatedAt { get; set; }
-
-        public TmImportEntity()
-        {
-        }
-
-        public TmImportEntity(TmImportStatus status)
-        {
-            ImportId = status.Identifier;
-            Status = status.Status.ToString();
-            Progress = status.Progress;
-            CreatedAt = status.CreatedAt;
-            StartedAt = status.StartedAt;
-            FinishedAt = status.FinishedAt;
-            UpdatedAt = status.UpdatedAt;
-        }
-    }
+    [Display("Updated at")]
+    public DateTime? UpdatedAt { get; set; } = status.UpdatedAt?.UtcDateTime;
 }
