@@ -102,7 +102,8 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
 
         var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
             await SdkClient.ProjectsGroups.AddProject<ProjectBase>(request));
-        return new(response);
+
+        return await GetProject(new ProjectRequest { ProjectId = response.Id.ToString() });
     }
 
     [Action("Delete project", Description = "Delete specific project")]

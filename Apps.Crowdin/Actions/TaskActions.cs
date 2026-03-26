@@ -163,7 +163,8 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
             await SdkClient.Tasks.AddTask(projectId, request)
         );
-        return new(response);
+
+        return await GetTask(new ProjectRequest { ProjectId = response.ProjectId.ToString() }, response.Id.ToString());
     }
 
     [Action("Add pending task", Description = "Add new pending task")]
@@ -195,8 +196,9 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         };
 
         var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-        await SdkClient.Tasks.AddTask(intProjectId, request));
-        return new(response);
+            await SdkClient.Tasks.AddTask(intProjectId, request));
+
+        return await GetTask(new ProjectRequest { ProjectId = response.ProjectId.ToString() }, response.Id.ToString());
     }
 
     [Action("Delete task", Description = "Delete specific task")]
@@ -343,7 +345,7 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
             await SdkClient.Tasks.EditTask(intProjectId!.Value, intTaskId!.Value, patchOperations.Cast<TaskPatchBase>().ToList()));
 
-        return new TaskEntity(response);
+        return await GetTask(new ProjectRequest { ProjectId = response.ProjectId.ToString() }, response.Id.ToString());
     }
 
     [Action("Download task strings as XLIFF", Description = "Download specific task strings as XLIFF")]

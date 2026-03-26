@@ -168,7 +168,8 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             };
 
             var file = await SdkClient.SourceFiles.AddFile(intProjectId!.Value, request);
-            return new(file);
+
+            return await GetFile(project, new FileRequest { FileId = file.Id.ToString() });
         }
         catch (CrowdinApiException ex)
         {
@@ -253,7 +254,10 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
                 intFileId!.Value,
                 request));
 
-        return new(result, isModified);
+        var addedFile = await GetFile(project, file);
+        addedFile.IsModified = isModified;
+
+        return addedFile;
     }
 
     [Action("Download file", Description = "Download specific file")]
@@ -529,7 +533,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         try
         {
             var newFile = await SdkClient.SourceFiles.AddFile(intProjectId!.Value, addFileRequest);
-            return new FileEntity(newFile);
+            return await GetFile(project, new FileRequest { FileId = newFile.Id.ToString() });
         }
         catch (CrowdinApiException ex)
         {
