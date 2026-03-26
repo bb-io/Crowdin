@@ -1,4 +1,5 @@
-﻿using Apps.Crowdin.Webhooks.Models.Payload.File;
+﻿using Apps.Crowdin.Converters;
+using Apps.Crowdin.Webhooks.Models.Payload.File;
 using Blackbird.Applications.Sdk.Common;
 using Crowdin.Api.SourceFiles;
 using Newtonsoft.Json;
@@ -34,11 +35,8 @@ public class FileEntity
     [Display("Is modified")]
     public bool? IsModified { get; set; }
 
-    [Display("Fields")]
-    public IEnumerable<FieldEntity> Fields => FieldsDict.Select(x => new FieldEntity(x.Key, x.Value));
-
-    [DefinitionIgnore, JsonProperty("fields")]
-    public Dictionary<string, object> FieldsDict { get; set; } = [];
+    [Display("Fields"), JsonProperty("fields"), JsonConverter(typeof(FieldsConverter))]
+    public IEnumerable<FieldEntity> Fields { get; set; } = [];
 
     public string? Priority { get; set; }
 

@@ -113,10 +113,11 @@ public class TaskTests : TestBase
     {
         var action = new TaskActions(InvocationContext, FileManager);
 
+        var projectRequest = new ProjectRequest { ProjectId = "1" };
         var input = new ListTasksRequest { };
         var fieldFilter = new FieldsFilterRequest { };
 
-        var result = await action.ListTasks(input, fieldFilter);
+        var result = await action.ListTasks(projectRequest, input, fieldFilter);
 
         PrintJsonResult(result); 
         Assert.IsNotNull(result);

@@ -1,4 +1,5 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Crowdin.Converters;
+using Blackbird.Applications.Sdk.Common;
 using Crowdin.Api.SourceStrings;
 using Newtonsoft.Json;
 
@@ -31,11 +32,8 @@ public class SourceStringEntity
     [Display("Created at")] 
     public DateTime CreatedAt { get; set; }
 
-    [Display("Fields")]
-    public IEnumerable<FieldEntity> Fields => FieldsDict.Select(x => new FieldEntity(x.Key, x.Value));
-
-    [DefinitionIgnore, JsonProperty("fields")]
-    public Dictionary<string, object> FieldsDict { get; set; } = [];
+    [Display("Fields"), JsonProperty("fields"), JsonConverter(typeof(FieldsConverter))]
+    public IEnumerable<FieldEntity> Fields { get; set; } = [];
 
     public SourceStringEntity() { }
 
