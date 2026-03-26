@@ -41,7 +41,7 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
 
         var items = await Paginator.Paginate(async (lim, offset) =>
         {
-            var request = new CrowdinRestRequest($"/{projectRequest.ProjectId}/tasks", Method.Get, Creds);
+            var request = new CrowdinRestRequest($"/projects/{projectRequest.ProjectId}/tasks", Method.Get, Creds);
 
             if (!string.IsNullOrEmpty(input.Status))
                 request.AddQueryParameter("status", input.Status);
