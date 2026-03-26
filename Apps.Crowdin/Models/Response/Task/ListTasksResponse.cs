@@ -2,4 +2,4 @@
 
 namespace Apps.Crowdin.Models.Response.Task;
 
-public record ListTasksResponse(TaskEntity[] Tasks);
+public record ListTasksResponse(List<TaskEntity> Tasks);

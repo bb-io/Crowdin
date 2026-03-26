@@ -4,6 +4,7 @@ using Apps.Crowdin.Extensions;
 using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Dtos;
 using Apps.Crowdin.Models.Entities;
+using Apps.Crowdin.Models.Request.Filter;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.Task;
 using Apps.Crowdin.Models.Request.Users;
@@ -18,6 +19,7 @@ using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Blackbird.Applications.Sdk.Utils.Utilities;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Crowdin.Api;
 using Crowdin.Api.ProjectsGroups;
 using Crowdin.Api.Tasks;
 using RestSharp;
@@ -30,18 +32,31 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
     : AppInvocable(invocationContext)
 {
     [Action("Search tasks", Description = "List all tasks")]
-    public async Task<ListTasksResponse> ListTasks([ActionParameter] ListTasksRequest input)
+    public async Task<ListTasksResponse> ListTasks(
+        [ActionParameter] ProjectRequest projectRequest,
+        [ActionParameter] ListTasksRequest input,
+        [ActionParameter] FieldsFilterRequest fieldsFilter)
     {
-        var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
-        var intAssigneeId = IntParser.Parse(input.AssigneeId, nameof(input.AssigneeId));
-        var status = EnumParser.Parse<TaskStatus>(input.Status, nameof(input.Status));
+        fieldsFilter.Validate();
 
-        var items = await Paginator.Paginate((lim, offset)
-            => ExceptionWrapper.ExecuteWithErrorHandling(() =>
-                SdkClient.Tasks.ListTasks(intProjectId!.Value, lim, offset, status, intAssigneeId)));
+        var items = await Paginator.Paginate(async (lim, offset) =>
+        {
+            var request = new CrowdinRestRequest($"/{projectRequest.ProjectId}/tasks", Method.Get, Creds);
 
-        var tasks = items.Select(x => new TaskEntity(x)).ToArray();
-        return new(tasks);
+            if (!string.IsNullOrEmpty(input.Status))
+                request.AddQueryParameter("status", input.Status);
+
+            request.AddQueryParameter("limit", lim);
+            request.AddQueryParameter("offset", offset);
+
+            return await RestClient.ExecuteWithErrorHandling<ResponseList<DataResponse<TaskEntity>>>(request);
+        });
+
+        var tasks = items.Select(x => x.Data)
+            .Where(x => x.Assignees.Contains(input.AssigneeId))
+            .ApplyFieldsFilter(x => x.Fields, fieldsFilter); 
+
+        return new(tasks.ToList());
     }
 
     [Action("Get task", Description = "Get specific task")]
@@ -49,12 +64,13 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         [ActionParameter] ProjectRequest project,
         [ActionParameter][Display("Task ID")] string taskId)
     {
-        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
-        var intTaskId = IntParser.Parse(taskId, nameof(taskId));
+        var request = new CrowdinRestRequest($"/projects/{project.ProjectId}/tasks/{taskId}", Method.Get, Creds);
 
-        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-            await SdkClient.Tasks.GetTask(intProjectId!.Value, intTaskId!.Value));
-        return new(response);
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(
+            () => RestClient.ExecuteWithErrorHandling<DataResponse<TaskEntity>>(request)
+        );
+
+        return response.Data;
     }
 
     [Action("[Enterprise] Add vendor task", Description = "Add new vendor task for a specific workflow")]

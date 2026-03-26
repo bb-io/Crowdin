@@ -1,6 +1,7 @@
-﻿using Crowdin.Api.Tasks;
+﻿using Apps.Crowdin.Models.Dtos;
 using Blackbird.Applications.Sdk.Common;
-using Apps.Crowdin.Models.Dtos;
+using Crowdin.Api.Tasks;
+using Newtonsoft.Json;
 
 namespace Apps.Crowdin.Models.Entities;
 
@@ -38,7 +39,13 @@ public class TaskEntity
 
     [Display("Created at")]
     public DateTime CreatedAt { get; set; }
-    
+
+    [Display("Fields")]
+    public IEnumerable<FieldEntity> Fields => FieldsDict.Select(x => new FieldEntity(x.Key, x.Value));
+
+    [DefinitionIgnore, JsonProperty("fields")]
+    public Dictionary<string, object> FieldsDict { get; set; } = [];
+
     public TaskEntity(TaskResource taskResource)
     {
         Id = taskResource.Id.ToString();

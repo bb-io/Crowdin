@@ -5,6 +5,7 @@ using Apps.Crowdin.Constants;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
+using Blackbird.Applications.Sdk.Utils.RestSharp;
 using Crowdin.Api;
 using RestSharp;
 
@@ -17,7 +18,7 @@ public class ApiClientFactory : IApiClientFactory
         return credentialsProviders.Get(CredsNames.CrowdinPlan).Value;
     }
 
-    public RestClient BuildRestClient(IEnumerable<AuthenticationCredentialsProvider> credentialsProviders)
+    public BlackBirdRestClient BuildRestClient(IEnumerable<AuthenticationCredentialsProvider> credentialsProviders)
     {
         var authenticationCredentialsProviders = credentialsProviders as AuthenticationCredentialsProvider[] ?? credentialsProviders.ToArray();
         var crowdinPlan = authenticationCredentialsProviders.GetCrowdinPlan();

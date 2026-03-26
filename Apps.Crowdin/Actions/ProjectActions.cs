@@ -3,7 +3,6 @@ using Apps.Crowdin.Api.RestSharp.Basic;
 using Apps.Crowdin.Api.RestSharp.Enterprise;
 using Apps.Crowdin.Constants;
 using Apps.Crowdin.Invocables;
-using Apps.Crowdin.Models.Dtos;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Filter;
 using Apps.Crowdin.Models.Request.Project;
@@ -23,7 +22,6 @@ using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Crowdin.Api;
 using Crowdin.Api.ProjectsGroups;
 using Crowdin.Api.Translations;
-using Newtonsoft.Json;
 using RestSharp;
 using System.Text.Json;
 
@@ -40,11 +38,6 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
     {
         fieldsFilter.Validate();
 
-        var userId = IntParser.Parse(input.UserId, nameof(input.UserId));
-        var groupId = IntParser.Parse(input.GroupID, nameof(input.GroupID));
-
-        var request = new CrowdinRestRequest("/projects", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
-        
         var items = await Paginator.Paginate(async (lim, offset) =>
         {
             var request = new CrowdinRestRequest($"/projects", Method.Get, Creds); 
@@ -57,28 +50,13 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
             request.AddQueryParameter("limit", lim);
             request.AddQueryParameter("offset", offset);
 
-            var response = await RestClient.ExecuteAsync(request);
-            return JsonConvert.DeserializeObject<ResponseList<DataResponse<ProjectEntity>>>(response.Content ?? string.Empty)!;
+            return await RestClient.ExecuteWithErrorHandling<ResponseList<DataResponse<ProjectEntity>>>(request);
         });
 
-        var result = items.Select(x => x.Data).Where(x => input.HasManagerAccess != true || x.UserId == input.UserId);
-
-        if (fieldsFilter.FieldNamesFilter != null && fieldsFilter.FieldValuesFilter != null)
-        {
-            var filterPairs = fieldsFilter.FieldNamesFilter
-                .Zip(fieldsFilter.FieldValuesFilter, (Name, Value) => new { Name, Value });
-
-            result = result.Where(project =>
-                filterPairs.All(filter =>
-                    project.Fields != null &&
-                    project.Fields.Any(f =>
-                        f.FieldKey == filter.Name &&
-                        f.FieldValue != null &&
-                        f.FieldValue.Contains(filter.Value, StringComparison.OrdinalIgnoreCase)
-                    )
-                )
-            );
-        }
+        var result = items
+            .Select(x => x.Data)
+            .Where(x => input.HasManagerAccess != true || x.UserId == input.UserId)
+            .ApplyFieldsFilter(x => x.Fields, fieldsFilter);
 
         return new(result.ToList());
     }
@@ -86,19 +64,10 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
     [Action("Get project", Description = "Get specific project")]
     public async Task<ProjectEntity> GetProject([ActionParameter] ProjectRequest project)
     {
-        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
+        var request = new CrowdinRestRequest($"/projects/{project.ProjectId}", Method.Get, Creds);
 
-        var request = new CrowdinRestRequest(
-            $"/projects/{project.ProjectId}", 
-            Method.Get, 
-            InvocationContext.AuthenticationCredentialsProviders);
-
-        var plan = InvocationContext.AuthenticationCredentialsProviders.GetCrowdinPlan();
-        BlackBirdRestClient client = plan == Plans.Enterprise
-            ? new CrowdinEnterpriseRestClient(InvocationContext.AuthenticationCredentialsProviders)
-            : new CrowdinRestClient();
         var response = await ExceptionWrapper.ExecuteWithErrorHandling(
-            () => client.ExecuteWithErrorHandling<DataWrapperDto<ProjectEntity>>(request)
+            () => RestClient.ExecuteWithErrorHandling<DataResponse<ProjectEntity>>(request)
         );
 
         return response.Data;

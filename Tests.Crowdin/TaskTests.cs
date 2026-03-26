@@ -5,6 +5,7 @@ using Apps.Crowdin.Models.Request.Task;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.Users;
 using Blackbird.Applications.Sdk.Common.Exceptions;
+using Apps.Crowdin.Models.Request.Filter;
 
 namespace Tests.Crowdin;
 
@@ -112,15 +113,13 @@ public class TaskTests : TestBase
     {
         var action = new TaskActions(InvocationContext, FileManager);
 
-        var input1 = new ListTasksRequest { ProjectId = "1" };
+        var input = new ListTasksRequest { };
+        var fieldFilter = new FieldsFilterRequest { };
 
-        var result = await action.ListTasks(input1);
+        var result = await action.ListTasks(input, fieldFilter);
 
-        foreach (var task in result.Tasks)
-        {
-            Console.WriteLine($"{task.Id} - {task.Title} - {string.Join(", ", task.Assignees)}");
-            Assert.IsNotNull(result);
-        }
+        PrintJsonResult(result); 
+        Assert.IsNotNull(result);
     }
 
     [TestMethod]
