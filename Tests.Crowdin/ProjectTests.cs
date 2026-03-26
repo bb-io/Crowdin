@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Apps.Crowdin.Actions;
-using Apps.Crowdin.Connections;
+﻿using Apps.Crowdin.Actions;
 using Apps.Crowdin.DataSourceHandlers;
+using Apps.Crowdin.Models.Request.Filter;
 using Apps.Crowdin.Models.Request.Project;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Tests.Crowdin.Base;
@@ -15,6 +10,26 @@ namespace Tests.Crowdin
     [TestClass]
     public class ProjectTests :TestBase
     {
+        [TestMethod]
+        public async Task ListProjects_ReturnsProjects()
+        {
+            // Arrange
+            var actions = new ProjectActions(InvocationContext, FileManager);
+            var input = new ListProjectsRequest { };
+            var fieldsFilter = new FieldsFilterRequest
+            {
+                FieldNamesFilter = ["testmult"],
+                FieldValuesFilter = ["aha"]
+            };
+
+            // Act
+            var result = await actions.ListProjects(input, fieldsFilter);
+
+            // Assert
+            PrintJsonResult(result);
+            Assert.IsNotNull(result);
+        }
+
         [TestMethod]
         public async Task AddProject_ShoudBeSuccess()
         {
@@ -36,13 +51,14 @@ namespace Tests.Crowdin
         {
             var input = new ProjectRequest
             {
-                ProjectId = "19"
+                ProjectId = "1"
             };
 
             var client = new ProjectActions(InvocationContext, FileManager);
 
             var result = await client.GetProject(input);
 
+            PrintJsonResult(result);
             Assert.IsNotNull(result);
         }
 

@@ -3,8 +3,11 @@ using Apps.Crowdin.Api.RestSharp.Basic;
 using Apps.Crowdin.Api.RestSharp.Enterprise;
 using Apps.Crowdin.Constants;
 using Apps.Crowdin.Invocables;
+using Apps.Crowdin.Models.Dtos;
 using Apps.Crowdin.Models.Entities;
+using Apps.Crowdin.Models.Request.Filter;
 using Apps.Crowdin.Models.Request.Project;
+using Apps.Crowdin.Models.Response;
 using Apps.Crowdin.Models.Response.File;
 using Apps.Crowdin.Models.Response.Project;
 using Apps.Crowdin.Utils;
@@ -17,9 +20,10 @@ using Blackbird.Applications.Sdk.Utils.Parsers;
 using Blackbird.Applications.Sdk.Utils.RestSharp;
 using Blackbird.Applications.Sdk.Utils.Utilities;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
-using Crowdin.Api.Clients;
+using Crowdin.Api;
 using Crowdin.Api.ProjectsGroups;
 using Crowdin.Api.Translations;
+using Newtonsoft.Json;
 using RestSharp;
 using System.Text.Json;
 
@@ -30,27 +34,74 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
     : AppInvocable(invocationContext)
 {
     [Action("Search projects", Description = "List all projects")]
-    public async Task<ListProjectsResponse> ListProjects([ActionParameter] ListProjectsRequest input)
+    public async Task<ListProjectsResponse> ListProjects(
+        [ActionParameter] ListProjectsRequest input,
+        [ActionParameter] FieldsFilterRequest fieldsFilter)
     {
+        fieldsFilter.Validate();
+
         var userId = IntParser.Parse(input.UserId, nameof(input.UserId));
         var groupId = IntParser.Parse(input.GroupID, nameof(input.GroupID));
 
-        var items = await Paginator.Paginate((lim, offset)
-            => ExceptionWrapper.ExecuteWithErrorHandling(() =>
-                SdkClient.ProjectsGroups.ListProjects<ProjectBase>(userId, groupId, input.HasManagerAccess ?? false,
-                    null, lim, offset)));
+        var request = new CrowdinRestRequest("/projects", Method.Get, InvocationContext.AuthenticationCredentialsProviders);
+        
+        var items = await Paginator.Paginate(async (lim, offset) =>
+        {
+            var request = new CrowdinRestRequest($"/projects", Method.Get, Creds); 
+            
+            if (!string.IsNullOrEmpty(input.GroupID))
+                request.AddQueryParameter("groupId", input.GroupID);
 
-        var projects = items.Select(x => new ProjectEntity(x)).ToArray();
-        return new(projects);
+            if (input.HasManagerAccess == true)
+                request.AddQueryParameter("hasManagerAccess", 1);
+            request.AddQueryParameter("limit", lim);
+            request.AddQueryParameter("offset", offset);
+
+            var response = await RestClient.ExecuteAsync(request);
+            return JsonConvert.DeserializeObject<ResponseList<DataResponse<ProjectEntity>>>(response.Content ?? string.Empty)!;
+        });
+
+        var result = items.Select(x => x.Data).Where(x => input.HasManagerAccess != true || x.UserId == input.UserId);
+
+        if (fieldsFilter.FieldNamesFilter != null && fieldsFilter.FieldValuesFilter != null)
+        {
+            var filterPairs = fieldsFilter.FieldNamesFilter
+                .Zip(fieldsFilter.FieldValuesFilter, (Name, Value) => new { Name, Value });
+
+            result = result.Where(project =>
+                filterPairs.All(filter =>
+                    project.Fields != null &&
+                    project.Fields.Any(f =>
+                        f.FieldKey == filter.Name &&
+                        f.FieldValue != null &&
+                        f.FieldValue.Contains(filter.Value, StringComparison.OrdinalIgnoreCase)
+                    )
+                )
+            );
+        }
+
+        return new(result.ToList());
     }
 
     [Action("Get project", Description = "Get specific project")]
     public async Task<ProjectEntity> GetProject([ActionParameter] ProjectRequest project)
     {
         var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
-        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-            await SdkClient.ProjectsGroups.GetProject<ProjectBase>(intProjectId!.Value));
-        return new(response);
+
+        var request = new CrowdinRestRequest(
+            $"/projects/{project.ProjectId}", 
+            Method.Get, 
+            InvocationContext.AuthenticationCredentialsProviders);
+
+        var plan = InvocationContext.AuthenticationCredentialsProviders.GetCrowdinPlan();
+        BlackBirdRestClient client = plan == Plans.Enterprise
+            ? new CrowdinEnterpriseRestClient(InvocationContext.AuthenticationCredentialsProviders)
+            : new CrowdinRestClient();
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(
+            () => client.ExecuteWithErrorHandling<DataWrapperDto<ProjectEntity>>(request)
+        );
+
+        return response.Data;
     }
 
     [Action("Add project", Description = "Add new project")]
@@ -202,9 +253,8 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
         return new(response);
     }
 
-
     [Action("Generate translation costs post-editing", Description = "Generates report")]
-    public async Task<Models.Response.Project.TranslationCostReportResponse> GenerateTranslateCostReport([ActionParameter] ProjectRequest project,
+    public async Task<TranslationCostReportResponse> GenerateTranslateCostReport([ActionParameter] ProjectRequest project,
        [ActionParameter] GenerateTranslationCostReportOptions options)
     {
         var reportRequest = new CrowdinRestRequest($"/projects/{project.ProjectId}/reports", Method.Post, InvocationContext.AuthenticationCredentialsProviders);
@@ -532,8 +582,6 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
 
         return resp;
     }
-
-
 
     [Action("Generate estimation post-editing cost by task", Description = "Generates cost estimation report for a specific task")]
     public async Task<EstimateCostReportResponse> GenerateCostReportByTask(
