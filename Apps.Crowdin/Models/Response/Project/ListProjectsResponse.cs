@@ -1,3 +1,5 @@
-﻿namespace Apps.Crowdin.Models.Response.Project;
+﻿using Apps.Crowdin.Models.Entities;
 
-public record ListProjectsResponse(Entities.ProjectEntity[] Projects);
+namespace Apps.Crowdin.Models.Response.Project;
+
+public record ListProjectsResponse(List<ProjectEntity> Projects);

@@ -1,5 +1,6 @@
 ﻿using Apps.Crowdin.Actions;
 using Apps.Crowdin.Models.Request.File;
+using Apps.Crowdin.Models.Request.Filter;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.Translation;
 using Blackbird.Applications.Sdk.Common.Exceptions;
@@ -78,12 +79,16 @@ public class FileTests : TestBase
     [TestMethod]
     public async Task AddFile_ReturnsSuccess()
     {
-       var action = new FileActions(InvocationContext, FileManager);
-       var input1 = new ProjectRequest { ProjectId = "750225" };
-       var input2 = new AddNewFileRequest {File=new FileReference { Name = "test.csv" }, Name="New test file1" };
+        var action = new FileActions(InvocationContext, FileManager);
+        var input1 = new ProjectRequest { ProjectId = "1" };
+        var input2 = new AddNewFileRequest 
+        { 
+            File = new FileReference { Name = "3 random sentences_en_uk_ua1.xlf" }, 
+            Name = "New test file1" 
+        };
 
-       var response = await action.AddFile(input1, input2);
-        Console.WriteLine(response.Id);
+        var response = await action.AddFile(input1, input2);
+        PrintJsonResult(response);
         Assert.IsNotNull(response);
     }
 
@@ -108,8 +113,9 @@ public class FileTests : TestBase
         var action = new FileActions(InvocationContext, FileManager);
         var input1 = new ProjectRequest { ProjectId = "783572" };
         var input2 = new ListFilesRequest { Recursive=true, CreatedBefore = DateTime.UtcNow.AddDays(-100) };
+        var fieldsRequest = new FieldsFilterRequest { };
 
-        var response = await action.ListFiles(input1, input2);
+        var response = await action.ListFiles(input1, input2, fieldsRequest);
         Console.WriteLine(response.Files.Count());
         foreach (var file in response.Files)
         {
@@ -153,17 +159,12 @@ public class FileTests : TestBase
     public async Task GetFile_ReturnsSuccess()
     {
         var action = new FileActions(InvocationContext, FileManager);
-        var input1 = new ProjectRequest { ProjectId = "134" };
-        var input2 = new FileRequest { FileId = "10616" };
-
-        //var input1 = new ProjectRequest { ProjectId = "596457" };
-        //var input2 = new FileRequest { FileId = "149138" };
+        var input1 = new ProjectRequest { ProjectId = "1" };
+        var input2 = new FileRequest { FileId = "7" };
 
         var file = await action.GetFile(input1, input2);
 
-        var json = JsonConvert.SerializeObject(file, Formatting.Indented);
-        Console.WriteLine(json);
-
+        PrintJsonResult(file);
         Assert.IsNotNull(file);
     }
 

@@ -5,7 +5,9 @@ using Apps.Crowdin.Constants;
 using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.File;
+using Apps.Crowdin.Models.Request.Filter;
 using Apps.Crowdin.Models.Request.Project;
+using Apps.Crowdin.Models.Response;
 using Apps.Crowdin.Models.Response.File;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
@@ -32,104 +34,73 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
     [Action("Search files", Description = "List project files")]
     public async Task<ListFilesResponse> ListFiles(
         [ActionParameter] ProjectRequest project,
-        [ActionParameter] ListFilesRequest input)
+        [ActionParameter] ListFilesRequest input,
+        [ActionParameter] FieldsFilterRequest fieldsFilter)
     {
-        var intProjectId = IntParser.Parse(project.ProjectId, nameof(project.ProjectId));
-        var intBranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId));
-        var intDirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId));
+        fieldsFilter.Validate();
 
-        var items = await Paginator.Paginate((lim, offset) =>
+        int? projectId = IntParser.Parse(project.ProjectId, "Project ID");
+        int? branchId = IntParser.Parse(input.BranchId, "Branch ID");
+        int? directoryId = IntParser.Parse(input.DirectoryId, "Directory ID");
+
+        var items = await Paginator.Paginate(async (lim, offset) =>
         {
-            var request = new FilesListParams
-            {
-                BranchId = intBranchId,
-                DirectoryId = intDirectoryId,
-                Filter = input.Filter,
-                Limit = lim,
-                Offset = offset
-            };
+            var request = new CrowdinRestRequest($"/projects/{projectId}/files", Method.Get, Creds);
 
-            request.Recursion = input.Recursive == true ? "true" : null;
-            return ExceptionWrapper.ExecuteWithErrorHandling(() =>
-                SdkClient.SourceFiles.ListFiles<FileCollectionResource>(intProjectId!.Value, request));
+            if (branchId != null)
+                request.AddQueryParameter("branchId", (int)branchId);
+
+            if (directoryId != null)
+                request.AddQueryParameter("directoryId", (int)directoryId);
+
+            if (!string.IsNullOrEmpty(input.Filter))
+                request.AddQueryParameter("filter", input.Filter);
+
+            if (input.Recursive.HasValue)
+                request.AddQueryParameter("recursion", (bool)input.Recursive);
+
+            request.AddQueryParameter("limit", lim);
+            request.AddQueryParameter("offset", offset);
+
+            return await RestClient.ExecuteWithErrorHandling<ResponseList<DataResponse<FileEntity>>>(request);
         });
 
-        IEnumerable<FileCollectionResource> filtered = items;
+        IEnumerable<FileEntity> filtered = items.Select(x => x.Data).ApplyFieldsFilter(x => x.Fields, fieldsFilter);
 
         if (!string.IsNullOrWhiteSpace(input.Status))
-        {
-            var status = input.Status.Trim();
-            filtered = filtered.Where(f =>
-                (status == "Active" && f.Status == FileStatus.Active) ||
-                (status == "NotImported" && f.Status == FileStatus.NotImported) ||
-                (status == "NotConfigured" && f.Status == FileStatus.NotConfigured));
-        }
+            filtered = filtered.Where(f => f.Status.Equals(input.Status, StringComparison.OrdinalIgnoreCase));
 
         if (!string.IsNullOrWhiteSpace(input.Priority))
         {
-            var prio = input.Priority.Trim().ToLowerInvariant();
-            filtered = filtered.Where(f =>
-                (prio == "low" && f.Priority == Priority.Low) ||
-                (prio == "normal" && f.Priority == Priority.Normal) ||
-                (prio == "high" && f.Priority == Priority.High));
+            filtered = filtered.Where(f => 
+                !string.IsNullOrEmpty(f.Priority) && 
+                f.Priority.Equals(input.Priority, StringComparison.OrdinalIgnoreCase));
         }
 
-        if (input.CreatedAfter is DateTime ca) filtered = filtered.Where(f => f.CreatedAt >= AsUtcOffset(ca));
-        if (input.CreatedBefore is DateTime cb) filtered = filtered.Where(f => f.CreatedAt <= AsUtcOffset(cb));
+        if (input.CreatedAfter is DateTime ca) 
+            filtered = filtered.Where(f => f.CreatedAt >= AsUtcOffset(ca));
+        if (input.CreatedBefore is DateTime cb) 
+            filtered = filtered.Where(f => f.CreatedAt <= AsUtcOffset(cb));
 
         if (input.UpdatedAfter is DateTime ua)
             filtered = filtered.Where(f => f.UpdatedAt.HasValue && f.UpdatedAt.Value >= AsUtcOffset(ua));
         if (input.UpdatedBefore is DateTime ub)
             filtered = filtered.Where(f => f.UpdatedAt.HasValue && f.UpdatedAt.Value <= AsUtcOffset(ub));
 
-        var files = filtered.Select(x => new FileEntity(x)).ToArray();
-        return new(files);
+        return new(filtered.ToList());
     }
 
     [Action("Get file", Description = "Get specific file info")]
-    public async Task<FileDetailsEntity> GetFile(
+    public async Task<FileEntity> GetFile(
         [ActionParameter] ProjectRequest project,
         [ActionParameter] FileRequest fileRequest)
     {
-        if (!int.TryParse(project.ProjectId, out var intProjectId))
-            throw new PluginMisconfigurationException(
-                $"Invalid Project ID: {project.ProjectId} must be a numeric value. Please check the input project ID");
+        var request = new CrowdinRestRequest($"/projects/{project.ProjectId}/files/{fileRequest.FileId}", Method.Get, Creds);
 
-        if (!int.TryParse(fileRequest.FileId, out var intFileId))
-            throw new PluginMisconfigurationException(
-                $"Invalid File ID: {fileRequest.FileId} must be a numeric value. Please check the input file ID");
+        var file = await ExceptionWrapper.ExecuteWithErrorHandling(() => 
+            RestClient.ExecuteWithErrorHandling<DataResponse<FileEntity>>(request));
 
-        var plan = InvocationContext.AuthenticationCredentialsProviders.GetCrowdinPlan();
-        BlackBirdRestClient restClient = plan == Plans.Enterprise
-            ? new CrowdinEnterpriseRestClient(invocationContext.AuthenticationCredentialsProviders)
-            : new CrowdinRestClient();
-        var request = new CrowdinRestRequest(
-                $"/projects/{intProjectId}/files/{intFileId}",
-                Method.Get,
-                invocationContext.AuthenticationCredentialsProviders);
-
-        var file = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-            await restClient.ExecuteWithErrorHandling<FileResponseDto>(request));
-
-        if (file == null || file.Data == null)
-            throw new PluginApplicationException("Crowdin response is null. Please try again");
-
-        var dto = file.Data;
-        var result = new FileDetailsEntity
-        {
-            Id = dto.Id,
-            ProjectId = dto.ProjectId,
-            BranchId = dto.BranchId,
-            DirectoryId = dto.DirectoryId,
-            Name = dto.Name,
-            Title = dto.Title,
-            Context = dto.Context,
-            Type = dto.Type,
-            Path = dto.Path,
-            Status = dto.Status
-        };
-
-        return result;
+        return file.Data;
     }
 
     [Action("Add file", Description = "Add new file")]
@@ -197,7 +168,8 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             };
 
             var file = await SdkClient.SourceFiles.AddFile(intProjectId!.Value, request);
-            return new(file);
+
+            return await GetFile(project, new FileRequest { FileId = file.Id.ToString() });
         }
         catch (CrowdinApiException ex)
         {
@@ -214,10 +186,14 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
                 );
             }
 
-            var allFiles = await ListFiles(project, new ListFilesRequest
-            {
-                DirectoryId = input.DirectoryId?.ToString()
-            });
+            var allFiles = await ListFiles(
+                project, 
+                new ListFilesRequest
+                {
+                    DirectoryId = input.DirectoryId?.ToString()
+                },
+                new());
+
             var fileToUpdate = allFiles.Files.FirstOrDefault(x =>
             x.Name == fileName &&
             (input.DirectoryId == null || x.DirectoryId.ToString() == input.DirectoryId));
@@ -278,7 +254,10 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
                 intFileId!.Value,
                 request));
 
-        return new(result, isModified);
+        var addedFile = await GetFile(project, file);
+        addedFile.IsModified = isModified;
+
+        return addedFile;
     }
 
     [Action("Download file", Description = "Download specific file")]
@@ -314,10 +293,14 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         [ActionParameter] ProjectRequest project,
         [ActionParameter] AddOrUpdateFileRequest input)
     {
-        var projectFiles = await ListFiles(project, new ListFilesRequest
-        {
-            DirectoryId = input.DirectoryId?.ToString()
-        });
+        var projectFiles = await ListFiles(
+            project, 
+            new ListFilesRequest
+            {
+                DirectoryId = input.DirectoryId?.ToString()
+            },
+            new());
+
         var existingFile = projectFiles.Files.FirstOrDefault(f =>
         f.Name == input.File.Name &&
         (input.DirectoryId == null || f.DirectoryId.ToString() == input.DirectoryId));
@@ -550,14 +533,14 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
         try
         {
             var newFile = await SdkClient.SourceFiles.AddFile(intProjectId!.Value, addFileRequest);
-            return new FileEntity(newFile);
+            return await GetFile(project, new FileRequest { FileId = newFile.Id.ToString() });
         }
         catch (CrowdinApiException ex)
         {
             if (!ex.Message.Contains("Name must be unique"))
                 throw new PluginMisconfigurationException(ex.Message);
 
-            var allFiles = await ListFiles(project, new());
+            var allFiles = await ListFiles(project, new(), new());
             var fileToUpdate = allFiles.Files.First(x => x.Name == fileName);
             return await UpdateFile(
                 project,

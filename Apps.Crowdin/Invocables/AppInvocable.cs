@@ -5,8 +5,7 @@ using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
-using RestSharp;
-using System.Reflection;
+using Blackbird.Applications.Sdk.Utils.RestSharp;
 
 namespace Apps.Crowdin.Invocables;
 
@@ -15,15 +14,14 @@ public class AppInvocable(InvocationContext invocationContext) : BaseInvocable(i
     private static readonly IApiClientFactory ApiClientFactory = new ApiClientFactory();
 
     protected List<AuthenticationCredentialsProvider> Creds => InvocationContext.AuthenticationCredentialsProviders.ToList();
-    protected RestClient RestClient => ApiClientFactory.BuildRestClient(InvocationContext.AuthenticationCredentialsProviders);
+    
+    protected BlackBirdRestClient RestClient => ApiClientFactory.BuildRestClient(Creds);
 
-
-    protected CrowdinClient SdkClient =>
-        ApiClientFactory.BuildSdkClient(InvocationContext.AuthenticationCredentialsProviders);
+    protected CrowdinClient SdkClient => ApiClientFactory.BuildSdkClient(Creds);
 
     protected void CheckAccessToEnterpriseAction()
     {
-        var plan = ApiClientFactory.GetPlan(InvocationContext.AuthenticationCredentialsProviders);
+        var plan = ApiClientFactory.GetPlan(Creds);
 
         if (plan == Plans.Basic)
         {

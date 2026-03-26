@@ -1,14 +1,19 @@
-﻿using Apps.Crowdin.Invocables;
+﻿using Apps.Crowdin.Api.RestSharp;
+using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
+using Apps.Crowdin.Models.Request.Filter;
+using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.SourceString;
+using Apps.Crowdin.Models.Response;
 using Apps.Crowdin.Models.Response.SourceString;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Parsers;
+using Crowdin.Api;
 using Crowdin.Api.SourceStrings;
+using RestSharp;
 
 namespace Apps.Crowdin.Actions;
 
@@ -16,72 +21,47 @@ namespace Apps.Crowdin.Actions;
 public class SourceStringAction(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
     [Action("Search strings", Description = "List all project source strings")]
-    public async Task<ListStringsResponse> ListStrings([ActionParameter] ListStringsRequest input)
+    public async Task<ListStringsResponse> ListStrings(
+        [ActionParameter] ProjectRequest projectRequest,
+        [ActionParameter] ListStringsRequest input,
+        [ActionParameter] FieldsFilterRequest fieldsFilter)
     {
-        var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
-        
-        var items = await Paginator.Paginate((lim, offset)
-            =>
-        {
-            var request = new StringsListParams
-            {
-                Limit = lim,
-                Offset = offset,
-                FileId = IntParser.Parse(input.FileId, nameof(input.FileId)),
-                BranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId)),
-                DirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId)),
-                LabelIds = input.LabelIds,
-                Filter = input.Filter,
-                CroQL = input.CroQl,
-                Scope = EnumParser.Parse<StringScope>(input.Scope, nameof(input.Scope)),
-                DenormalizePlaceholders = input.DenormalizePlaceholders is true ? 1 : 0,
-            };
-            return ExceptionWrapper.ExecuteWithErrorHandling(() => SdkClient.SourceStrings.ListStrings(intProjectId!.Value, request));
-        });
+        fieldsFilter.Validate();
 
-        var strings = items.Select(x => new SourceStringEntity(x)).ToArray();
-        return new(strings);
+        var strings = await GetSourceStrings(projectRequest, input);        
+        strings = strings.ApplyFieldsFilter(x => x.Fields, fieldsFilter);
+
+        return new(strings.ToList());
     }
 
     [Action("Find source string", Description = "Return first matching source strings")]
-    public async Task<SourceStringEntity> FindString([ActionParameter] ListStringsRequest input)
+    public async Task<SourceStringEntity?> FindString(
+        [ActionParameter] ProjectRequest project,
+        [ActionParameter] ListStringsRequest input,
+        [ActionParameter] FieldsFilterRequest fieldsFilter)
     {
-        var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
+        fieldsFilter.Validate();
 
-        var request = new StringsListParams
-        {
-            Limit = 1,
-            Offset = 0,
-            FileId = IntParser.Parse(input.FileId, nameof(input.FileId)),
-            BranchId = IntParser.Parse(input.BranchId, nameof(input.BranchId)),
-            DirectoryId = IntParser.Parse(input.DirectoryId, nameof(input.DirectoryId)),
-            LabelIds = input.LabelIds,
-            Filter = input.Filter,
-            CroQL = input.CroQl,
-            Scope = EnumParser.Parse<StringScope>(input.Scope, nameof(input.Scope)),
-            DenormalizePlaceholders = input.DenormalizePlaceholders is true ? 1 : 0,
-        };
+        var strings = await GetSourceStrings(project, input);
+        strings = strings.ApplyFieldsFilter(x => x.Fields, fieldsFilter);
 
-        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => await SdkClient.SourceStrings
-            .ListStrings(intProjectId!.Value, request));
-
-        return new(response.Data.FirstOrDefault());
+        return strings.FirstOrDefault();
     }
 
-
     [Action("Get source string", Description = "Get specific source string")]
-    public async Task<SourceStringEntity> GetString([ActionParameter] GetSourceStringRequest input)
+    public async Task<SourceStringEntity> GetString(
+        [ActionParameter] ProjectRequest project,
+        [ActionParameter] GetSourceStringRequest input)
     {
-        if (!int.TryParse(input.ProjectId, out var intProjectId))
-            throw new PluginMisconfigurationException($"Invalid Project ID: {input.ProjectId} must be a numeric value. Please check the input project ID");
+        var request = new CrowdinRestRequest($"/projects/{project.ProjectId}/strings/{input.StringId}", Method.Get, Creds);
+        if (input.DenormalizePlaceholders == true)
+            request.AddQueryParameter("denormalizePlaceholders", 1);
 
-        if (!int.TryParse(input.StringId, out var intStringId))
-            throw new PluginMisconfigurationException($"Invalid String ID: {input.StringId} must be a numeric value. Please check the input string ID");
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(
+            () => RestClient.ExecuteWithErrorHandling<DataResponse<SourceStringEntity>>(request)
+        );
 
-        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => await SdkClient.SourceStrings
-        .GetString(intProjectId, intStringId, input.DenormalizePlaceholders ?? false));
-
-        return new(response);
+        return response.Data;
     }
 
     [Action("Add source string", Description = "Add new source string")]
@@ -112,5 +92,43 @@ public class SourceStringAction(InvocationContext invocationContext) : AppInvoca
         
         await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
             await SdkClient.SourceStrings.DeleteString(intProjectId!.Value, intStringId!.Value));
+    }
+
+    private async Task<IEnumerable<SourceStringEntity>> GetSourceStrings(
+        ProjectRequest projectRequest,
+        ListStringsRequest listStringsRequest)
+    {
+        var items = await Paginator.Paginate(async (lim, offset) =>
+        {
+            var request = new CrowdinRestRequest($"/projects/{projectRequest.ProjectId}/strings", Method.Get, Creds);
+
+            if (!string.IsNullOrEmpty(listStringsRequest.FileId))
+                request.AddQueryParameter("fileId", listStringsRequest.FileId);
+
+            if (!string.IsNullOrEmpty(listStringsRequest.BranchId))
+                request.AddQueryParameter("branchId", listStringsRequest.BranchId);
+
+            if (!string.IsNullOrEmpty(listStringsRequest.DirectoryId))
+                request.AddQueryParameter("directoryId", listStringsRequest.DirectoryId);
+
+            if (!string.IsNullOrEmpty(listStringsRequest.LabelIds))
+                request.AddQueryParameter("labelIds", listStringsRequest.LabelIds);
+
+            if (!string.IsNullOrEmpty(listStringsRequest.CroQl))
+                request.AddQueryParameter("croql", listStringsRequest.CroQl);
+
+            if (!string.IsNullOrEmpty(listStringsRequest.Scope))
+                request.AddQueryParameter("scope", listStringsRequest.Scope);
+
+            if (listStringsRequest.DenormalizePlaceholders == true)
+                request.AddQueryParameter("denormalizePlaceholders", 1);
+
+            request.AddQueryParameter("limit", lim);
+            request.AddQueryParameter("offset", offset);
+
+            return await RestClient.ExecuteWithErrorHandling<ResponseList<DataResponse<SourceStringEntity>>>(request);
+        });
+
+        return items.Select(x => x.Data);
     }
 }

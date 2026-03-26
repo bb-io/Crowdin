@@ -2,4 +2,4 @@
 
 namespace Apps.Crowdin.Models.Response.SourceString;
 
-public record ListStringsResponse(SourceStringEntity[] Strings);
+public record ListStringsResponse(List<SourceStringEntity> Strings);

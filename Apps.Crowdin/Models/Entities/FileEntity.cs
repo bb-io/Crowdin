@@ -1,26 +1,46 @@
-﻿using Apps.Crowdin.Webhooks.Models.Payload.File;
+﻿using Apps.Crowdin.Converters;
+using Apps.Crowdin.Webhooks.Models.Payload.File;
 using Blackbird.Applications.Sdk.Common;
 using Crowdin.Api.SourceFiles;
+using Newtonsoft.Json;
 using File = Crowdin.Api.SourceFiles.File;
 
 namespace Apps.Crowdin.Models.Entities;
 
 public class FileEntity
 {
-    [Display("File ID")] public string Id { get; set; }
-    [Display("Project ID")] public string ProjectId { get; set; }
-    [Display("Branch ID")] public string? BranchId { get; set; }
-    [Display("Directory ID")] public string? DirectoryId { get; set; }
+    [Display("File ID")] 
+    public string Id { get; set; }
+
+    [Display("Project ID")] 
+    public string ProjectId { get; set; }
+
+    [Display("Branch ID")] 
+    public string? BranchId { get; set; }
+
+    [Display("Directory ID")] 
+    public string? DirectoryId { get; set; }
     public string Name { get; set; }
     public string? Title { get; set; }
     public string Type { get; set; }
     public string Path { get; set; }
     public string Status { get; set; }
-    [Display("Created at")] public DateTime CreatedAt { get; set; }
+
+    [Display("Created at")] 
+    public DateTime CreatedAt { get; set; }
+
+    [Display("Updated at")]
+    public DateTime? UpdatedAt { get; set; }
 
     [Display("Is modified")]
     public bool? IsModified { get; set; }
 
+    [Display("Fields"), JsonProperty("fields"), JsonConverter(typeof(FieldsConverter))]
+    public IEnumerable<FieldEntity> Fields { get; set; } = [];
+
+    public string? Priority { get; set; }
+
+    public FileEntity() { }
 
     public FileEntity(FileCollectionResource file)
     {
