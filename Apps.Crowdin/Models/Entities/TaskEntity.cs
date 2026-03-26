@@ -46,6 +46,8 @@ public class TaskEntity
     [DefinitionIgnore, JsonProperty("fields")]
     public Dictionary<string, object> FieldsDict { get; set; } = [];
 
+    public TaskEntity() { }
+
     public TaskEntity(TaskResource taskResource)
     {
         Id = taskResource.Id.ToString();
