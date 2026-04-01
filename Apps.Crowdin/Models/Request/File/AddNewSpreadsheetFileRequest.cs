@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel;
 using Apps.Crowdin.DataSourceHandlers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
@@ -31,7 +26,7 @@ namespace Apps.Crowdin.Models.Request.File
         public IEnumerable<string>? ExcludedTargetLanguages { get; set; }
 
         [Display("Attach label IDs")]
-        public IEnumerable<int>? AttachLabelIds { get; set; }
+        public IEnumerable<long>? AttachLabelIds { get; set; }
 
         [Display("Content segmentation")]
         [Description("If enabled, Crowdin will split content into segments")]

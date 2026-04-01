@@ -76,7 +76,7 @@ public class SourceStringAction(InvocationContext invocationContext) : AppInvoca
             Context = input.Context,
             IsHidden = input.IsHidden,
             MaxLength = input.MaxLength,
-            LabelIds = input.LabelIds?.Select(labelId => IntParser.Parse(labelId, nameof(labelId))!.Value).ToList()
+            LabelIds = input.LabelIds?.Select(labelId => LongParser.Parse(labelId, nameof(labelId))!.Value).ToList()
         };
         var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => await SdkClient.SourceStrings
             .AddString(intProjectId!.Value, request));

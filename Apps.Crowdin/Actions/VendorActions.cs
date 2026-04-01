@@ -1,4 +1,5 @@
 ﻿using Apps.Crowdin.Invocables;
+using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Vendors;
 using Apps.Crowdin.Models.Response.Vendors;
 using Apps.Crowdin.Utils;
