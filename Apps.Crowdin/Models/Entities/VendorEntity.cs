@@ -1,25 +1,19 @@
 ﻿using Crowdin.Api.Vendors;
 using Blackbird.Applications.Sdk.Common;
 
-public class VendorEntity
+namespace Apps.Crowdin.Models.Entities;
+
+public class VendorEntity(Vendor vendor)
 {
     [Display("Vendor ID")]
-    public int Id { get; set; }
+    public long Id { get; set; } = vendor.Id;
 
     [Display("Name")]
-    public string Name { get; set; }
+    public string Name { get; set; } = vendor.Name;
 
     [Display("Description")]
-    public string? Description { get; set; }
+    public string? Description { get; set; } = string.IsNullOrWhiteSpace(vendor.Description) ? null : vendor.Description;
 
     [Display("Status")]
-    public string Status { get; set; }
-
-    public VendorEntity(Vendor vendor)
-    {
-        Id = vendor.Id;
-        Name = vendor.Name;
-        Description = string.IsNullOrWhiteSpace(vendor.Description) ? null : vendor.Description;
-        Status = vendor.Status.ToString();
-    }
+    public string Status { get; set; } = vendor.Status.ToString();
 }

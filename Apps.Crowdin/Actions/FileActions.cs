@@ -506,7 +506,7 @@ public class FileActions(InvocationContext invocationContext, IFileManagementCli
             }
         }
 
-        var importOptions = new Apps.Crowdin.Models.Request.File.CustomFileImportOptions
+        var importOptions = new CustomFileImportOptions
         {
             FirstLineContainsHeader = input.FirstLineContainsHeader,
             ImportTranslations = input.ImportTranslations,

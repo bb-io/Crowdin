@@ -53,7 +53,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         var request = new ApplyPreTranslationRequest
         {
             LanguageIds = input.LanguageIds.ToList(),
-            FileIds = input.FileIds.Select(fileId => IntParser.Parse(fileId, nameof(fileId))!.Value).ToList(),
+            FileIds = input.FileIds.Select(fileId => LongParser.Parse(fileId, nameof(fileId))!.Value).ToList(),
             EngineId = intEngineId,
             Method = method,
             AiPromptId = input.aiPromptId is null ? null : IntParser.Parse(input.aiPromptId, nameof(input.aiPromptId)),
@@ -176,20 +176,10 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
     [Action("Add file translation", Description = "Add new file translation")]
     public async Task<FileTranslationEntity> AddFileTranslation([ActionParameter] AddNewFileTranslationRequest input)
     {
-        if (string.IsNullOrEmpty(input.LanguageId))
-        {
-            throw new PluginMisconfigurationException(
-                "Language ID cannot be null or empty. Please provide a valid language ID.");
-        }
-
-        if (string.IsNullOrEmpty(input.ProjectId))
-        {
-            throw new PluginMisconfigurationException(
-                "Project ID cannot be null or empty. Please provide a valid project ID.");
-        }
+        input.Validate();
 
         int? fileID;
-        if (!String.IsNullOrEmpty(input.SourceFileId))
+        if (!string.IsNullOrEmpty(input.SourceFileId))
         {
             try
             {
@@ -223,18 +213,19 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
             await client.Storage.AddStorage(memoryStream, input.File.Name));
 
              
-        var request = new UploadTranslationsRequest
+        var request = new ImportTranslationsRequest
         {
             StorageId = storageResult.Id,
             FileId = fileID,
             ImportEqSuggestions = input.ImportEqSuggestions,
             AutoApproveImported = input.AutoApproveImported,
-            TranslateHidden = input.TranslateHidden
+            TranslateHidden = input.TranslateHidden,
+            LanguageIds = [input.LanguageId]
         };
-
         var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
-            await client.Translations.UploadTranslations(intProjectId!.Value, input.LanguageId, request));
-        return new(response);
+            await client.Translations.ImportTranslations(intProjectId!.Value, request));
+
+        return new(response, intProjectId.ToString());
     }
 
     [Action("Delete translation", Description = "Delete specific translation")]
@@ -280,8 +271,6 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         return new(file);
     }
 
-
-
     [Action("Get language progress", Description = "Get translation progress for a specific language in the project")]
     public async Task<SimplifiedLanguageProgressResponseDto> GetLanguageProgress(
     [ActionParameter] ProjectRequest project,
@@ -318,8 +307,6 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
 
         return new SimplifiedLanguageProgressResponseDto { Data = simplifiedList };
     }
-
-
 
     [Action("Export project translation", Description = "Generate a download link for a project's translation in a specified language for the given files")]
     public async Task<ExportProjectTranslationResponse> ExportProjectTranslation(

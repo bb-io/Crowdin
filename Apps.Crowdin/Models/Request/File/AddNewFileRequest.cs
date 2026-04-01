@@ -22,5 +22,5 @@ public class AddNewFileRequest : ManageFileRequest
     public IEnumerable<string>? ExcludedTargetLanguages { get; set; }
 
     [Display("Attach label IDs")]
-    public IEnumerable<int>? AttachLabelIds { get; set; }
+    public IEnumerable<long>? AttachLabelIds { get; set; }
 }

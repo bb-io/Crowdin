@@ -3,25 +3,17 @@ using Crowdin.Api.Translations;
 
 namespace Apps.Crowdin.Models.Entities;
 
-public class FileTranslationEntity
+public class FileTranslationEntity(TranslationImportResponse fileTranslation, string? projectId)
 {
     [Display("File ID")]
-    public string FileId { get; set; }
+    public string FileId { get; set; } = fileTranslation.Attributes.FileId.ToString();
 
     [Display("Language ID")]
-    public string LanguageId { get; set; }
+    public string LanguageId { get; set; } = fileTranslation.Attributes.LanguageIds.First().ToString();
 
     [Display("Project ID")]
-    public string ProjectId { get; set; }
+    public string? ProjectId { get; set; } = projectId;
 
     [Display("Storage ID")]
-    public string StorageId { get; set; }
-
-    public FileTranslationEntity(UploadTranslationsResponse fileTranslation)
-    {
-            FileId = fileTranslation.FileId.ToString();
-            LanguageId = fileTranslation.LanguageId.ToString();
-            ProjectId = fileTranslation.ProjectId.ToString();
-            StorageId = fileTranslation.StorageId.ToString();
-        }
+    public string StorageId { get; set; } = fileTranslation.Attributes.StorageId.ToString();
 }

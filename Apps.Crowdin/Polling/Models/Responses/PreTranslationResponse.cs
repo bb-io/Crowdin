@@ -56,10 +56,10 @@ public class Attributes
     public string Method { get; set; } = default!;
     
     [Display("File IDs")]
-    public List<int> FileIds { get; set; } = default!;
+    public List<long> FileIds { get; set; } = default!;
     
     [Display("Label IDs")]
-    public List<int> LabelIds { get; set; } = default!;
+    public List<long> LabelIds { get; set; } = default!;
     
     [Display("Language IDs")]
     public List<string> LanguageIds { get; set; } = default!;

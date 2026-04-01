@@ -132,7 +132,7 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
             LanguageId = input.LanguageId,
             FileIds = input.FileIds.Select(fileId =>
             {
-                if (!int.TryParse(fileId, out var parsedFileId))
+                if (!long.TryParse(fileId, out var parsedFileId))
                     throw new PluginMisconfigurationException($"Invalid File ID: {fileId} must be a numeric value. Please check the input file ID");
                 return parsedFileId;
             }).ToList(),
@@ -144,7 +144,7 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
             SkipUntranslatedStrings = input.SkipUntranslatedStrings,
             LabelIds = input.LabelIds?.Select(labelId =>
             {
-                if (!int.TryParse(labelId, out var parsedLabelId))
+                if (!long.TryParse(labelId, out var parsedLabelId))
                     throw new PluginMisconfigurationException($"Invalid Label ID: {labelId} must be a numeric value. Please check the input label ID");
                 return parsedLabelId;
             }).ToList(),

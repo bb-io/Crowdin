@@ -1,4 +1,5 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Crowdin.Models.Entities;
+using Blackbird.Applications.Sdk.Common;
 
 namespace Apps.Crowdin.Models.Response.Vendors;
 
