@@ -38,6 +38,8 @@ public class TaskResourceDto
     [JsonProperty("description")]
     public string Description { get; set; }
 
+    public string? TranslationURL { get; set; }
+
     [JsonProperty("deadline")]
     public DateTime? DeadLine { get; set; }
 
