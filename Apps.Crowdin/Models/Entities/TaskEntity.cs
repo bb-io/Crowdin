@@ -41,8 +41,12 @@ public class TaskEntity
     [Display("Created at")]
     public DateTime CreatedAt { get; set; }
 
+    [Display("Translation URL")]
+    public string? TranslationURL { get; set; }
+
     [Display("Fields"), JsonProperty("fields"), JsonConverter(typeof(FieldsConverter))]
     public IEnumerable<FieldEntity> Fields { get; set; } = [];
+
 
     public TaskEntity() { }
 
@@ -61,6 +65,7 @@ public class TaskEntity
         TargetLanguageId = taskResource.TargetLanguageId;
         Deadline = taskResource.DeadLine.DateTime;
         CreatedAt = taskResource.CreatedAt.DateTime;
+        TranslationURL = taskResource.TranslationUrl;
     }
 
     public TaskEntity(TaskResourceDto taskResource)
@@ -78,5 +83,6 @@ public class TaskEntity
         TargetLanguageId = taskResource.TargetLanguageId;
         Deadline = taskResource.DeadLine;
         CreatedAt = taskResource.CreatedAt;
+        TranslationURL = taskResource.TranslationURL;
     }
 }
