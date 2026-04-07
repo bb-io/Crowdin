@@ -25,7 +25,7 @@ public class TaskEntity
 
     public string Vendor { get; set; }
 
-    public IEnumerable<string> Assignees { get; set; }
+    public IEnumerable<TaskAssignee> Assignees { get; set; }
 
     [Display("File IDs")]
     public IEnumerable<string> FileIds { get; set; }
@@ -58,7 +58,7 @@ public class TaskEntity
         Status = taskResource.Status.ToString();
         Title = taskResource.Title;
         Description = taskResource.Description;
-        Assignees = taskResource.Assignees.Select(x => x.FullName);
+        Assignees = taskResource.Assignees;
         Vendor = taskResource.Vendor;
         FileIds = taskResource.FileIds.Select(x => x.ToString());
         SourceLanguageId = taskResource.SourceLanguageId;
@@ -76,7 +76,7 @@ public class TaskEntity
         Status = taskResource.Status.ToString();
         Title = taskResource.Title;
         Description = taskResource.Description;
-        Assignees = taskResource.Assignees.Select(x => x.FullName);
+        Assignees = taskResource.Assignees;
         Vendor = taskResource.Vendor;
         FileIds = taskResource.FileIds.Select(x => x.ToString());
         SourceLanguageId = taskResource.SourceLanguageId;

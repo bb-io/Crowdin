@@ -53,7 +53,7 @@ public class TaskActions(InvocationContext invocationContext, IFileManagementCli
         });
 
         var tasks = items.Select(x => x.Data)
-            .Where(x => string.IsNullOrEmpty(input.AssigneeId) || x.Assignees.Contains(input.AssigneeId))
+            .Where(x => string.IsNullOrEmpty(input.AssigneeId) || x.Assignees.Any(x => x.Id.ToString() == input.AssigneeId))
             .ApplyFieldsFilter(x => x.Fields, fieldsFilter); 
 
         return new(tasks.ToList());
