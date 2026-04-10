@@ -25,7 +25,15 @@ public class TaskEntity
 
     public string Vendor { get; set; }
 
-    public IEnumerable<TaskAssignee> Assignees { get; set; }
+    public IEnumerable<TaskAssignee> Assignees { get; set; } = [];
+
+    [Display("Assignee full names")]
+    public IEnumerable<string> AssigneeFullNames =>
+        Assignees?
+            .Where(a => !string.IsNullOrWhiteSpace(a.FullName))
+            .Select(a => a.FullName)
+            .Distinct()
+        ?? Enumerable.Empty<string>();
 
     [Display("File IDs")]
     public IEnumerable<string> FileIds { get; set; }
@@ -46,7 +54,6 @@ public class TaskEntity
 
     [Display("Fields"), JsonProperty("fields"), JsonConverter(typeof(FieldsConverter))]
     public IEnumerable<FieldEntity> Fields { get; set; } = [];
-
 
     public TaskEntity() { }
 
