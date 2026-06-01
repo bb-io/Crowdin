@@ -46,7 +46,7 @@ public class PreTranslationResponse
             DuplicateTranslations = preTranslation.Attributes.DuplicateTranslations,
             FileIds = preTranslation.Attributes.FileIds?.ToList() ?? new(),
             LanguageIds = preTranslation.Attributes.LanguageIds.ToList(),
-            LabelIds = preTranslation.Attributes.LabelIds.ToList()
+            LabelIds = preTranslation.Attributes.LabelIds?.ToList() ?? new(),
         };
     }
 }

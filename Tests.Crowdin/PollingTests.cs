@@ -1,4 +1,7 @@
 ﻿using Apps.Crowdin.Polling.Models;
+using Apps.Crowdin.Polling.Models.Requests;
+using Blackbird.Applications.Sdk.Common.Polling;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,7 +33,7 @@ namespace Tests.Crowdin
                     Statuses = new List<string> { "finished"}
                 });
 
-            var json = Newtonsoft.Json.JsonConvert.SerializeObject(result);
+            var json = JsonConvert.SerializeObject(result);
             Console.WriteLine(json);
             Assert.IsNotNull(json);
         }
@@ -69,6 +72,33 @@ namespace Tests.Crowdin
             //var json = Newtonsoft.Json.JsonConvert.SerializeObject(result);
             //Console.WriteLine(json);
             //Assert.IsNotNull(json);
+        }
+
+        [TestMethod]
+        public async Task OnPreTranslationStatusChanged_IsSuccess()
+        {
+            var polling = new Apps.Crowdin.Polling.PreTranslationPollingList(InvocationContext);
+            var pollingEventRequest = new PollingEventRequest<PollingMemory>
+            {
+                Memory = new PollingMemory
+                {
+                    LastPollingTime = DateTime.UtcNow.AddHours(-1),
+                    Triggered = false
+                },
+            };
+            var preTranslationStatusChangedRequest = new PreTranslationStatusChangedRequest
+            {
+                ProjectId = "110",
+                Statuses = ["finished"]
+            };
+
+            var result = await polling.OnPreTranslationStatusChanged(
+                pollingEventRequest,
+                preTranslationStatusChangedRequest);
+
+            var json = JsonConvert.SerializeObject(result);
+            Console.WriteLine(json);
+            Assert.IsNotNull(json);
         }
     }
 }
