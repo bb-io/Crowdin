@@ -99,19 +99,18 @@ namespace Tests.Crowdin
         public async Task GenerateCostReport_ShoudBeSuccess()
         {
             var action = new ProjectActions(InvocationContext, FileManager);
+            var projectId = new ProjectRequest { ProjectId = "906975" };
+            var input = new GenerateEstimateCostReportOptions
+            {
+                Currency = "USD",
+                StandardizeMatchBands = true
+            };
 
-            var result = await action.GenerateCostReport(new ProjectRequest
-            {
-                ProjectId = "2"
-            }, new GenerateEstimateCostReportOptions
-            {
-                Currency = "EUR",
-            });
+            var result = await action.GenerateCostReport(projectId, input);
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);
             Assert.IsNotNull(result);
-
         }
 
         [TestMethod]
@@ -134,8 +133,7 @@ namespace Tests.Crowdin
             Assert.IsNotNull(result);
 
         }
-
-
+        
         [TestMethod]
         public async Task GenerateTaskTranslationReport_ShoudBeSuccess()
         {
@@ -164,6 +162,22 @@ namespace Tests.Crowdin
             Console.WriteLine(json);
             Assert.IsNotNull(result);
 
+        }
+
+        [TestMethod]
+        public async Task ExportProjectAnalysis_IsSuccess()
+        {
+            // Arrange
+            var actions = new ProjectActions(InvocationContext, FileManager);
+            var projectInput = new ProjectRequest { ProjectId = "906975" };
+            var reportInput = new ProjectReportRequest { ReportId = "58e4a1e6-c68b-4653-8cca-81f4de1e0337" };
+
+            // Act
+            var result = await actions.ExportProjectAnalysis(projectInput, reportInput);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Console.WriteLine(result.ExportedAnalysis.Name);
         }
     }
 }

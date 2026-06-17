@@ -75,6 +75,7 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 - **Build project** Build project translation
 - **Download translations** Downloads project translations from build
 - **Download file translations from build** Downloads single file translations from build (useful for multilingual files)
+- **Export project analysis** Get raw and normalized project analysis JSON output. The output of this action can be used by another app that supports importing analysis data
 
 ### Project Group
 
