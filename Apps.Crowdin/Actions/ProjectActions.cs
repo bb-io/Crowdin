@@ -910,7 +910,12 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
 
         var downloadReportClient = new RestClient();
         var downloadReportRequest = new RestRequest(downloadResponse.Data.Url);
-        var downloadReportResponse = await downloadReportClient.DownloadDataAsync(downloadReportRequest);
+        var downloadReportResponse = await ExceptionWrapper.ExecuteWithErrorHandling(
+            () => downloadReportClient.DownloadDataAsync(downloadReportRequest)
+        );
+        if (downloadReportResponse is null)
+            throw new PluginApplicationException("Crowdin analysis file is empty");
+        
         string jsonString = Encoding.UTF8.GetString(downloadReportResponse);
 
         JObject root;
