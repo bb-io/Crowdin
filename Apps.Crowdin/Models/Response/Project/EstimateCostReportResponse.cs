@@ -4,7 +4,9 @@ namespace Apps.Crowdin.Models.Response.Project
 {
     public class EstimateCostReportResponse
     {
-
+        [Display("Report ID")]
+        public string ReportId { get; set; } = string.Empty;
+        
         [Display("Unit")] public string? Unit { get; set; }
         [Display("Currency")] public string? Currency { get; set; }
         [Display("Calculate Internal Matches")]

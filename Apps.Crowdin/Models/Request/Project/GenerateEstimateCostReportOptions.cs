@@ -8,6 +8,10 @@ namespace Apps.Crowdin.Models.Request.Project
 {
     public class GenerateEstimateCostReportOptions
     {
+        [Display("Standardize match bands", 
+            Description = "If true, overrides the project's native match bands to use standard 50/75/85/95/100 buckets")]
+        public bool? StandardizeMatchBands { get; set; }
+        
         [Display("Currency")]
         [StaticDataSource(typeof(CurrencyDataHandler))]
         public string? Currency { get; set; }

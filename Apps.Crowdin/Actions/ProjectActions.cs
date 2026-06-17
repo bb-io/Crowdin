@@ -1,4 +1,5 @@
-﻿using Apps.Crowdin.Api.RestSharp;
+﻿using System.Text;
+using Apps.Crowdin.Api.RestSharp;
 using Apps.Crowdin.Api.RestSharp.Basic;
 using Apps.Crowdin.Api.RestSharp.Enterprise;
 using Apps.Crowdin.Constants;
@@ -24,6 +25,9 @@ using Crowdin.Api.ProjectsGroups;
 using Crowdin.Api.Translations;
 using RestSharp;
 using System.Text.Json;
+using Blackbird.Filters.Analysis.Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Apps.Crowdin.Actions;
 
@@ -371,14 +375,33 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
     }
 
     [Action("Generate estimation post-editing cost", Description = "Generates report")]
-    public async Task<EstimateCostReportResponse> GenerateCostReport([ActionParameter] ProjectRequest project,
-      [ActionParameter] GenerateEstimateCostReportOptions options)
+    public async Task<EstimateCostReportResponse> GenerateCostReport(
+        [ActionParameter] ProjectRequest project,
+        [ActionParameter] GenerateEstimateCostReportOptions options)
     {
         if (options.IndividualProofRead.HasValue && options.IndividualProofRead <= 0)
             throw new PluginMisconfigurationException("IndividualProofRead must be a positive float.");
         if (options.BaseProofRead.HasValue && options.BaseProofRead <= 0)
             throw new PluginMisconfigurationException("BaseProofRead must be a positive float.");
 
+        var tmMatchPayload = options.StandardizeMatchBands == true
+            ? new[]
+            {
+                new { matchType = "perfect", price = 0.0f },
+                new { matchType = "100", price = 0.0f },
+                new { matchType = "99-95", price = 0.0f },
+                new { matchType = "94-85", price = 0.0f },
+                new { matchType = "84-75", price = 0.0f },
+                new { matchType = "74-50", price = 0.0f }
+            }
+            : new[]
+            {
+                new { matchType = "perfect", price = options.TmMatchType == "perfect" ? (options.TmPrice ?? 0.02f) : 0.0f },
+                new { matchType = "100", price = options.TmMatchType == "100" ? (options.TmPrice ?? 0.02f) : 0.0f },
+                new { matchType = "99-82", price = options.TmMatchType == "99-82" ? (options.TmPrice ?? 0.02f) : 0.0f },
+                new { matchType = "81-60", price = options.TmMatchType == "81-60" ? (options.TmPrice ?? 0.02f) : 0.0f }
+            };
+        
         var requestBody = new
         {
             name = "costs-estimation-pe",
@@ -403,16 +426,7 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
                       }
                       }
                     : Array.Empty<object>(),
-                netRateSchemes = new
-                {
-                    tmMatch = new[]
-                    {
-                    new { matchType = "perfect", price = options.TmMatchType == "perfect" ? (float)(options.TmPrice ?? 0.02f) : 0.0f },
-                    new { matchType = "100", price = options.TmMatchType == "100" ? (float)(options.TmPrice ?? 0.02f) : 0.0f },
-                    new { matchType = "99-82", price = options.TmMatchType == "99-82" ? (float)(options.TmPrice ?? 0.02f) : 0.0f },
-                    new { matchType = "81-60", price = options.TmMatchType == "81-60" ? (float)(options.TmPrice ?? 0.02f) : 0.0f }
-                }
-                },
+                netRateSchemes = new { tmMatch = tmMatchPayload },
                 dateFrom = options.FromDate?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss+00:00"),
                 dateTo = options.ToDate?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss+00:00"),
                 languageIds = options.LanguageIds
@@ -496,6 +510,7 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
 
         var resp = new EstimateCostReportResponse
         {
+            ReportId = reportId.ToString(),
             Unit = root.TryGetProperty("unit", out var unit) ? unit.GetString() : null,
             Currency = root.TryGetProperty("currency", out var currency) ? currency.GetString() : null,
             CalculateInternalMatches = root.TryGetProperty("calculateInternalMatches", out var calcMatches) ? calcMatches.GetBoolean() : false,
@@ -518,37 +533,30 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
             ? files.EnumerateArray()
                 .Select(f =>
                 {
-                    try
+                    var stats = f.GetProperty("statistics");
+                    var dets = f.GetProperty("detailedStatistics");
+
+                    return new FileEstimateDetail
                     {
-                        var stats = f.GetProperty("statistics");
-                        var dets = f.GetProperty("detailedStatistics");
+                        FileId = f.GetProperty("file").GetProperty("id").GetInt32(),
+                        Path = f.GetProperty("file").GetProperty("path").GetString() ?? string.Empty,
+                        Untranslated = stats.GetProperty("untranslated").GetInt32(),
+                        Unapproved = stats.GetProperty("unapproved").GetInt32(),
 
-                        return new FileEstimateDetail
-                        {
-                            FileId = f.GetProperty("file").GetProperty("id").GetInt32(),
-                            Path = f.GetProperty("file").GetProperty("path").GetString() ?? string.Empty,
-                            Untranslated = stats.GetProperty("untranslated").GetInt32(),
-                            Unapproved = stats.GetProperty("unapproved").GetInt32(),
+                        Matches = ParseBreakdownObject(f.GetProperty("matches")),
+                        TranslationCosts = ParseBreakdownObject(f.GetProperty("translationCosts")),
+                        ApprovalCosts = ParseBreakdownObject(f.GetProperty("approvalCosts")),
+                        Savings = ParseBreakdownObject(f.GetProperty("savings")),
+                        WeightedUnits = ParseBreakdownObject(f.GetProperty("weightedUnits")),
 
-                            Matches = ParseBreakdownObject(f.GetProperty("matches")),
-                            TranslationCosts = ParseBreakdownObject(f.GetProperty("translationCosts")),
-                            ApprovalCosts = ParseBreakdownObject(f.GetProperty("approvalCosts")),
-                            Savings = ParseBreakdownObject(f.GetProperty("savings")),
-                            WeightedUnits = ParseBreakdownObject(f.GetProperty("weightedUnits")),
+                        DetailedUntranslated = ParseDetailedValue(dets.GetProperty("untranslated")),
+                        DetailedUnapproved = ParseDetailedValue(dets.GetProperty("unapproved")),
 
-                            DetailedUntranslated = ParseDetailedValue(dets.GetProperty("untranslated")),
-                            DetailedUnapproved = ParseDetailedValue(dets.GetProperty("unapproved")),
-
-                            DetailedMatches = ParseDetailedBreakdown(f.GetProperty("detailedMatches")),
-                            DetailedWeightedUnits = ParseDetailedBreakdown(f.GetProperty("detailedWeightedUnits"))
-                        };
-                    }
-                    catch (Exception ex)
-                    {
-                        throw;
-                    }
+                        DetailedMatches = ParseDetailedBreakdown(f.GetProperty("detailedMatches")),
+                        DetailedWeightedUnits = ParseDetailedBreakdown(f.GetProperty("detailedWeightedUnits"))
+                    };
                 })
-                .ToArray() : Array.Empty<FileEstimateDetail>();
+                .ToArray() : [];
 
         return resp;
     }
@@ -686,6 +694,7 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
 
         var resp = new EstimateCostReportResponse
         {
+            ReportId = reportId.ToString(),
             Unit = root.GetProperty("unit").GetString(),
             Currency = root.GetProperty("currency").GetString(),
             CalculateInternalMatches = root.GetProperty("calculateInternalMatches").GetBoolean(),
@@ -885,6 +894,48 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
         return response;
     }
 
+    [Action("Export project analysis", 
+        Description = "Get raw and normalized project analysis JSON output. " +
+                      "The output of this action can be used by another app that supports importing analysis data")]
+    public async Task<ExportProjectAnalysisResponse> ExportProjectAnalysis(
+        [ActionParameter] ProjectRequest projectInput,
+        [ActionParameter] ProjectReportRequest reportInput)
+    {
+        string downloadEndpoint = $"/projects/{projectInput.ProjectId}/reports/{reportInput.ReportId}/download";
+        var downloadRequest = new CrowdinRestRequest(downloadEndpoint, Method.Get, Creds);
+        var downloadResponse = await RestClient.ExecuteWithErrorHandling<DataResponse<DownloadData>>(downloadRequest);
+        
+        if (string.IsNullOrEmpty(downloadResponse.Data.Url))
+            throw new PluginApplicationException("Report download URL was not found or is still generating.");
+
+        var downloadReportClient = new RestClient();
+        var downloadReportRequest = new RestRequest(downloadResponse.Data.Url);
+        var downloadReportResponse = await downloadReportClient.DownloadDataAsync(downloadReportRequest);
+        string jsonString = Encoding.UTF8.GetString(downloadReportResponse);
+
+        JObject root;
+        try
+        {
+            root = JObject.Parse(jsonString);
+        }
+        catch (JsonReaderException)
+        {
+            throw new PluginMisconfigurationException(
+                "The provided Crowdin report is not in JSON format. " +
+                "Please ensure the report was generated with the 'json' format."
+            );
+        }
+
+        List<Analysis> parsedAnalyses = AnalysisHelper.GenerateAnalysis(root);
+        string outputJsonString = JsonConvert.SerializeObject(parsedAnalyses, Formatting.Indented);
+        using var outStream = new MemoryStream(Encoding.UTF8.GetBytes(outputJsonString));
+        
+        var fileName = $"analysis_{projectInput.ProjectId}.json";
+        var fileReference = await fileManagementClient.UploadAsync(outStream, "application/json", fileName);
+    
+        return new(fileReference);
+    }
+    
     private ColumnValue[] ParseBreakdownObject(JsonElement element)
     {
         if (element.ValueKind != JsonValueKind.Object)
