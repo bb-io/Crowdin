@@ -14,6 +14,7 @@ public class OAuth2TokenService(InvocationContext invocationContext)
 {
     private const string ExpiresAtKeyName = "expires_at";
     private const int RefreshBufferMinutes = 30;
+    private const int MinimumRemainingLifetimeSeconds = 60;
 
     #region Token actions
 
@@ -45,8 +46,8 @@ public class OAuth2TokenService(InvocationContext invocationContext)
             { "refresh_token", refreshToken },
         };
 
-        InvocationContext.Logger?.LogInformation(
-            $"[Crowdin][OAuth] Starting refresh token flow. RefreshToken: {GetTokenFingerprint(refreshToken)}; LocalExpiresAt: {GetSafeValue(values, ExpiresAtKeyName)}; MinutesUntilLocalExpiry: {GetRefreshTokenExprireInMinutes(values)?.ToString() ?? "n/a"}",
+        InvocationContext.Logger?.LogError(
+            $"[Crowdin][OAuth] Starting refresh token flow. RefreshToken: {GetTokenPreview(refreshToken)}; LocalExpiresAt: {GetSafeValue(values, ExpiresAtKeyName)}; MinutesUntilLocalExpiry: {GetRefreshTokenExprireInMinutes(values)?.ToString() ?? "n/a"}",
             null);
 
         return GetToken(parameters, cancellationToken, "refresh token");
@@ -71,17 +72,17 @@ public class OAuth2TokenService(InvocationContext invocationContext)
             var grantType = parameters.TryGetValue("grant_type", out var currentGrantType)
                 ? currentGrantType
                 : "unknown";
-            var refreshTokenFingerprint = parameters.TryGetValue("refresh_token", out var currentRefreshToken)
-                ? GetTokenFingerprint(currentRefreshToken)
+            var refreshTokenPreview = parameters.TryGetValue("refresh_token", out var currentRefreshToken)
+                ? GetTokenPreview(currentRefreshToken)
                 : "n/a";
 
-            InvocationContext.Logger?.LogInformation(
-                $"[Crowdin][OAuth] Requesting OAuth token. Operation: {operationName}; GrantType: {grantType}; RefreshToken: {refreshTokenFingerprint}",
+            InvocationContext.Logger?.LogError(
+                $"[Crowdin][OAuth] Requesting OAuth token. Operation: {operationName}; GrantType: {grantType}; RefreshToken: {refreshTokenPreview}",
                 null);
 
             var responseContent = await ExecuteTokenRequest(parameters, token);
 
-            InvocationContext.Logger?.LogInformation(
+            InvocationContext.Logger?.LogError(
                 $"[Crowdin][OAuth] OAuth token response body. Operation: {operationName}; GrantType: {grantType}; Body: {SanitizeOAuthResponseBody(responseContent)}",
                 null);
 
@@ -91,12 +92,16 @@ public class OAuth2TokenService(InvocationContext invocationContext)
 
             var expiresIn = int.Parse(resultDictionary["expires_in"]);
             var utcNow = DateTime.UtcNow;
-            var expiresAt = utcNow.AddMinutes(-RefreshBufferMinutes).AddSeconds(expiresIn);
+            var configuredBufferSeconds = RefreshBufferMinutes * 60;
+            var effectiveBufferSeconds = expiresIn > MinimumRemainingLifetimeSeconds
+                ? Math.Min(configuredBufferSeconds, expiresIn - MinimumRemainingLifetimeSeconds)
+                : 0;
+            var expiresAt = utcNow.AddSeconds(expiresIn - effectiveBufferSeconds);
 
-            if (expiresIn < RefreshBufferMinutes * 60)
+            if (effectiveBufferSeconds != configuredBufferSeconds)
             {
-                InvocationContext.Logger?.LogWarning(
-                    $"[Crowdin][OAuth] OAuth token lifetime is shorter than the configured refresh buffer. Operation: {operationName}; GrantType: {grantType}; ExpiresInSeconds: {expiresIn}; RefreshBufferMinutes: {RefreshBufferMinutes}",
+                InvocationContext.Logger?.LogError(
+                    $"[Crowdin][OAuth] OAuth token lifetime is shorter than the configured refresh buffer. Operation: {operationName}; GrantType: {grantType}; ExpiresInSeconds: {expiresIn}; RefreshBufferMinutes: {RefreshBufferMinutes}; EffectiveBufferSeconds: {effectiveBufferSeconds}",
                     null);
             }
 
@@ -108,15 +113,15 @@ public class OAuth2TokenService(InvocationContext invocationContext)
             resultDictionary["refresh_token"] = nextRefreshToken;
             resultDictionary[ExpiresAtKeyName] = expiresAt.ToString("O");
 
-            InvocationContext.Logger?.LogInformation(
-                $"[Crowdin][OAuth] OAuth token request succeeded. Operation: {operationName}; GrantType: {grantType}; ExpiresInSeconds: {expiresIn}; RefreshBufferMinutes: {RefreshBufferMinutes}; LocalExpiresAt: {expiresAt:O}; NextRefreshToken: {GetTokenFingerprint(nextRefreshToken)}; RefreshTokenReturned: {!string.IsNullOrWhiteSpace(nextRefreshTokenValue)}",
+            InvocationContext.Logger?.LogError(
+                $"[Crowdin][OAuth] OAuth token request succeeded. Operation: {operationName}; GrantType: {grantType}; ExpiresInSeconds: {expiresIn}; RefreshBufferMinutes: {RefreshBufferMinutes}; EffectiveBufferSeconds: {effectiveBufferSeconds}; LocalExpiresAt: {expiresAt:O}; NextRefreshToken: {GetTokenPreview(nextRefreshToken)}; RefreshTokenReturned: {!string.IsNullOrWhiteSpace(nextRefreshTokenValue)}",
                 null);
 
             return resultDictionary;
         }
         catch (Exception ex) when (ex is not PluginApplicationException && ex is not InvalidOperationException)
         {
-            InvocationContext.Logger?.LogWarning(
+            InvocationContext.Logger?.LogError(
                 $"[Crowdin][OAuth] Unexpected error during {operationName}. Error: {ex.Message}",
                 null);
 
@@ -138,10 +143,10 @@ public class OAuth2TokenService(InvocationContext invocationContext)
                 ? currentGrantType
                 : "unknown";
 
-            InvocationContext.Logger?.LogWarning(
+            InvocationContext.Logger?.LogError(
                 $"[Crowdin][OAuth] OAuth token request failed. GrantType: {grantType}; StatusCode: {(int)response.StatusCode} {response.StatusCode}",
                 null);
-            InvocationContext.Logger?.LogInformation(
+            InvocationContext.Logger?.LogError(
                 $"[Crowdin][OAuth] OAuth token response body. GrantType: {grantType}; Body: {SanitizeOAuthResponseBody(responseContent)}",
                 null);
 
@@ -176,14 +181,12 @@ public class OAuth2TokenService(InvocationContext invocationContext)
     private static string GetSafeValue(Dictionary<string, string> values, string key)
         => values.TryGetValue(key, out var value) ? value : "n/a";
 
-    private static string GetTokenFingerprint(string? token)
+    private static string GetTokenPreview(string? token)
     {
         if (string.IsNullOrWhiteSpace(token))
             return "missing";
 
-        return token.Length <= 8
-            ? $"len:{token.Length}"
-            : $"len:{token.Length};suffix:{token[^6..]}";
+        return token.Length <= 8 ? token : token[..8];
     }
 
     private static string SanitizeOAuthResponseBody(string? content)
@@ -213,7 +216,7 @@ public class OAuth2TokenService(InvocationContext invocationContext)
     private static void MaskToken(JObject obj, string key)
     {
         if (obj.TryGetValue(key, out var tokenValue) && tokenValue.Type == JTokenType.String)
-            obj[key] = GetTokenFingerprint(tokenValue.Value<string>());
+            obj[key] = GetTokenPreview(tokenValue.Value<string>());
     }
 
     #endregion
