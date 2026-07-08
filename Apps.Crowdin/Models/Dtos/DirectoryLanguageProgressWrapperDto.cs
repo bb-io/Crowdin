@@ -7,8 +7,8 @@
 
     public class DirectoryLanguageProgressDto
     {
-        public WordsPhrasesUnitDto Words { get; set; } = default!;
-        public WordsPhrasesUnitDto Phrases { get; set; } = default!;
+        public WordsPhrasesUnitDto? Words { get; set; }
+        public WordsPhrasesUnitDto? Phrases { get; set; }
 
         public int TranslationProgress { get; set; }
         public int ApprovalProgress { get; set; }
@@ -19,10 +19,10 @@
 
     public class WordsPhrasesUnitDto
     {
-        public int Total { get; set; }
-        public int Translated { get; set; }
-        public int PreTranslateAppliedTo { get; set; }
-        public int Approved { get; set; }
+        public int? Total { get; set; }
+        public int? Translated { get; set; }
+        public int? PreTranslateAppliedTo { get; set; }
+        public int? Approved { get; set; }
     }
 
     public class LanguageInfoDto
