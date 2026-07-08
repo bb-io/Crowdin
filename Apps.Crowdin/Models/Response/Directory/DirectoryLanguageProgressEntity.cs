@@ -16,15 +16,15 @@ namespace Apps.Crowdin.Models.Response.Directory
             TranslationProgress = src.TranslationProgress;
             ApprovalProgress = src.ApprovalProgress;
 
-            WordsTotal = src.Words.Total;
-            WordsTranslated = src.Words.Translated;
-            WordsPreTranslated = src.Words.PreTranslateAppliedTo;
-            WordsApproved = src.Words.Approved;
+            WordsTotal = src.Words?.Total ?? 0;
+            WordsTranslated = src.Words?.Translated ?? 0;
+            WordsPreTranslated = src.Words?.PreTranslateAppliedTo ?? 0;
+            WordsApproved = src.Words?.Approved ?? 0;
 
-            PhrasesTotal = src.Phrases.Total;
-            PhrasesTranslated = src.Phrases.Translated;
-            PhrasesPreTranslated = src.Phrases.PreTranslateAppliedTo;
-            PhrasesApproved = src.Phrases.Approved;
+            PhrasesTotal = src.Phrases?.Total ?? 0;
+            PhrasesTranslated = src.Phrases?.Translated ?? 0;
+            PhrasesPreTranslated = src.Phrases?.PreTranslateAppliedTo ?? 0;
+            PhrasesApproved = src.Phrases?.Approved ?? 0;
         }
 
         [Display("Language ID")]
