@@ -49,7 +49,6 @@ namespace Apps.Crowdin.Webhooks.Bridge
             var credsList = credentials.ToList();
             
             var payloadUrl = values["payloadUrl"];
-            WebhookLogger.Log($"sub url: {payloadUrl}");
             var bridge = new BridgeService(credsList, _bridgeServiceUrl);
             
             foreach (var ev in SubscriptionEvents)
@@ -66,7 +65,6 @@ namespace Apps.Crowdin.Webhooks.Bridge
             var credsList = credentials.ToList();
             
             var payloadUrl = values["payloadUrl"];
-            WebhookLogger.Log($"UNsub url: {payloadUrl}");
             var bridge = new BridgeService(credsList, _bridgeServiceUrl);
             
             foreach (var ev in SubscriptionEvents)

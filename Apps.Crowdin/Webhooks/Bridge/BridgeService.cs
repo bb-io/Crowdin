@@ -34,8 +34,9 @@ namespace Apps.Crowdin.Webhooks.Bridge
             var requestGet = new RestRequest($"/{projectId}/{@event}");
             requestGet.AddHeader("Blackbird-Token", ApplicationConstants.BlackbirdToken);
             var webhooks = client.Get<List<BridgeGetResponse>>(requestGet);
+            
+            WebhookLogger.Log($"{@event}: total: {webhooks.Count}, matching: {webhooks.Count(w => w.Value == url)}, ids: {string.Join(",", webhooks.Select(w => w.Id))}");
 
-            WebhookLogger.Log($"{string.Join(", ", webhooks)}");
             var webhook = webhooks.FirstOrDefault(w => w.Value == url);
             if (webhook != null)
             {
