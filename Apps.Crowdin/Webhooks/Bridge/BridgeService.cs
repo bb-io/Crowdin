@@ -29,31 +29,31 @@ namespace Apps.Crowdin.Webhooks.Bridge
 
         public void Unsubscribe(string @event, string projectId, string url)
         {
-
+            WebhookLogger.Log("bridge service - unsubscribe");
             var client = new RestClient(BridgeServiceUrl);
-            var requestGet = new RestRequest($"/{projectId}/{@event}", Method.Get);
+            var requestGet = new RestRequest($"/{projectId}/{@event}");
             requestGet.AddHeader("Blackbird-Token", ApplicationConstants.BlackbirdToken);
             var webhooks = client.Get<List<BridgeGetResponse>>(requestGet);
 
+            WebhookLogger.Log($"{string.Join(", ", webhooks)}");
             var webhook = webhooks.FirstOrDefault(w => w.Value == url);
             if (webhook != null)
             {
                 var requestDelete = new RestRequest($"/{projectId}/{@event}/{webhook.Id}", Method.Delete);
                 requestDelete.AddHeader("Blackbird-Token", ApplicationConstants.BlackbirdToken);
                 var responseDelete = client.Delete(requestDelete);
+                WebhookLogger.Log(responseDelete);
             }
         }
 
         public bool IsAnySubscriberExist(string @event, string projectId)
         {
             var client = new RestClient(BridgeServiceUrl);
-            var request = new RestRequest($"/{projectId}/{@event}", Method.Get);
+            var request = new RestRequest($"/{projectId}/{@event}");
             request.AddHeader("Blackbird-Token", ApplicationConstants.BlackbirdToken);
             var response = client.Get<List<BridgeGetResponse>>(request);
 
-            bool exists = response?.Any() ?? false;
-
-            return response?.Any() ?? false;
+            return response?.Count > 0;
         }
     }
 }
