@@ -29,21 +29,17 @@ namespace Apps.Crowdin.Webhooks.Bridge
 
         public void Unsubscribe(string @event, string projectId, string url)
         {
-            WebhookLogger.Log("bridge service - unsubscribe");
             var client = new RestClient(BridgeServiceUrl);
             var requestGet = new RestRequest($"/{projectId}/{@event}");
             requestGet.AddHeader("Blackbird-Token", ApplicationConstants.BlackbirdToken);
             var webhooks = client.Get<List<BridgeGetResponse>>(requestGet);
             
-            WebhookLogger.Log($"{@event}: total: {webhooks.Count}, matching: {webhooks.Count(w => w.Value == url)}, ids: {string.Join(",", webhooks.Select(w => w.Id))}");
-
             var webhook = webhooks.FirstOrDefault(w => w.Value == url);
             if (webhook != null)
             {
                 var requestDelete = new RestRequest($"/{projectId}/{@event}/{webhook.Id}", Method.Delete);
                 requestDelete.AddHeader("Blackbird-Token", ApplicationConstants.BlackbirdToken);
                 var responseDelete = client.Delete(requestDelete);
-                WebhookLogger.Log(responseDelete);
             }
         }
 

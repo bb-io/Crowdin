@@ -54,7 +54,6 @@ namespace Apps.Crowdin.Webhooks.Bridge
             foreach (var ev in SubscriptionEvents)
                 bridge.Subscribe(ev.ToDescription(), _projectId.ToString(), payloadUrl);
 
-            WebhookLogger.Log("bridge subscribed");
             await SyncWebhook(credsList, bridge);
         }
      
@@ -70,7 +69,6 @@ namespace Apps.Crowdin.Webhooks.Bridge
             foreach (var ev in SubscriptionEvents)
                 bridge.Unsubscribe(ev.ToDescription(), _projectId.ToString(), payloadUrl);
             
-            WebhookLogger.Log("bridge UNsubscribed");
             await SyncWebhook(credsList, bridge);
         }
         
@@ -81,7 +79,6 @@ namespace Apps.Crowdin.Webhooks.Bridge
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Where(x => bridge.IsAnySubscriberExist(x, _projectId.ToString()))
                 .ToList();
-            WebhookLogger.Log($"desired: {string.Join(", ", desired)}");
 
             var listRequest = new CrowdinRestRequest($"/projects/{_projectId}/webhooks", Method.Get, credentials);
             var listResponse = await _restClient.ExecuteWithErrorHandling<ListWebhooksResponse>(listRequest);
@@ -89,11 +86,9 @@ namespace Apps.Crowdin.Webhooks.Bridge
             var hook = listResponse.Data
                 .Select(x => x.Data)
                 .FirstOrDefault(x => string.Equals(x.Url, _bridgeServiceUrl, StringComparison.OrdinalIgnoreCase));
-            WebhookLogger.Log(hook);
 
             if (desired.Count == 0)
             {
-                WebhookLogger.Log("0 desired");
                 if (hook == null) 
                     return;
                 
@@ -105,7 +100,6 @@ namespace Apps.Crowdin.Webhooks.Bridge
             {
                 var currentEvents = hook.Events ?? [];
                 var eventsAreSame = currentEvents.Count == desired.Count && !currentEvents.Except(desired, StringComparer.OrdinalIgnoreCase).Any();
-                WebhookLogger.Log($"events are same? {eventsAreSame}");
                 if (eventsAreSame) 
                     return;
 
@@ -113,7 +107,6 @@ namespace Apps.Crowdin.Webhooks.Bridge
                 await _restClient.ExecuteWithErrorHandling(deleteRequest);
             }
             
-            WebhookLogger.Log("creating new subscription");
             var addRequest = new CrowdinRestRequest($"/projects/{_projectId}/webhooks", Method.Post, credentials)
                 .AddJsonBody(new 
                 {
