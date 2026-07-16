@@ -94,6 +94,7 @@ namespace Apps.Crowdin.Webhooks.Bridge
                 
                 var deleteRequest = new CrowdinRestRequest($"/projects/{_projectId}/webhooks/{hook.Id}", Method.Delete, credentials);
                 await _restClient.ExecuteWithErrorHandling(deleteRequest);
+                return;
             }
 
             if (hook != null)
