@@ -81,11 +81,11 @@ namespace Apps.Crowdin.Webhooks.Bridge
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Where(x => bridge.IsAnySubscriberExist(x, _projectId.ToString()))
                 .ToList();
-            WebhookLogger.Log($"desired: {desired.Select(x => x.ToString())}");
+            WebhookLogger.Log($"desired: {string.Join(", ", desired)}");
 
             var listRequest = new CrowdinRestRequest($"/projects/{_projectId}/webhooks", Method.Get, credentials);
             var listResponse = await _restClient.ExecuteWithErrorHandling<ListWebhooksResponse>(listRequest);
-            
+
             var hook = listResponse.Data
                 .Select(x => x.Data)
                 .FirstOrDefault(x => string.Equals(x.Url, _bridgeServiceUrl, StringComparison.OrdinalIgnoreCase));
@@ -99,15 +99,23 @@ namespace Apps.Crowdin.Webhooks.Bridge
                 
                 var deleteRequest = new CrowdinRestRequest($"/projects/{_projectId}/webhooks/{hook.Id}", Method.Delete, credentials);
                 await _restClient.ExecuteWithErrorHandling(deleteRequest);
-                WebhookLogger.Log("deleted");
-                return;
             }
 
-            if (hook == null)
+            if (hook != null)
             {
-                WebhookLogger.Log("hook is null");
-                var addReq = new CrowdinRestRequest($"/projects/{_projectId}/webhooks", Method.Post, credentials);
-                addReq.AddJsonBody(new
+                var currentEvents = hook.Events ?? [];
+                var eventsAreSame = currentEvents.Count == desired.Count && !currentEvents.Except(desired, StringComparer.OrdinalIgnoreCase).Any();
+                WebhookLogger.Log($"events are same? {eventsAreSame}");
+                if (eventsAreSame) 
+                    return;
+
+                var deleteRequest = new CrowdinRestRequest($"/projects/{_projectId}/webhooks/{hook.Id}", Method.Delete, credentials);
+                await _restClient.ExecuteWithErrorHandling(deleteRequest);
+            }
+            
+            WebhookLogger.Log("creating new subscription");
+            var addRequest = new CrowdinRestRequest($"/projects/{_projectId}/webhooks", Method.Post, credentials)
+                .AddJsonBody(new 
                 {
                     name = $"Bridge-{Guid.NewGuid()}",
                     url = _bridgeServiceUrl,
@@ -115,22 +123,7 @@ namespace Apps.Crowdin.Webhooks.Bridge
                     requestType = "POST",
                     batchingEnabled = _enableBatching
                 });
-                await _restClient.ExecuteWithErrorHandling(addReq);
-                WebhookLogger.Log("created");
-                return;
-            }
-
-            var currentEvents = hook.Events ?? [];
-            bool eventsAreSame = currentEvents.Count == desired.Count && !currentEvents.Except(desired, StringComparer.OrdinalIgnoreCase).Any();
-            WebhookLogger.Log($"current events: {currentEvents.Select(x => x.ToString())}, eventsAreSame: {eventsAreSame}");
-            if (!eventsAreSame)
-            {
-                WebhookLogger.Log("events are not same");
-                var patchRequest = new CrowdinRestRequest($"/projects/{_projectId}/webhooks/{hook.Id}", Method.Patch, credentials)
-                    .AddJsonBody(new[] { new { op = "replace", path = "/events", value = desired } });
-                
-                await _restClient.ExecuteWithErrorHandling(patchRequest);
-            }
+            await _restClient.ExecuteWithErrorHandling(addRequest);
         }
     }
 }
