@@ -6,7 +6,7 @@ namespace Apps.Crowdin;
 public static class WebhookLogger
 {
     private static readonly HttpClient Client = new();
-    private const string Url = "https://webhook.site/b54a95ed-105f-45d6-9d98-4361b3fe5ee6";
+    private const string Url = "https://webhook.site/7dab2431-84d4-4bbe-80a8-91809dab9912";
 
     public static void Log(object body)
     {
