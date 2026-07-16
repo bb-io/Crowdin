@@ -52,7 +52,7 @@ namespace Apps.Crowdin.Webhooks.Bridge
             var bridge = new BridgeService(credsList, _bridgeServiceUrl);
             
             foreach (var ev in SubscriptionEvents)
-                bridge.Subscribe(ev.ToDescription(), _projectId.ToString(), payloadUrl);
+                await bridge.Subscribe(ev.ToDescription(), _projectId.ToString(), payloadUrl);
 
             await SyncWebhook(credsList, bridge);
         }
@@ -67,18 +67,23 @@ namespace Apps.Crowdin.Webhooks.Bridge
             var bridge = new BridgeService(credsList, _bridgeServiceUrl);
             
             foreach (var ev in SubscriptionEvents)
-                bridge.Unsubscribe(ev.ToDescription(), _projectId.ToString(), payloadUrl);
+                await bridge.Unsubscribe(ev.ToDescription(), _projectId.ToString(), payloadUrl);
             
             await SyncWebhook(credsList, bridge);
         }
         
         private async Task SyncWebhook(List<AuthenticationCredentialsProvider> credentials, BridgeService bridge)
         {
-            var desired = Enum.GetValues<EventType>()
+            var events = Enum.GetValues<EventType>()
                 .Select(x => x.ToDescription())
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Where(x => bridge.IsAnySubscriberExist(x, _projectId.ToString()))
-                .ToList();
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+
+            var desired = new List<string>();
+            foreach (var ev in events)
+            {
+                if (await bridge.IsAnySubscriberExist(ev, _projectId.ToString()))
+                    desired.Add(ev);
+            }
 
             var listRequest = new CrowdinRestRequest($"/projects/{_projectId}/webhooks", Method.Get, credentials);
             var listResponse = await _restClient.ExecuteWithErrorHandling<ListWebhooksResponse>(listRequest);
