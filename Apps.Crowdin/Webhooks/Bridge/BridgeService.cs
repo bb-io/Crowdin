@@ -1,11 +1,7 @@
 ﻿using Apps.Crowdin.Webhooks.Bridge.Models;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using RestSharp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Apps.Crowdin.Webhooks.Bridge
 {
@@ -18,47 +14,44 @@ namespace Apps.Crowdin.Webhooks.Bridge
             BridgeServiceUrl = bridgeServiceUrl;
         }
 
-        public void Subscribe(string _event, string projectId, string url)
+        public async Task Subscribe(string @event, string projectId, string url)
         {
             var client = new RestClient(BridgeServiceUrl);
-            var request = new RestRequest($"/{projectId}/{_event}", Method.Post);
+            var request = new RestRequest($"/{projectId}/{@event}", Method.Post);
             request.AddHeader("Blackbird-Token", ApplicationConstants.BlackbirdToken);
             request.AddBody(url);
 
-            var response = client.Execute(request);
+            var response = await client.ExecuteAsync(request);
             if (!response.IsSuccessful)
-            {
-                throw new Exception($"Failed to subscribe to event {_event} for project {projectId}");
-            }
+                throw new PluginApplicationException($"Failed to subscribe to event {@event} for project {projectId}");
         }
 
-        public void Unsubscribe(string _event, string projectId, string url)
+        public async Task Unsubscribe(string @event, string projectId, string url)
         {
-
             var client = new RestClient(BridgeServiceUrl);
-            var requestGet = new RestRequest($"/{projectId}/{_event}", Method.Get);
-            requestGet.AddHeader("Blackbird-Token", ApplicationConstants.BlackbirdToken);
-            var webhooks = client.Get<List<BridgeGetResponse>>(requestGet);
-
-            var webhook = webhooks.FirstOrDefault(w => w.Value == url);
-            if (webhook != null)
-            {
-                var requestDelete = new RestRequest($"/{projectId}/{_event}/{webhook.Id}", Method.Delete);
-                requestDelete.AddHeader("Blackbird-Token", ApplicationConstants.BlackbirdToken);
-                var responseDelete = client.Delete(requestDelete);
-            }
+            var requestGet = new RestRequest($"/{projectId}/{@event}")
+                .AddHeader("Blackbird-Token", ApplicationConstants.BlackbirdToken);
+            var webhooks = await client.GetAsync<List<BridgeGetResponse>>(requestGet);
+            
+            var webhook = webhooks?.FirstOrDefault(w => w.Value == url);
+            if (webhook == null) 
+                return;
+            
+            var requestDelete = new RestRequest($"/{projectId}/{@event}/{webhook.Id}", Method.Delete)
+                .AddHeader("Blackbird-Token", ApplicationConstants.BlackbirdToken);
+            var responseDelete = await client.DeleteAsync(requestDelete);
+            if (!responseDelete.IsSuccessful)
+                throw new PluginApplicationException($"Failed to subscribe to event {@event} for project {projectId}");
         }
 
-        public bool IsAnySubscriberExist(string _event, string projectId)
+        public async Task<bool> IsAnySubscriberExist(string @event, string projectId)
         {
             var client = new RestClient(BridgeServiceUrl);
-            var request = new RestRequest($"/{projectId}/{_event}", Method.Get);
-            request.AddHeader("Blackbird-Token", ApplicationConstants.BlackbirdToken);
-            var response = client.Get<List<BridgeGetResponse>>(request);
-
-            bool exists = response?.Any() ?? false;
-
-            return response?.Any() ?? false;
+            var request = new RestRequest($"/{projectId}/{@event}")
+                .AddHeader("Blackbird-Token", ApplicationConstants.BlackbirdToken);
+            
+            var response = await client.GetAsync<List<BridgeGetResponse>>(request);
+            return response?.Count > 0;
         }
     }
 }
