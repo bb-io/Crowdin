@@ -41,7 +41,9 @@ public class TMExportPollingList(InvocationContext invocationContext) : AppInvoc
                 }
             };
         }
-        var tmExportStatusResponse = await SdkClient.TranslationMemory.CheckTmExportStatus(Convert.ToInt32(tmExportStatusChangedRequest.TranslationMemoryId), tmExportStatusChangedRequest.ExportId);
+        var tmId = ParseTmId(tmExportStatusChangedRequest.TranslationMemoryId);
+
+        var tmExportStatusResponse = await SdkClient.TranslationMemory.CheckTmExportStatus(tmId, tmExportStatusChangedRequest.ExportId);
 
         var TmExportHasRightStatus = tmExportStatusChangedRequest.GetCrowdinOperationStatuses()
             .Any(x => x == tmExportStatusResponse.Status);
@@ -65,7 +67,7 @@ public class TMExportPollingList(InvocationContext invocationContext) : AppInvoc
        PollingEventRequest<PollingMemory> request,
        [PollingEventParameter] TranslationMemoryImportStatusChangedRequest tmImportStatusChangedRequest)
     {
-        var tmId = Convert.ToInt32(tmImportStatusChangedRequest.TranslationMemoryId);
+        var tmId = ParseTmId(tmImportStatusChangedRequest.TranslationMemoryId);
 
         var importStatus = await GetTmImportStatusAsync(tmId, tmImportStatusChangedRequest.ImportId);
 
@@ -92,6 +94,24 @@ public class TMExportPollingList(InvocationContext invocationContext) : AppInvoc
                 Triggered = triggeredNow || previouslyTriggered
             }
         };
+    }
+
+    private static int ParseTmId(string translationMemoryId)
+    {
+        if (string.IsNullOrWhiteSpace(translationMemoryId))
+        {
+            throw new PluginMisconfigurationException(
+                "Translation memory ID is empty. Please specify the translation memory to check the status for");
+        }
+
+        if (!int.TryParse(translationMemoryId.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var tmId))
+        {
+            throw new PluginMisconfigurationException(
+                $"Invalid translation memory ID: '{translationMemoryId}' must be a numeric value. " +
+                "Make sure the export/import ID is not entered in the 'Translation memory ID' field");
+        }
+
+        return tmId;
     }
 
     private static string NormalizeStatus(string status)
