@@ -3,6 +3,7 @@ using Apps.Crowdin.Constants;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Connections;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Crowdin.Connections;
 
@@ -39,21 +40,48 @@ public class ConnectionDefinition : IConnectionDefinition
             .Select(x => new AuthenticationCredentialsProvider(x.Key, x.Value))
             .ToList();
 
-        var plan = credentials.GetCrowdinPlan();
-        if (plan == Plans.Enterprise)
-        {        
-            var token = values.First(x => x.Key == CredsNames.ApiToken).Value;
-            var domain = GetOrganization(token);
-            credentials.Add(new(CredsNames.OrganizationDomain, domain));
+        if (credentials.GetCrowdinPlan() != Plans.Enterprise)
+            return credentials;
+
+        if (!values.TryGetValue(CredsNames.ApiToken, out var token) || string.IsNullOrWhiteSpace(token))
+        {
+            throw new PluginMisconfigurationException(
+                "The Crowdin Enterprise connection has no access token stored, which usually means the " +
+                "authorization was never completed. Please reconnect your Crowdin connection.");
         }
+
+        credentials.Add(new(CredsNames.OrganizationDomain, GetOrganization(token)));
 
         return credentials;
     }
 
-    private string GetOrganization(string token)
+    private static string GetOrganization(string token)
     {
-        var jwt = new JwtSecurityToken(token);
+        var handler = new JwtSecurityTokenHandler();
+
+        if (!handler.CanReadToken(token))
+        {
+            throw new PluginMisconfigurationException(
+                "The stored Crowdin Enterprise access token could not be read. " +
+                "Please reconnect your Crowdin connection.");
+        }
+
+        JwtSecurityToken jwt;
+        try
+        {
+            jwt = handler.ReadJwtToken(token);
+        }
+        catch (Exception e)
+        {
+            throw new PluginMisconfigurationException(
+                $"The stored Crowdin Enterprise access token could not be read: {e.Message}. " +
+                "Please reconnect your Crowdin connection.");
+        }
+
         return jwt.Claims.FirstOrDefault(c => c.Type == CredsNames.OrganizationDomain)?.Value ??
-               throw new("Wrong login to Crowdin Enterprise");
+               throw new PluginMisconfigurationException(
+                   "Could not read the organization domain from the Crowdin Enterprise access token. " +
+                   "Please make sure you signed in with a Crowdin Enterprise account and reconnect " +
+                   "your Crowdin connection.");
     }
 }

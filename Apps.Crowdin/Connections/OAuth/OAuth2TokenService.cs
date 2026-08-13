@@ -5,7 +5,6 @@ using Blackbird.Applications.Sdk.Common.Authentication.OAuth2;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Apps.Crowdin.Connections.OAuth;
 
@@ -13,6 +12,7 @@ public class OAuth2TokenService(InvocationContext invocationContext)
     : BaseInvocable(invocationContext), IOAuth2TokenService, ITokenRefreshable
 {
     private const string ExpiresAtKeyName = "expires_at";
+    private const string RefreshTokenKeyName = "refresh_token";
     private const int RefreshBufferMinutes = 30;
     private const int MinimumRemainingLifetimeSeconds = 60;
 
@@ -37,7 +37,14 @@ public class OAuth2TokenService(InvocationContext invocationContext)
     public Task<Dictionary<string, string>> RefreshToken(Dictionary<string, string> values,
         CancellationToken cancellationToken)
     {
-        var refreshToken = values["refresh_token"];
+        if (!values.TryGetValue(RefreshTokenKeyName, out var refreshToken) ||
+            string.IsNullOrWhiteSpace(refreshToken))
+        {
+            throw new PluginMisconfigurationException(
+                "The Crowdin connection has no refresh token stored, so it cannot be renewed automatically. " +
+                "Please reconnect your Crowdin connection.");
+        }
+
         var parameters = new Dictionary<string, string>
         {
             { "grant_type", "refresh_token" },
@@ -57,6 +64,27 @@ public class OAuth2TokenService(InvocationContext invocationContext)
     {
         throw new NotImplementedException();
     }
+    
+    public bool IsRefreshToken(Dictionary<string, string> values)
+    {
+        if (!values.TryGetValue(ExpiresAtKeyName, out var expireValue))
+            return false;
+
+        return DateTime.TryParse(expireValue, out var expiresAt) && DateTime.UtcNow > expiresAt;
+    }
+
+    public int? GetRefreshTokenExprireInMinutes(Dictionary<string, string> values)
+    {
+        if (!values.TryGetValue(ExpiresAtKeyName, out var expireValue))
+            return null;
+
+        if (!DateTime.TryParse(expireValue, out var expireDate))
+            return null;
+
+        var difference = expireDate - DateTime.UtcNow;
+
+        return (int)difference.TotalMinutes;
+    }
 
     #endregion
 
@@ -72,19 +100,9 @@ public class OAuth2TokenService(InvocationContext invocationContext)
             var grantType = parameters.TryGetValue("grant_type", out var currentGrantType)
                 ? currentGrantType
                 : "unknown";
-            var refreshTokenPreview = parameters.TryGetValue("refresh_token", out var currentRefreshToken)
-                ? GetTokenPreview(currentRefreshToken)
-                : "n/a";
-
-            InvocationContext.Logger?.LogError(
-                $"[Crowdin][OAuth] Requesting OAuth token. Operation: {operationName}; GrantType: {grantType}; RefreshToken: {refreshTokenPreview}",
-                null);
+            parameters.TryGetValue(RefreshTokenKeyName, out var currentRefreshToken);
 
             var responseContent = await ExecuteTokenRequest(parameters, token);
-
-            InvocationContext.Logger?.LogError(
-                $"[Crowdin][OAuth] OAuth token response body. Operation: {operationName}; GrantType: {grantType}; Body: {SanitizeOAuthResponseBody(responseContent)}",
-                null);
 
             var resultDictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseContent)
                                        ?.ToDictionary(r => r.Key, r => r.Value?.ToString())
@@ -105,12 +123,12 @@ public class OAuth2TokenService(InvocationContext invocationContext)
                     null);
             }
 
-            var nextRefreshToken = resultDictionary.TryGetValue("refresh_token", out var nextRefreshTokenValue) &&
+            var nextRefreshToken = resultDictionary.TryGetValue(RefreshTokenKeyName, out var nextRefreshTokenValue) &&
                                    !string.IsNullOrWhiteSpace(nextRefreshTokenValue)
                 ? nextRefreshTokenValue
                 : currentRefreshToken ?? string.Empty;
 
-            resultDictionary["refresh_token"] = nextRefreshToken;
+            resultDictionary[RefreshTokenKeyName] = nextRefreshToken;
             resultDictionary[ExpiresAtKeyName] = expiresAt.ToString("O");
 
             InvocationContext.Logger?.LogError(
@@ -146,36 +164,12 @@ public class OAuth2TokenService(InvocationContext invocationContext)
             InvocationContext.Logger?.LogError(
                 $"[Crowdin][OAuth] OAuth token request failed. GrantType: {grantType}; StatusCode: {(int)response.StatusCode} {response.StatusCode}",
                 null);
-            InvocationContext.Logger?.LogError(
-                $"[Crowdin][OAuth] OAuth token response body. GrantType: {grantType}; Body: {SanitizeOAuthResponseBody(responseContent)}",
-                null);
 
             throw new PluginApplicationException(
                 $"Failed to obtain OAuth token: {response.StatusCode}. {responseContent}");
         }
 
         return responseContent;
-    }
-
-    public bool IsRefreshToken(Dictionary<string, string> values)
-    {
-        if (!values.TryGetValue(ExpiresAtKeyName, out var expireValue))
-            return false;
-
-        return DateTime.TryParse(expireValue, out var expiresAt) && DateTime.UtcNow > expiresAt;
-    }
-
-    public int? GetRefreshTokenExprireInMinutes(Dictionary<string, string> values)
-    {
-        if (!values.TryGetValue(ExpiresAtKeyName, out var expireValue))
-            return null;
-
-        if (!DateTime.TryParse(expireValue, out var expireDate))
-            return null;
-
-        var difference = expireDate - DateTime.UtcNow;
-
-        return (int)difference.TotalMinutes;
     }
 
     private static string GetSafeValue(Dictionary<string, string> values, string key)
@@ -187,36 +181,6 @@ public class OAuth2TokenService(InvocationContext invocationContext)
             return "missing";
 
         return token.Length <= 8 ? token : token[..8];
-    }
-
-    private static string SanitizeOAuthResponseBody(string? content)
-    {
-        if (string.IsNullOrWhiteSpace(content))
-            return "empty";
-
-        try
-        {
-            var json = JToken.Parse(content);
-
-            if (json is JObject obj)
-            {
-                MaskToken(obj, "access_token");
-                MaskToken(obj, "refresh_token");
-                MaskToken(obj, "id_token");
-            }
-
-            return json.ToString(Formatting.None);
-        }
-        catch
-        {
-            return content;
-        }
-    }
-
-    private static void MaskToken(JObject obj, string key)
-    {
-        if (obj.TryGetValue(key, out var tokenValue) && tokenValue.Type == JTokenType.String)
-            obj[key] = GetTokenPreview(tokenValue.Value<string>());
     }
 
     #endregion

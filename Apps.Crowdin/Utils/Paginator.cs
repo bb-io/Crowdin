@@ -5,25 +5,28 @@ namespace Apps.Crowdin.Utils;
 
 public static class Paginator
 {
-    private const int Limit = 50;
-    
-    public static async Task<List<T>> Paginate<T>(Func<int, int, Task<ResponseList<T>>> request)
+    private const int MaxLimit = 500; // Crowdin API v2 maximum page size
+
+    public static async Task<List<T>> Paginate<T>(Func<int, int, Task<ResponseList<T>>> request,
+        int limit = MaxLimit)
     {
         try
         {
             var offset = 0;
-
             var items = new List<T>();
-            ResponseList<T> response;
-            do
+
+            while (true)
             {
-                response = await request(Limit, offset);
-                offset += Limit;
+                var page = (await request(limit, offset)).Data?.ToList() ?? [];
+                items.AddRange(page);
 
-                items.AddRange(response.Data ?? []);
-            } while (response.Data?.Any() is true);
+                if (page.Count == 0)
+                    return items;
 
-            return items;
+                // Advancing by the page size instead of the requested limit keeps the paging correct
+                // for endpoints that cap the page size below the requested one.
+                offset += page.Count;
+            }
         }
         catch (Exception e)
         {
