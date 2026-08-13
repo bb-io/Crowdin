@@ -4,6 +4,7 @@ using Apps.Crowdin.Api.RestSharp.Enterprise;
 using Apps.Crowdin.Constants;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
 using Blackbird.Applications.Sdk.Utils.RestSharp;
 using Crowdin.Api;
@@ -33,7 +34,7 @@ public class ApiClientFactory : IApiClientFactory
             return new CrowdinEnterpriseRestClient(authenticationCredentialsProviders);
         }
 
-        throw new Exception($"Unsupported crowdin plan provided: {crowdinPlan}");
+        throw new PluginMisconfigurationException($"Unsupported crowdin plan provided: {crowdinPlan}");
     }
 
     public CrowdinClient BuildSdkClient(IEnumerable<AuthenticationCredentialsProvider> credentialsProviders)
