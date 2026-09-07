@@ -37,7 +37,7 @@ public class ProjectEntity
     [Display("Is external"), JsonProperty("isExternal")]
     public bool IsExternal { get; set; }
 
-    [Display("External project type"), JsonProperty("proofread")]
+    [Display("External project type"), JsonProperty("externalType")]
     public string? ExternalType { get; set; }
 
     [Display("External project ID"), JsonProperty("externalProjectId")]
