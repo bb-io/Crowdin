@@ -34,6 +34,18 @@ public class ProjectEntity
     [Display("Last activity")]
     public DateTime? LastActivity { get; set; }
 
+    [Display("Is external"), JsonProperty("isExternal")]
+    public bool IsExternal { get; set; }
+
+    [Display("External project type"), JsonProperty("proofread")]
+    public string? ExternalType { get; set; }
+
+    [Display("External project ID"), JsonProperty("externalProjectId")]
+    public string? ExternalProjectId { get; set; }
+
+    [Display("External organization ID"), JsonProperty("externalOrganizationId")]
+    public string? ExternalOrganizationId { get; set; }
+
     [Display("Fields"), JsonProperty("fields"), JsonConverter(typeof(FieldsConverter))]
     public IEnumerable<FieldEntity> Fields { get; set; } = [];
 
