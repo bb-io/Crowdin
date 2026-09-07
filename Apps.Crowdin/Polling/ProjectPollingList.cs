@@ -16,7 +16,7 @@ namespace Apps.Crowdin.Polling;
 [PollingEventList("Projects")]
 public class ProjectPollingList(InvocationContext context) : AppInvocable(context)
 {
-    [PollingEvent("[Enterprise] On project assigned to vendor", 
+    [PollingEvent("[Enterprise] On projects assigned to vendor", 
         Description = "Triggers when a client organization assigns a new project to your vendor organization")]
     public async Task<PollingEventResponse<ProjectsPollingMemory, ListProjectsResponse>> OnProjectAssignedToVendor(
         PollingEventRequest<ProjectsPollingMemory> pollingRequest,
