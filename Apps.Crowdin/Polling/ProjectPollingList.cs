@@ -57,7 +57,7 @@ public class ProjectPollingList(InvocationContext context) : AppInvocable(contex
         {
             FlyBird = newlyAssignedProjects.Count > 0,
             Result = new(newlyAssignedProjects),
-            Memory = new() { KnownProjectIds = newlyAssignedProjects.Count > 0 ? externalProjectIds : pollingRequest.Memory.KnownProjectIds }
+            Memory = new() { KnownProjectIds = externalProjectIds }
         };
     }
 }
