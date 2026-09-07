@@ -183,6 +183,7 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 - **On project created** On project created
 - **On project deleted** On project deleted
 - **On project translated** On project translated
+- **[Enterprise] On project assigned to vendor** Triggers when a client organization assigns a new project to your vendor organization
 
 ### Project groups
 
