@@ -154,6 +154,7 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 - **Delete user** Delete specific user
 
 ### Vendors
+
 - **Search vendors** Get the list of the vendors you already invited to your organization 
 - **Find vendor** Get the first vendor you already invited to your organization that matches the search criteria
 
@@ -183,6 +184,7 @@ Crowdin is a cloud-based localization platform that helps businesses and organiz
 - **On project created** On project created
 - **On project deleted** On project deleted
 - **On project translated** On project translated
+- **[Enterprise] On projects assigned to vendor** Triggers when a client organization assigns a new project to your vendor organization
 
 ### Project groups
 

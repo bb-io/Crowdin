@@ -19,15 +19,15 @@ public class AppInvocable(InvocationContext invocationContext) : BaseInvocable(i
 
     protected CrowdinClient SdkClient => ApiClientFactory.BuildSdkClient(Creds);
 
-    protected void CheckAccessToEnterpriseAction()
+    protected void CheckAccessToEnterpriseAction(string stepType = "action")
     {
-        var plan = ApiClientFactory.GetPlan(Creds);
+        string plan = ApiClientFactory.GetPlan(Creds);
 
         if (plan == Plans.Basic)
         {
             throw new PluginMisconfigurationException(
-                "You are not able to execute this action because your connection is based on the basic plan. " +
-                "This action is only available for enterprise-level Crowdin connections.");
+                $"You are not able to execute this {stepType} because your connection is based on the basic plan. " +
+                $"This {stepType} is only available for enterprise-level Crowdin connections.");
         }
     }
 }
