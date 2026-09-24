@@ -2,9 +2,11 @@
 using Apps.Crowdin.Api.RestSharp.Basic;
 using Apps.Crowdin.Api.RestSharp.Enterprise;
 using Apps.Crowdin.Constants;
+using Apps.Crowdin.Extensions;
 using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.TranslationMemory;
+using Apps.Crowdin.Models.Response;
 using Apps.Crowdin.Models.Response.File;
 using Apps.Crowdin.Models.Response.TranslationMemory;
 using Apps.Crowdin.Utils;
@@ -16,6 +18,7 @@ using Blackbird.Applications.Sdk.Utils.Parsers;
 using Blackbird.Applications.Sdk.Utils.RestSharp;
 using Blackbird.Applications.Sdk.Utils.Utilities;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Crowdin.Api;
 using Crowdin.Api.TranslationMemory;
 using Newtonsoft.Json;
 using RestSharp;
@@ -30,15 +33,27 @@ public class TranslationMemoryActions(InvocationContext invocationContext, IFile
     public async Task<ListTranslationMemoriesResponse> ListTranslationMemories(
         [ActionParameter] ListTranslationMemoryRequest input)
     {
-        var intUserId = IntParser.Parse(input.UserId, nameof(input.UserId));
-        var intGroupId = IntParser.Parse(input.GroupId, nameof(input.GroupId));
+        // Basic Crowdin API accepts 'userId' but does not accept the 'groupId' value.
+        // The enterprise API accepts 'groupId' but doesn't accept 'userId'.
+        var request = new CrowdinRestRequest("tms", Method.Get, Creds);
 
-        var items = await Paginator.Paginate((lim, offset)
-            => ExceptionWrapper.ExecuteWithErrorHandling(() =>
-                SdkClient.TranslationMemory.ListTms(intUserId, intGroupId, lim, offset)));
+        int? groupIdInput = ProcessOptionalQueryIntParam(input.GroupId, Plans.Enterprise, "Group ID");
+        if (groupIdInput is not null)
+            request.AddQueryParameter("groupId", (int)groupIdInput);
+        
+        int? userIdInput = ProcessOptionalQueryIntParam(input.UserId, Plans.Basic, "User ID");
+        if (userIdInput is not null)
+            request.AddQueryParameter("userId", (int)userIdInput);
+        
+        var items = await Paginator.Paginate(async (lim, offset) =>
+        {
+            request.AddOrUpdateParameter("limit", lim);
+            request.AddOrUpdateParameter("offset", offset);
 
-        var tms = items.Select(x => new TranslationMemoryEntity(x)).ToArray();
-        return new(tms);
+            return await RestClient.ExecuteWithErrorHandling<ResponseList<DataResponse<TranslationMemoryEntity>>>(request);
+        });
+        
+        return new(items.Select(x => x.Data).ToArray());
     }
 
     [Action("Get translation memory", Description = "Get specific translation memory")]
@@ -401,5 +416,19 @@ public class TranslationMemoryActions(InvocationContext invocationContext, IFile
             Id = segmentDto.Data.Id.ToString(),
             Records = recordEntities
         };
+    }
+
+    private int? ProcessOptionalQueryIntParam(string? value, string supportedPlan, string paramDisplayName)
+    {
+        int? result = value.ToPlanScopedInt(Creds.GetCrowdinPlan(), supportedPlan, paramDisplayName);
+
+        if (result is null && !string.IsNullOrEmpty(value))
+        {
+            InvocationContext.Logger?.LogWarning(
+                $"The '{paramDisplayName}' parameter is only supported for the {supportedPlan} plan. The input was ignored", 
+                []);
+        }
+
+        return result;
     }
 }

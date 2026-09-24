@@ -5,14 +5,8 @@ namespace Apps.Crowdin.Utils;
 
 public static class ExceptionWrapper
 {
-    private static readonly List<string> MisconfigurationErrorMessages =
-    [
-        "not found or does not exist",
-        "File name can't contain any of the following characters"
-    ];
-
     public static async Task<T> ExecuteWithErrorHandling<T>(Func<Task<T>> func)
-   {
+    {
         try
         {
             return await func.Invoke();

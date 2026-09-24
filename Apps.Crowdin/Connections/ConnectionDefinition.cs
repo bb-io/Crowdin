@@ -71,7 +71,7 @@ public class ConnectionDefinition : IConnectionDefinition
         {
             jwt = handler.ReadJwtToken(token);
         }
-        catch (Exception e)
+        catch (ArgumentException e)
         {
             throw new PluginMisconfigurationException(
                 $"The stored Crowdin Enterprise access token could not be read: {e.Message}. " +

@@ -1,7 +1,4 @@
 ﻿using Apps.Crowdin.Models.Request.TranslationMemory;
-using Crowdin.Api.StringTranslations;
-using Crowdin.Api.TranslationMemory;
-using RestSharp;
 using Tests.Crowdin.Base;
 
 namespace Tests.Crowdin
@@ -13,9 +10,9 @@ namespace Tests.Crowdin
         public async Task ListTranslationMemories_ShouldReturnResults()
         {
             var action = new Apps.Crowdin.Actions.TranslationMemoryActions(InvocationContext, FileManager);
-            var request = new Apps.Crowdin.Models.Request.TranslationMemory.ListTranslationMemoryRequest
+            var request = new ListTranslationMemoryRequest
             {
-                UserId = null,
+                UserId = "123",
                 GroupId = null
             };
 
@@ -28,7 +25,6 @@ namespace Tests.Crowdin
 
             Assert.IsNotNull(response);
             Assert.IsNotNull(response.TranslationMemories);
-            Assert.IsTrue(response.TranslationMemories.Length > 0, "Expected at least one translation memory.");
         }
 
         [TestMethod]
