@@ -1,9 +1,14 @@
-﻿using System.Text.RegularExpressions;
+﻿using Blackbird.Applications.Sdk.Utils.Parsers;
 
 namespace Apps.Crowdin.Extensions;
 
 public static class StringExtensions
 {
-    public static string ToPascalCase(this string input)
-        => Regex.Replace(input, @"\b\p{Ll}", match => match.Value.ToUpper());
+    public static int? ToPlanScopedInt(this string? value, string currentPlan, string supportedPlan, string paramDisplayName)
+    {
+        if (string.IsNullOrEmpty(value) || currentPlan != supportedPlan)
+            return null;
+
+        return IntParser.Parse(value, paramDisplayName);
+    }
 }

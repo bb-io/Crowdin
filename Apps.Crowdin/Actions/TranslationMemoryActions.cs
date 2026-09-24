@@ -2,6 +2,7 @@
 using Apps.Crowdin.Api.RestSharp.Basic;
 using Apps.Crowdin.Api.RestSharp.Enterprise;
 using Apps.Crowdin.Constants;
+using Apps.Crowdin.Extensions;
 using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.TranslationMemory;
@@ -419,16 +420,15 @@ public class TranslationMemoryActions(InvocationContext invocationContext, IFile
 
     private int? ProcessOptionalQueryIntParam(string? value, string supportedPlan, string paramDisplayName)
     {
-        if (string.IsNullOrEmpty(value))
-            return null;
-        
-        string plan = Creds.GetCrowdinPlan();
-        if (plan == supportedPlan) 
-            return IntParser.Parse(value, paramDisplayName);
-        
-        InvocationContext.Logger?.LogWarning(
-            $"The '{paramDisplayName}' parameter is only supported for the {supportedPlan} plan. The input was ignored", 
-            []);
-        return null;
+        int? result = value.ToPlanScopedInt(Creds.GetCrowdinPlan(), supportedPlan, paramDisplayName);
+
+        if (result is null && !string.IsNullOrEmpty(value))
+        {
+            InvocationContext.Logger?.LogWarning(
+                $"The '{paramDisplayName}' parameter is only supported for the {supportedPlan} plan. The input was ignored", 
+                []);
+        }
+
+        return result;
     }
 }
