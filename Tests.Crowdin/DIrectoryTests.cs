@@ -43,12 +43,12 @@ namespace Tests.Crowdin
 
             var project = new ProjectRequest
             {
-                ProjectId = "1",
+                ProjectId = "108",
             };
 
             var request = new DirectoryRequest
             {
-                DirectoryId = "413"
+                DirectoryId = "113045"
             };
 
             var response = await action.GetDirectoryProgress(project, request);
