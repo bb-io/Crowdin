@@ -379,6 +379,22 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
         [ActionParameter] ProjectRequest project,
         [ActionParameter] GenerateEstimateCostReportOptions options)
     {
+        int[]? taskIds = null;
+        var requestedTaskIds = options.TaskIds?.ToArray();
+        if (requestedTaskIds?.Length > 0)
+        {
+            taskIds = requestedTaskIds.Select(taskId =>
+            {
+                if (!int.TryParse(taskId, out var parsedTaskId))
+                {
+                    throw new PluginMisconfigurationException(
+                        $"Invalid Task ID: '{taskId}' must be a numeric value. Please check the input Task IDs");
+                }
+
+                return parsedTaskId;
+            }).Distinct().ToArray();
+        }
+
         if (options.IndividualProofRead.HasValue && options.IndividualProofRead <= 0)
             throw new PluginMisconfigurationException("IndividualProofRead must be a positive float.");
         if (options.BaseProofRead.HasValue && options.BaseProofRead <= 0)
@@ -429,7 +445,8 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
                 netRateSchemes = new { tmMatch = tmMatchPayload },
                 dateFrom = options.FromDate?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss+00:00"),
                 dateTo = options.ToDate?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss+00:00"),
-                languageIds = options.LanguageIds
+                languageIds = options.LanguageIds,
+                taskIds
             }
         };
 
