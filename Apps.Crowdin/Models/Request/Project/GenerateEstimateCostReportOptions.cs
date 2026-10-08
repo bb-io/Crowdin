@@ -28,7 +28,7 @@ namespace Apps.Crowdin.Models.Request.Project
 
         [Display("Language IDs")]
         [DataSource(typeof(LanguagesDataHandler))]
-        public IEnumerable<string> LanguageIds { get; set; }
+        public IEnumerable<string>? LanguageIds { get; set; }
 
         [Display("Task IDs", Description = "Task IDs to include in the consolidated report. Leave empty to include the whole project")]
         public IEnumerable<string>? TaskIds { get; set; }

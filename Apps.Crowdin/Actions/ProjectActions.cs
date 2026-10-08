@@ -381,6 +381,7 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
     {
         int[]? taskIds = null;
         var requestedTaskIds = options.TaskIds?.ToArray();
+        var languageIds = options.LanguageIds?.ToArray();
         if (requestedTaskIds?.Length > 0)
         {
             taskIds = requestedTaskIds.Select(taskId =>
@@ -393,6 +394,12 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
 
                 return parsedTaskId;
             }).Distinct().ToArray();
+        }
+
+        if (taskIds?.Length > 0 && languageIds?.Length > 0)
+        {
+            throw new PluginMisconfigurationException(
+                "Task IDs and Language IDs cannot be used together. Please provide only one of these filters.");
         }
 
         if (options.IndividualProofRead.HasValue && options.IndividualProofRead <= 0)
@@ -418,36 +425,45 @@ public class ProjectActions(InvocationContext invocationContext, IFileManagement
                 new { matchType = "81-60", price = options.TmMatchType == "81-60" ? (options.TmPrice ?? 0.02f) : 0.0f }
             };
         
-        var requestBody = new
+        var schema = new Dictionary<string, object?>
         {
-            name = "costs-estimation-pe",
-            schema = new
+            ["unit"] = options.Unit ?? "words",
+            ["currency"] = options.Currency ?? "USD",
+            ["format"] = "json",
+            ["baseRates"] = new
             {
-                unit = options.Unit ?? "words",
-                currency = options.Currency ?? "USD",
-                format = "json",
-                baseRates = new
-                {
-                    fullTranslation = (float)(options.BaseFullTranslations ?? 0.10f),
-                    proofread = (float)(options.BaseProofRead ?? 0.05f)
-                },
-                individualRates = options.LanguageIds?.Any() == true
-                    ? new[]
-                      {
+                fullTranslation = (float)(options.BaseFullTranslations ?? 0.10f),
+                proofread = (float)(options.BaseProofRead ?? 0.05f)
+            },
+            ["individualRates"] = languageIds?.Length > 0
+                ? new[]
+                  {
                       new
                       {
-                          languageIds = options.LanguageIds,
+                          languageIds,
                           fullTranslation = (float)(options.IndividualFullTranslations ?? options.BaseFullTranslations ?? 0.10f),
                           proofread = (float)(options.IndividualProofRead ?? options.BaseProofRead ?? 0.05f)
                       }
-                      }
-                    : Array.Empty<object>(),
-                netRateSchemes = new { tmMatch = tmMatchPayload },
-                dateFrom = options.FromDate?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss+00:00"),
-                dateTo = options.ToDate?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss+00:00"),
-                languageIds = options.LanguageIds,
-                taskIds
-            }
+                  }
+                : Array.Empty<object>(),
+            ["netRateSchemes"] = new { tmMatch = tmMatchPayload },
+            ["dateFrom"] = options.FromDate?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss+00:00"),
+            ["dateTo"] = options.ToDate?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss+00:00")
+        };
+
+        if (taskIds?.Length > 0)
+        {
+            schema["taskIds"] = taskIds;
+        }
+        else if (languageIds?.Length > 0)
+        {
+            schema["languageIds"] = languageIds;
+        }
+
+        var requestBody = new
+        {
+            name = "costs-estimation-pe",
+            schema
         };
 
         var reportRequest = new CrowdinRestRequest(
