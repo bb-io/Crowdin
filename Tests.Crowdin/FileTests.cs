@@ -92,7 +92,25 @@ public class FileTests : TestBase
         Assert.IsNotNull(response);
     }
 
-    //AddOrUpdateFile
+    //DownloadTranslationFile
+
+    [TestMethod]
+    public async Task DownloadTranslationFile_ReturnsSuccess()
+    {
+        var action = new TranslationActions(InvocationContext, FileManager);
+        var input1 = new ProjectRequest { ProjectId = "94" };
+        var input2 = new DownloadFileTranslationRequest
+        {
+            FileId = "136085",
+            TargetLanguage = "de",
+            SkipUntranslatedFiles = false,
+            SkipUntranslatedStrings = false,
+        };
+
+        var response = await action.DownloadTranslationFile(input1, input2);
+        PrintJsonResult(response);
+        Assert.IsNotNull(response);
+    }
 
     [TestMethod]
     public async Task AddOrUpdateFile_ReturnsSuccess()

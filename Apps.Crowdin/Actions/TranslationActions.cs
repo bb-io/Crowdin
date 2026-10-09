@@ -3,6 +3,7 @@ using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
 using Apps.Crowdin.Models.Request.Project;
 using Apps.Crowdin.Models.Request.Translation;
+using Apps.Crowdin.Models.Response;
 using Apps.Crowdin.Models.Response.File;
 using Apps.Crowdin.Models.Response.Translation;
 using Apps.Crowdin.Utils;
@@ -11,7 +12,6 @@ using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Parsers;
-using Crowdin.Api.SourceFiles;
 using Crowdin.Api.StringTranslations;
 using Crowdin.Api.Translations;
 using RestSharp;
@@ -249,8 +249,12 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
 
         var client = SdkClient;
 
-        var fileInfo = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
-            await client.SourceFiles.GetFile<FileResource>(intProjectId!.Value, intFileId!.Value));
+        var fileInfoRequest = new CrowdinRestRequest(
+            $"/projects/{intProjectId!.Value}/files/{intFileId!.Value}",
+            Method.Get,
+            Creds);
+        var fileInfo = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
+            (await RestClient.ExecuteWithErrorHandling<DataResponse<FileMetadataResponse>>(fileInfoRequest)).Data);
         
         var build = await ExceptionWrapper.ExecuteWithErrorHandling(async () =>
             await client.Translations.BuildProjectFileTranslation(intProjectId!.Value, intFileId!.Value,
