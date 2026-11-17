@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <Product>Crowdin</Product>
     <Description>Cloud-based solution that streamlines localization management</Description>
-    <Version>1.2.54</Version>
+    <Version>1.2.55</Version>
     <AssemblyName>Apps.Crowdin</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
@@ -24,6 +24,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource CopyToOutputDirectory="Always" Include="image\icon.png" />
-    <EmbeddedResource CopyToOutputDirectory="Always" Include="..\README.md"/>
+    <EmbeddedResource Include="..\README.md" Link="README.md" CopyToOutputDirectory="Always" />
   </ItemGroup>
 </Project>
