@@ -23,4 +23,7 @@ public class AddNewCommentRequest : ProjectRequest
     [Display("Issue type")] 
     [StaticDataSource(typeof(IssueTypeHandler))]
     public string? IssueType { get; set; }
+
+    [Display("Share with vendor", Description = "Whether to share the comment or issue with the connected vendor organization. Crowdin Enterprise only.")]
+    public bool? ShareWithVendor { get; set; }
 }

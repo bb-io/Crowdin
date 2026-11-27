@@ -1,15 +1,19 @@
 ﻿using Apps.Crowdin.Invocables;
 using Apps.Crowdin.Models.Entities;
+using Apps.Crowdin.Api.RestSharp;
+using Apps.Crowdin.Constants;
 using Apps.Crowdin.Models.Request.Comments;
 using Apps.Crowdin.Models.Request.Project;
+using Apps.Crowdin.Models.Response;
 using Apps.Crowdin.Models.Response.Comments;
 using Apps.Crowdin.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using Crowdin.Api.StringComments;
+using RestSharp;
 
 namespace Apps.Crowdin.Actions;
 
@@ -65,21 +69,55 @@ public class CommentActions(InvocationContext invocationContext) : AppInvocable(
     {
         var intProjectId = IntParser.Parse(input.ProjectId, nameof(input.ProjectId));
         var intStringId = IntParser.Parse(input.StringId, nameof(input.StringId));
-        
-        var request = new AddStringCommentRequest
+
+        var isEnterprise = Creds.GetCrowdinPlan() == Plans.Enterprise;
+        if (input.ShareWithVendor == true && !isEnterprise)
         {
-            StringId = intStringId!.Value,
-            Text = input.Text,
-            TargetLanguageId = input.TargetLanguageId,
-            Type = EnumParser.Parse<StringCommentType>(input.Type, nameof(input.Type))!
-                .Value,
-            IssueType = EnumParser.Parse<IssueType>(input.IssueType, nameof(input.IssueType))
+            throw new PluginMisconfigurationException(
+                "The 'Share with vendor' input is available only for Crowdin Enterprise connections. " +
+                "Leave it empty or use a Crowdin Enterprise connection.");
+        }
+
+        var type = EnumParser.Parse<StringCommentType>(input.Type, nameof(input.Type))!.Value;
+        var issueType = EnumParser.Parse<IssueType>(input.IssueType, nameof(input.IssueType));
+
+        var requestBody = new Dictionary<string, object>
+        {
+            ["stringId"] = intStringId!.Value,
+            ["text"] = input.Text,
+            ["targetLanguageId"] = input.TargetLanguageId,
+            ["type"] = ToApiValue(type)
         };
 
-        var response = await ExceptionWrapper.ExecuteWithErrorHandling(async () => 
-            await SdkClient.StringComments.AddStringComment(intProjectId!.Value, request));
-        return new(response);
+        if (issueType.HasValue)
+            requestBody["issueType"] = ToApiValue(issueType.Value);
+
+        if (input.ShareWithVendor.HasValue && isEnterprise)
+            requestBody["isShared"] = input.ShareWithVendor.Value;
+
+        var request = new CrowdinRestRequest($"/projects/{intProjectId!.Value}/comments", Method.Post, Creds)
+            .AddJsonBody(requestBody);
+
+        var response = await ExceptionWrapper.ExecuteWithErrorHandling(() =>
+            RestClient.ExecuteWithErrorHandling<DataResponse<StringComment>>(request));
+        return new(response.Data);
     }
+
+    private static string ToApiValue(StringCommentType type) => type switch
+    {
+        StringCommentType.Comment => "comment",
+        StringCommentType.Issue => "issue",
+        _ => throw new PluginMisconfigurationException($"Unsupported string comment type: {type}")
+    };
+
+    private static string ToApiValue(IssueType issueType) => issueType switch
+    {
+        IssueType.GeneralQuestion => "general_question",
+        IssueType.TranslationMistake => "translation_mistake",
+        IssueType.ContextRequest => "context_request",
+        IssueType.SourceMistake => "source_mistake",
+        _ => throw new PluginMisconfigurationException($"Unsupported issue type: {issueType}")
+    };
 
     [Action("Delete string comment", Description = "Delete specific string comment")]
     public async Task DeleteComment(
